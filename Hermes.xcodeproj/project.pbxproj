@@ -13,6 +13,12 @@
 		2778E09028D6023B003E901E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E08F28D6023B003E901E /* ContentView.swift */; };
 		2778E09228D6023D003E901E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2778E09128D6023D003E901E /* Assets.xcassets */; };
 		2778E09628D6023D003E901E /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2778E09528D6023D003E901E /* Preview Assets.xcassets */; };
+		2778E09F28D6033F003E901E /* RecordingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E09E28D6033F003E901E /* RecordingView.swift */; };
+		2778E0A328D607C0003E901E /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0A228D607C0003E901E /* CameraManager.swift */; };
+		2778E0A528D60877003E901E /* CameraError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0A428D60877003E901E /* CameraError.swift */; };
+		2778E0A728D60DCE003E901E /* FrameManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0A628D60DCE003E901E /* FrameManager.swift */; };
+		2778E0A928D6165D003E901E /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0A828D6165D003E901E /* ContentViewModel.swift */; };
+		2778E0AB28D663DF003E901E /* CGImageExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0AA28D663DF003E901E /* CGImageExtension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +30,13 @@
 		2778E09128D6023D003E901E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2778E09328D6023D003E901E /* Hermes.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Hermes.entitlements; sourceTree = "<group>"; };
 		2778E09528D6023D003E901E /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		2778E09E28D6033F003E901E /* RecordingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingView.swift; sourceTree = "<group>"; };
+		2778E0A228D607C0003E901E /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
+		2778E0A428D60877003E901E /* CameraError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraError.swift; sourceTree = "<group>"; };
+		2778E0A628D60DCE003E901E /* FrameManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameManager.swift; sourceTree = "<group>"; };
+		2778E0A828D6165D003E901E /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
+		2778E0AA28D663DF003E901E /* CGImageExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGImageExtension.swift; sourceTree = "<group>"; };
+		2778E0AC28D664EE003E901E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,9 +69,13 @@
 		2778E08728D6023B003E901E /* Hermes */ = {
 			isa = PBXGroup;
 			children = (
+				2778E0AC28D664EE003E901E /* Info.plist */,
+				2778E0AA28D663DF003E901E /* CGImageExtension.swift */,
+				2778E0A428D60877003E901E /* CameraError.swift */,
+				2778E09D28D6032B003E901E /* Models */,
+				2778E09C28D60320003E901E /* Views */,
 				2778E08828D6023B003E901E /* HermesApp.swift */,
 				2778E08A28D6023B003E901E /* Persistence.swift */,
-				2778E08F28D6023B003E901E /* ContentView.swift */,
 				2778E09128D6023D003E901E /* Assets.xcassets */,
 				2778E09328D6023D003E901E /* Hermes.entitlements */,
 				2778E08C28D6023B003E901E /* Hermes.xcdatamodeld */,
@@ -73,6 +90,25 @@
 				2778E09528D6023D003E901E /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		2778E09C28D60320003E901E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				2778E09E28D6033F003E901E /* RecordingView.swift */,
+				2778E08F28D6023B003E901E /* ContentView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		2778E09D28D6032B003E901E /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				2778E0A228D607C0003E901E /* CameraManager.swift */,
+				2778E0A628D60DCE003E901E /* FrameManager.swift */,
+				2778E0A828D6165D003E901E /* ContentViewModel.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -146,9 +182,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				2778E08928D6023B003E901E /* HermesApp.swift in Sources */,
+				2778E0AB28D663DF003E901E /* CGImageExtension.swift in Sources */,
+				2778E0A328D607C0003E901E /* CameraManager.swift in Sources */,
+				2778E09F28D6033F003E901E /* RecordingView.swift in Sources */,
 				2778E08E28D6023B003E901E /* Hermes.xcdatamodeld in Sources */,
+				2778E0A928D6165D003E901E /* ContentViewModel.swift in Sources */,
 				2778E09028D6023B003E901E /* ContentView.swift in Sources */,
 				2778E08B28D6023B003E901E /* Persistence.swift in Sources */,
+				2778E0A728D60DCE003E901E /* FrameManager.swift in Sources */,
+				2778E0A528D60877003E901E /* CameraError.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -205,6 +247,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -257,6 +300,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -277,6 +321,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Hermes/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -315,6 +360,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Hermes/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
