@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct RecordingView: View {
+struct CameraPreview: View {
     var image: CGImage?
     private let label = Text("Recording label")
     
@@ -29,6 +29,6 @@ struct RecordingView: View {
 
 struct RecordingView_Previews: PreviewProvider {
     static var previews: some View {
-        RecordingView(image: nil)
+        CameraPreview(image: nil)
     }
 }

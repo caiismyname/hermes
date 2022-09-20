@@ -10,11 +10,23 @@ import CoreData
 
 struct ContentView: View {
     @StateObject private var model = ContentViewModel()
+    @State var playbackMode = false
    
     var body: some View {
-        ZStack {
-            RecordingView(image: model.frame)
-                .ignoresSafeArea(.all)
+        GeometryReader { geometry in
+            ZStack {
+                CameraPreview(image: model.frame)
+                    .ignoresSafeArea(.all)
+                    .popover(isPresented: $playbackMode) {
+                        PlaybackView(videoURL: model.recordingManager.projectManager.allClips.last?.finalURL)
+                            .frame(height:200)
+                    }
+                RecordingControlsView(
+                    recordingCallback: {model.recordingManager.toggleRecording()},
+                    playbackCallback: {self.playbackMode = !self.playbackMode}
+                )
+                    .position(x: geometry.size.width / 2, y: geometry.size.height - 100)
+            }
         }
     }
 }

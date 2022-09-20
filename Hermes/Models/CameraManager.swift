@@ -122,4 +122,7 @@ class CameraManager: ObservableObject {
         }
     }
     
+    func startVideo() {
+    }
+    
 }

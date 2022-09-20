@@ -13,12 +13,16 @@
 		2778E09028D6023B003E901E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E08F28D6023B003E901E /* ContentView.swift */; };
 		2778E09228D6023D003E901E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2778E09128D6023D003E901E /* Assets.xcassets */; };
 		2778E09628D6023D003E901E /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2778E09528D6023D003E901E /* Preview Assets.xcassets */; };
-		2778E09F28D6033F003E901E /* RecordingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E09E28D6033F003E901E /* RecordingView.swift */; };
+		2778E09F28D6033F003E901E /* CameraPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E09E28D6033F003E901E /* CameraPreview.swift */; };
 		2778E0A328D607C0003E901E /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0A228D607C0003E901E /* CameraManager.swift */; };
 		2778E0A528D60877003E901E /* CameraError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0A428D60877003E901E /* CameraError.swift */; };
 		2778E0A728D60DCE003E901E /* FrameManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0A628D60DCE003E901E /* FrameManager.swift */; };
 		2778E0A928D6165D003E901E /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0A828D6165D003E901E /* ContentViewModel.swift */; };
 		2778E0AB28D663DF003E901E /* CGImageExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0AA28D663DF003E901E /* CGImageExtension.swift */; };
+		2778E0AE28D66D27003E901E /* RecordingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0AD28D66D27003E901E /* RecordingManager.swift */; };
+		2778E0B028D674BA003E901E /* RecordingControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0AF28D674BA003E901E /* RecordingControlsView.swift */; };
+		2778E0B228D7A171003E901E /* ProjectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0B128D7A171003E901E /* ProjectManager.swift */; };
+		2778E0B428D9D291003E901E /* PlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0B328D9D291003E901E /* PlaybackView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,13 +34,17 @@
 		2778E09128D6023D003E901E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2778E09328D6023D003E901E /* Hermes.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Hermes.entitlements; sourceTree = "<group>"; };
 		2778E09528D6023D003E901E /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		2778E09E28D6033F003E901E /* RecordingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingView.swift; sourceTree = "<group>"; };
+		2778E09E28D6033F003E901E /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
 		2778E0A228D607C0003E901E /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
 		2778E0A428D60877003E901E /* CameraError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraError.swift; sourceTree = "<group>"; };
 		2778E0A628D60DCE003E901E /* FrameManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameManager.swift; sourceTree = "<group>"; };
 		2778E0A828D6165D003E901E /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
 		2778E0AA28D663DF003E901E /* CGImageExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGImageExtension.swift; sourceTree = "<group>"; };
 		2778E0AC28D664EE003E901E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2778E0AD28D66D27003E901E /* RecordingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingManager.swift; sourceTree = "<group>"; };
+		2778E0AF28D674BA003E901E /* RecordingControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingControlsView.swift; sourceTree = "<group>"; };
+		2778E0B128D7A171003E901E /* ProjectManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectManager.swift; sourceTree = "<group>"; };
+		2778E0B328D9D291003E901E /* PlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,8 +103,10 @@
 		2778E09C28D60320003E901E /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				2778E09E28D6033F003E901E /* RecordingView.swift */,
+				2778E09E28D6033F003E901E /* CameraPreview.swift */,
 				2778E08F28D6023B003E901E /* ContentView.swift */,
+				2778E0AF28D674BA003E901E /* RecordingControlsView.swift */,
+				2778E0B328D9D291003E901E /* PlaybackView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -106,6 +116,8 @@
 			children = (
 				2778E0A228D607C0003E901E /* CameraManager.swift */,
 				2778E0A628D60DCE003E901E /* FrameManager.swift */,
+				2778E0AD28D66D27003E901E /* RecordingManager.swift */,
+				2778E0B128D7A171003E901E /* ProjectManager.swift */,
 				2778E0A828D6165D003E901E /* ContentViewModel.swift */,
 			);
 			path = Models;
@@ -182,15 +194,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				2778E08928D6023B003E901E /* HermesApp.swift in Sources */,
+				2778E0B028D674BA003E901E /* RecordingControlsView.swift in Sources */,
 				2778E0AB28D663DF003E901E /* CGImageExtension.swift in Sources */,
 				2778E0A328D607C0003E901E /* CameraManager.swift in Sources */,
-				2778E09F28D6033F003E901E /* RecordingView.swift in Sources */,
+				2778E09F28D6033F003E901E /* CameraPreview.swift in Sources */,
 				2778E08E28D6023B003E901E /* Hermes.xcdatamodeld in Sources */,
 				2778E0A928D6165D003E901E /* ContentViewModel.swift in Sources */,
+				2778E0B428D9D291003E901E /* PlaybackView.swift in Sources */,
+				2778E0AE28D66D27003E901E /* RecordingManager.swift in Sources */,
 				2778E09028D6023B003E901E /* ContentView.swift in Sources */,
 				2778E08B28D6023B003E901E /* Persistence.swift in Sources */,
 				2778E0A728D60DCE003E901E /* FrameManager.swift in Sources */,
 				2778E0A528D60877003E901E /* CameraError.swift in Sources */,
+				2778E0B228D7A171003E901E /* ProjectManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

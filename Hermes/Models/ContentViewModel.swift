@@ -12,8 +12,9 @@ class ContentViewModel: ObservableObject {
     
     private let context = CIContext()
     
-    private let frameManager = FrameManager.shared
     private let cameraManager = CameraManager.shared
+    private let frameManager = FrameManager.shared
+    let recordingManager = RecordingManager()
     
     init() {
         setupSubscriptions()
@@ -37,5 +38,7 @@ class ContentViewModel: ObservableObject {
                 return self.context.createCGImage(ciImage, from: ciImage.extent)
             }
             .assign(to: &$frame)
+        
+        recordingManager.configureCaptureSession(session: cameraManager.session)
     }
 }
