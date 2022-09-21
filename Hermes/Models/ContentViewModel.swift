@@ -5,6 +5,7 @@
 //  Created by David Cai on 9/17/22.
 //
 import CoreImage
+import SwiftUI
 
 class ContentViewModel: ObservableObject {
     @Published var error: Error?
@@ -14,7 +15,7 @@ class ContentViewModel: ObservableObject {
     
     private let cameraManager = CameraManager.shared
     private let frameManager = FrameManager.shared
-    let recordingManager = RecordingManager()
+    @Published var recordingManager = RecordingManager()
     
     init() {
         setupSubscriptions()
@@ -33,7 +34,7 @@ class ContentViewModel: ObservableObject {
                     return nil
                 }
                 
-                var ciImage = CIImage(cgImage: image)
+                let ciImage = CIImage(cgImage: image)
                 
                 return self.context.createCGImage(ciImage, from: ciImage.extent)
             }

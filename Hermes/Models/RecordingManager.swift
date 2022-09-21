@@ -6,15 +6,16 @@
 //
 
 import AVFoundation
-import UIKit
+import SwiftUI
 
-class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate {
+class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, ObservableObject {
     
     private var movieFileOutput: AVCaptureMovieFileOutput?
     private var backgroundRecordingID: UIBackgroundTaskIdentifier?
     private let sessionQueue = DispatchQueue(label: "com.caiismyname.SessionQ")
     var session: AVCaptureSession?
     var projectManager = ProjectManager()
+    @Published var isRecording = false
     
     func configureCaptureSession(session: AVCaptureSession) {
         self.session = session
@@ -45,6 +46,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate {
             return
         }
         
+        self.isRecording = true
         sessionQueue.async {
             if !movieFileOutput.isRecording {
                 let movieFileOutputConnection = movieFileOutput.connection(with: .video)
@@ -57,11 +59,11 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate {
                 
                 if let clip = self.projectManager.startClip() {
                     movieFileOutput.startRecording(to: clip.temporaryURL, recordingDelegate: self)
-                    print("start recording")
+                    print("Start recording")
                 }
             } else {
                 movieFileOutput.stopRecording()
-                print("stop recording")
+                print("Stop recording")
             }
         }
     }
@@ -71,31 +73,12 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate {
         // Enable the Record button to let the user stop recording.
         DispatchQueue.main.async {
             // TODO set proper control status here
-            print("recording started (delegate)")
         }
     }
     
     /// - Tag: DidFinishRecording
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        
-        print(outputFileURL)
         self.projectManager.endClip()
-        
-//        func cleanup() {
-//
-//
-//            // TODO Background recording clean
-//        }
-//
-//        var success = true // this seems roundabout
-//
-//        if error != nil {
-//            print("Movie file finishing error: \(String(describing: error))")
-//            success = false // idk they had a whole complex unwrapping thing here
-//        }
-//
-//        if success {
-//            print("video saved correctly (delegate): \(outputFileURL)")
-//        }
+        self.isRecording = false
     }
 }

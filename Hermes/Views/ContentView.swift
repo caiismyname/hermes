@@ -22,8 +22,8 @@ struct ContentView: View {
                             .frame(height:200)
                     }
                 RecordingControlsView(
-                    recordingCallback: {model.recordingManager.toggleRecording()},
-                    playbackCallback: {self.playbackMode = !self.playbackMode}
+                    playbackCallback: {self.playbackMode = !self.playbackMode},
+                    recordingManager: model.recordingManager
                 )
                     .position(x: geometry.size.width / 2, y: geometry.size.height - 100)
             }

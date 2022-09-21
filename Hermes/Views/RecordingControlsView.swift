@@ -8,17 +8,12 @@
 import SwiftUI
 
 struct RecordingControlsView: View {
-    var recordingCallback: () -> ()
     var playbackCallback: () -> ()
+    @ObservedObject var recordingManager: RecordingManager
 
     var body: some View {
         HStack {
-            Button(action: recordingCallback) {
-                Text("Record")
-            }
-            .frame(width: 100, height: 100)
-            .cornerRadius(50)
-            .background(Color.red)
+            RecordButton(recordingManager: recordingManager)
             
             Button(action: playbackCallback) {
                 Text("Play latest recording")
@@ -30,8 +25,32 @@ struct RecordingControlsView: View {
 }
 
 
-struct RecordingControlsView_Previews: PreviewProvider {
-    static var previews: some View {
-        RecordingControlsView(recordingCallback: {}, playbackCallback: {})
+//struct RecordingControlsView_Previews: PreviewProvider {
+//    static var previews: some View {
+//
+//        RecordingControlsView(recordingCallback: {}, playbackCallback: {}, isRecording: true)
+//        RecordingControlsView(recordingCallback: {}, playbackCallback: {}, isRecording: false)
+//    }
+//}
+
+
+struct RecordButton: View {
+    @ObservedObject var recordingManager: RecordingManager
+    
+    var body: some View {
+        if recordingManager.isRecording {
+            Button(action: recordingManager.toggleRecording) {
+                RoundedRectangle(cornerSize: CGSize.init(width: 10, height: 10))
+                    .fill(Color.black)
+            }
+            .frame(width: 75, height: 75)
+
+        } else {
+            Button(action: recordingManager.toggleRecording) {
+                Circle()
+                    .fill(Color.red)
+            }
+            .frame(width: 100, height: 100)
+        }
     }
 }

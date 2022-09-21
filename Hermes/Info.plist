@@ -2,8 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Hermes requires access to your phone&apos;s microphone to record audio.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>VLOG requires acccess to your phone&apos;s camera to record videos for your vlog.</string>
+	<string>Hermes requires acccess to your phone&apos;s camera to record videos for your vlog.</string>
 	<key>NSServices</key>
 	<array/>
 </dict>

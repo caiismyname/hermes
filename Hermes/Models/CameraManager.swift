@@ -77,6 +77,24 @@ class CameraManager: ObservableObject {
             session.commitConfiguration()
         }
         
+        
+        
+        
+        
+        
+        
+        
+        
+//        let backVideoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInTelephotoCamera, .builtInWideAngleCamera], mediaType: .video, position: .back)
+//        let backVideoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInTripleCamera, .builtInDualCamera, .builtInWideAngleCamera], mediaType: .video, position: .back)
+//        print(backVideoDeviceDiscoverySession.devices[0].constituentDevices[0].)
+//        
+        
+        
+        
+
+        
+        
         // Set up device
         let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
         guard let camera = device else {
@@ -113,16 +131,38 @@ class CameraManager: ObservableObject {
             return
         }
         
+        configureAudioSession()
+        
         status = .configured
+    }
+    
+    private func configureAudioSession() {
+        do {
+            let audioDevice = AVCaptureDevice.default(for: .audio)
+            let audioDeviceInput = try AVCaptureDeviceInput(device: audioDevice!)
+            
+            if session.canAddInput(audioDeviceInput) {
+                session.addInput(audioDeviceInput)
+            } else {
+                set(error: .cannotAddInput)
+                status = .failed
+                return
+            }
+        } catch {
+            status = .failed
+            print("Error configuring audio input")
+            return
+        }
+    }
+    
+    func changeCamera() {
+        
     }
     
     func set(_ delegate: AVCaptureVideoDataOutputSampleBufferDelegate, queue: DispatchQueue) {
         sessionQueue.async {
             self.videoOutput.setSampleBufferDelegate(delegate, queue: queue)
         }
-    }
-    
-    func startVideo() {
     }
     
 }
