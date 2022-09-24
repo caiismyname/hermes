@@ -10,17 +10,15 @@ import SwiftUI
 struct RecordingControlsView: View {
     var playbackCallback: () -> ()
     @ObservedObject var recordingManager: RecordingManager
+    @ObservedObject var project: Project
 
     var body: some View {
-        HStack {
-            RecordButton(recordingManager: recordingManager)
-            
-            Button(action: playbackCallback) {
-                Text("Play latest recording")
+        VStack {
+            HStack {
+                RecordButton(recordingManager: recordingManager)
             }
-            .frame(width: 50, height: 50)
-            .background(Color.green)
-        }
+            Thumbnails(project: project)
+        }.frame(height: 200)
     }
 }
 
@@ -54,3 +52,25 @@ struct RecordButton: View {
         }
     }
 }
+
+//struct SwitchProjectsButton: View {
+//    @State all
+//
+//    var body: some View {
+//        if recordingManager.isRecording {
+//            Button(action: recordingManager.toggleRecording) {
+//                RoundedRectangle(cornerSize: CGSize.init(width: 10, height: 10))
+//                    .fill(Color.black)
+//            }
+//            .frame(width: 75, height: 75)
+//
+//        } else {
+//            Button(action: recordingManager.toggleRecording) {
+//                Circle()
+//                    .fill(Color.red)
+//            }
+//            .frame(width: 100, height: 100)
+//        }
+//    }
+//}
+

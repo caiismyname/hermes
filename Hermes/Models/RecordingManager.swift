@@ -14,8 +14,12 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     private var backgroundRecordingID: UIBackgroundTaskIdentifier?
     private let sessionQueue = DispatchQueue(label: "com.caiismyname.SessionQ")
     var session: AVCaptureSession?
-    var projectManager = ProjectManager()
+    var project: Project
     @Published var isRecording = false
+    
+    init(project: Project) {
+        self.project = project
+    }
     
     func configureCaptureSession(session: AVCaptureSession) {
         self.session = session
@@ -57,7 +61,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
                         [AVVideoCodecKey: AVVideoCodecType.hevc], for: movieFileOutputConnection!)
                 }
                 
-                if let clip = self.projectManager.startClip() {
+                if let clip = self.project.startClip() {
                     movieFileOutput.startRecording(to: clip.temporaryURL, recordingDelegate: self)
                     print("Start recording")
                 }
@@ -78,7 +82,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     
     /// - Tag: DidFinishRecording
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        self.projectManager.endClip()
+        self.project.endClip()
         self.isRecording = false
     }
 }
