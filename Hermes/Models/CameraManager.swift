@@ -22,9 +22,7 @@ class CameraManager: ObservableObject {
         case failed
     }
     
-    static let shared = CameraManager()
-    
-    private init() {
+    init() {
         configure()
     }
     

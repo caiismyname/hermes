@@ -13,8 +13,7 @@ class ContentViewModel: ObservableObject {
     
     private let context = CIContext()
     
-    private let cameraManager = CameraManager.shared
-    private let frameManager = FrameManager.shared
+    let cameraManager = CameraManager()
     @Published var recordingManager: RecordingManager
     @Published var project: Project
     @Published var allProjects: [Project]
@@ -36,19 +35,6 @@ class ContentViewModel: ObservableObject {
             .receive(on: RunLoop.main)
             .map { $0 }
             .assign(to: &$error)
-        
-        frameManager.$current
-            .receive(on: RunLoop.main)
-            .compactMap { buffer in
-                guard let image = CGImage.create(from: buffer) else {
-                    return nil
-                }
-                
-                let ciImage = CIImage(cgImage: image)
-                
-                return self.context.createCGImage(ciImage, from: ciImage.extent)
-            }
-            .assign(to: &$frame)
         
         recordingManager.configureCaptureSession(session: cameraManager.session)
     }
@@ -101,27 +87,27 @@ class ContentViewModel: ObservableObject {
         print("Saved current project ID \(project.id.uuidString)")
     }
     
-    @MainActor
     func loadProjects(completion: @escaping (Result<[String: [Project]], Error>) -> Void) {
-        do {
-            guard let file = try? FileHandle(forReadingFrom: self.contentViewModelURL()) else {
-                // If loading fails
-                completion(.success(["allProjects": [self.project]]))
-                return
+        DispatchQueue.main.async {
+            do {
+                guard let file = try? FileHandle(forReadingFrom: self.contentViewModelURL()) else {
+                    // If loading fails
+                    completion(.success(["allProjects": [self.project]]))
+                    return
+                }
+                
+                // Successfully loaded projects
+                let results = try JSONDecoder().decode([String: [Project]].self, from: file.availableData)
+                completion(.success(results))
+            } catch {
+                completion(.failure(error))
             }
-            
-            // Successfully loaded projects
-            let results = try JSONDecoder().decode([String: [Project]].self, from: file.availableData)
-            completion(.success(results))
-        } catch {
-            completion(.failure(error))
         }
 
     }
     
-    @MainActor
     func loadCurrentProject() {
-//        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.main.async {
             let currentProjectIdString = UserDefaults.standard.string(forKey: "currentProjectId") ?? ""
             print(currentProjectIdString)
             if currentProjectIdString != "" {
@@ -135,6 +121,6 @@ class ContentViewModel: ObservableObject {
             }
             
             self.recordingManager.project = self.project
-//        }
+        }
     }
 }

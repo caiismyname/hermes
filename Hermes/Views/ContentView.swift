@@ -15,7 +15,7 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                CameraPreview(image: model.frame)
+                CameraPreviewWrapper(session: model.cameraManager.session)
                     .ignoresSafeArea(.all)
                     .popover(isPresented: $playbackMode) {
                         PlaybackView(videoURL: model.recordingManager.project.allClips.last?.finalURL)

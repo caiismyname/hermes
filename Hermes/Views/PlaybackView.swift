@@ -22,21 +22,3 @@ struct PlaybackView_Preview: PreviewProvider {
         PlaybackView()
     }
 }
-
-struct Thumbnails: View {
-    @ObservedObject var project: Project
-    
-    var body: some View {
-        ZStack {
-            ScrollView {
-                HStack {
-                    ForEach(project.allClips) { c in
-                        Image(uiImage: UIImage(cgImage: c.generateThumbnail()!))
-                            .frame(width: 40, height: 40)
-//                        Circle().background(Color.green)
-                    }
-                }
-            }
-        }
-    }
-}

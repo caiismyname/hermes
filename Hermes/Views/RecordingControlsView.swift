@@ -14,10 +14,8 @@ struct RecordingControlsView: View {
 
     var body: some View {
         VStack {
-            HStack {
-                RecordButton(recordingManager: recordingManager)
-            }
-            Thumbnails(project: project)
+            RecordButton(recordingManager: recordingManager)
+            ThumbnailReel(project: project)
         }.frame(height: 200)
     }
 }
@@ -52,6 +50,41 @@ struct RecordButton: View {
         }
     }
 }
+
+
+struct ThumbnailReel: View {
+    @ObservedObject var project: Project
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+//            ScrollViewReader { scrollReader in // This will eventually allow for programmatic scrolling
+                HStack {
+                    ForEach(project.allClips) { c in
+                        Thumbnail(clip: c)
+                    }
+                }
+//            }
+        }
+    }
+}
+
+struct Thumbnail: View {
+    @ObservedObject var clip: Clip
+    
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .background(Color.red)
+            if clip.thumbnail != nil {
+                Image(uiImage: UIImage(data: clip.thumbnail!)!)
+                    .resizable(resizingMode: .stretch)
+                    .frame(width: 100, height: 100)
+            }
+        }
+        .frame(width: 100, height: 100)
+    }
+}
+
 
 //struct SwitchProjectsButton: View {
 //    @State all

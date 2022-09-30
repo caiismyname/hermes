@@ -7,9 +7,10 @@
 
 import Foundation
 import AVFoundation
+import UIKit
 
 class Project: ObservableObject, Codable {
-
+    
     var id: UUID
     @Published var allClips: [Clip] = []
     private var currentlyRecording = false
@@ -25,7 +26,7 @@ class Project: ObservableObject, Codable {
         }
         
         let clipUUID = UUID()
-
+        
         do {
             let temporaryURL = URL(fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent((clipUUID.uuidString as NSString).appendingPathExtension("mov")!))
             
@@ -48,9 +49,10 @@ class Project: ObservableObject, Codable {
     func endClip() {
         do {
             try FileManager.default.moveItem(at: currentClip!.temporaryURL, to: currentClip!.finalURL)
-//                try FileManager.default.removeItem(at: currentClip.temporaryURL)
+//            try FileManager.default.removeItem(at: currentClip.temporaryURL)
             
             self.currentClip!.status = .final
+            self.currentClip!.generateThumbnail()
             self.allClips.append(self.currentClip!)
             self.currentlyRecording = false
             
@@ -78,16 +80,18 @@ class Project: ObservableObject, Codable {
         id = try values.decode(UUID.self, forKey: .id)
         allClips = try values.decode([Clip].self, forKey: .allClips)
     }
+}
 
 
 // A Clip is one recording within a project
-class Clip: Identifiable, Codable {
+class Clip: Identifiable, Codable, ObservableObject {
     let id: UUID
     var timestamp: Date
     let projectId: UUID
     var finalURL: URL
     var temporaryURL: URL
-    var status: ClipStatus
+    @Published var status: ClipStatus
+    @Published var thumbnail: Data?
     
     enum ClipStatus: Codable {
         case temporary
@@ -103,16 +107,20 @@ class Clip: Identifiable, Codable {
         self.status = .temporary
     }
     
-    func generateThumbnail() -> CGImage? {
-        do {
-            let asset = AVURLAsset(url: self.finalURL)
-            let imgGenerator = AVAssetImageGenerator(asset: asset)
-            let cgImage = try imgGenerator.copyCGImage(at: CMTimeMake(value: 0, timescale: 1), actualTime: nil)
-            
-            return cgImage
-        } catch {
-            print("Error generating thumbnail for \(self.id)")
-            return (nil)
+    func generateThumbnail() {
+        Task {
+            do {
+                let asset = AVURLAsset(url: self.finalURL)
+                let imgGenerator = AVAssetImageGenerator(asset: asset)
+                imgGenerator.appliesPreferredTrackTransform = true
+                //            let cgImage = try imgGenerator.copyCGImage(at: CMTimeMake(value: 0, timescale: 1), actualTime: nil)
+                let cgImage = try await imgGenerator.image(at: CMTime(value: 0, timescale: 1)).image
+                let png = UIImage(cgImage: cgImage).pngData()
+                
+                self.thumbnail = png
+            } catch {
+                print("Error generating thumbnail for \(self.id)")
+            }
         }
     }
     
@@ -124,6 +132,7 @@ class Clip: Identifiable, Codable {
         case temporaryURL
         case finalURL
         case status
+        case thumbnail
     }
     
     func encode(to encoder: Encoder) throws {
@@ -134,6 +143,7 @@ class Clip: Identifiable, Codable {
         try container.encode(temporaryURL, forKey: .temporaryURL)
         try container.encode(finalURL, forKey: .finalURL)
         try container.encode(status, forKey: .status)
+        try container.encode(thumbnail, forKey: .thumbnail)
     }
     
     required init(from decoder: Decoder) throws {
@@ -144,5 +154,6 @@ class Clip: Identifiable, Codable {
         temporaryURL = try values.decode(URL.self, forKey: .temporaryURL)
         finalURL = try values.decode(URL.self, forKey: .finalURL)
         status = try values.decode(ClipStatus.self, forKey: .status)
+        thumbnail = try values.decode(Data.self, forKey: .thumbnail)
     }
 }
