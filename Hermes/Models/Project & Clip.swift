@@ -113,11 +113,16 @@ class Clip: Identifiable, Codable, ObservableObject {
                 let asset = AVURLAsset(url: self.finalURL)
                 let imgGenerator = AVAssetImageGenerator(asset: asset)
                 imgGenerator.appliesPreferredTrackTransform = true
-                //            let cgImage = try imgGenerator.copyCGImage(at: CMTimeMake(value: 0, timescale: 1), actualTime: nil)
-                let cgImage = try await imgGenerator.image(at: CMTime(value: 0, timescale: 1)).image
-                let png = UIImage(cgImage: cgImage).pngData()
-                
-                self.thumbnail = png
+                if #available(iOS 16, *) {
+                    let cgImage = try await imgGenerator.image(at: CMTime(value: 0, timescale: 1)).image
+                    let png = UIImage(cgImage: cgImage).pngData()
+                    self.thumbnail = png
+                } else {
+                    // Fallback on earlier versions
+                    let cgImage = try imgGenerator.copyCGImage(at: CMTimeMake(value: 0, timescale: 1), actualTime: nil)
+                    let png = UIImage(cgImage: cgImage).pngData()
+                    self.thumbnail = png
+                }
             } catch {
                 print("Error generating thumbnail for \(self.id)")
             }
