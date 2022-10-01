@@ -8,10 +8,15 @@
 import Foundation
 import AVFoundation
 import UIKit
+import FirebaseCore
+import FirebaseDatabase
+import FirebaseStorage
 
 class Project: ObservableObject, Codable {
     
     var id: UUID
+    var name = "Temporary project name"
+    var me = Me(id: UUID(), name: "David")
     @Published var allClips: [Clip] = []
     private var currentlyRecording = false
     private var currentClip: Clip? = nil
@@ -63,6 +68,66 @@ class Project: ObservableObject, Codable {
         }
     }
     
+    // MARK: Firebase
+    func createRTDBEntry() {
+        let ref = Database.database().reference()
+        print(ref.url)
+        
+        // Create DB
+        ref.child(self.id.uuidString).setValue(
+            [
+                "name": self.name,
+                "clips": [], // should be empty right now
+                "members": [me.id.uuidString: me.name]
+            ]
+        )
+    }
+    
+    func saveToRTDB() {
+        let dbRef = Database.database().reference()
+        
+        // Save all local clips metadata
+        let localClips = allClips.filter({ $0.location == .local })
+        localClips.forEach({ c in
+            dbRef.child(self.id.uuidString).child("clips").childByAutoId().setValue(
+                [
+                    "id": c.id.uuidString,
+                    "timestamp": c.timestamp.ISO8601Format(),
+                    "creator": me.id.uuidString
+                ]
+            )
+        })
+        
+        
+        let storageRef = Storage.storage().reference().child(self.id.uuidString)
+        print(storageRef.name)
+        
+        localClips.forEach({c in
+            // Upload thumbnails
+            if c.thumbnail != nil {
+                let thumbnailRef = storageRef.child("thumbnails").child(c.id.uuidString)
+                let uploadTask = thumbnailRef.putData(c.thumbnail!) { (metadata, error) in
+                    guard let metadata = metadata else {
+                        return
+                    }
+                    
+                    print("Uploading thumbnail for \(c.id.uuidString). [\(metadata.size)]")
+                }
+            }
+            
+            // Upload videos
+            let videoRef = storageRef.child("videos").child(c.id.uuidString)
+            let uploadTask = videoRef.putFile(from: c.finalURL) { (metadata, error) in
+                guard let metadata = metadata else {
+                    print(error?.localizedDescription)
+                    return
+                }
+                
+                print("Uploading video for \(c.id.uuidString). [\(metadata.size)]")
+            }
+        })
+    }
+    
     // MARK: — Codable
     private enum CoderKeys: String, CodingKey {
         case id
@@ -92,10 +157,17 @@ class Clip: Identifiable, Codable, ObservableObject {
     var temporaryURL: URL
     @Published var status: ClipStatus
     @Published var thumbnail: Data?
+    var location: ClipLocation
     
     enum ClipStatus: Codable {
         case temporary
         case final
+    }
+    
+    enum ClipLocation: Codable {
+        case local // Only exists on the device
+        case uploaded // Uploaded to DB (implies that it still remains on device)
+        case downloaded // Downloaded from the DB (no upload responsibility)
     }
     
     init(id: UUID, timestamp: Date, projectId: UUID, temporaryURL: URL, finalURL: URL) {
@@ -105,6 +177,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         self.temporaryURL = temporaryURL
         self.finalURL = finalURL
         self.status = .temporary
+        self.location = .local
     }
     
     func generateThumbnail() {
@@ -138,6 +211,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         case finalURL
         case status
         case thumbnail
+        case location
     }
     
     func encode(to encoder: Encoder) throws {
@@ -149,6 +223,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         try container.encode(finalURL, forKey: .finalURL)
         try container.encode(status, forKey: .status)
         try container.encode(thumbnail, forKey: .thumbnail)
+        try container.encode(location, forKey: .location)
     }
     
     required init(from decoder: Decoder) throws {
@@ -160,5 +235,11 @@ class Clip: Identifiable, Codable, ObservableObject {
         finalURL = try values.decode(URL.self, forKey: .finalURL)
         status = try values.decode(ClipStatus.self, forKey: .status)
         thumbnail = try values.decode(Data.self, forKey: .thumbnail)
+        location = try values.decode(ClipLocation.self, forKey: .location)
     }
+}
+
+struct Me {
+    var id: UUID
+    var name: String
 }

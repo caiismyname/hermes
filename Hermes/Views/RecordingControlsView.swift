@@ -14,6 +14,10 @@ struct RecordingControlsView: View {
 
     var body: some View {
         VStack {
+            Button("Sync") {
+                project.createRTDBEntry()
+                project.saveToRTDB()
+            }
             RecordButton(recordingManager: recordingManager)
             ThumbnailReel(project: project)
         }.frame(height: 200)

@@ -3,4 +3,166 @@
    uuid = "BC48E250-40F0-4DD2-841E-45E87C3CA845"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "D8969ACC-8698-4ECD-B2A4-25E1002B0C35"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Hermes/Models/Project &amp; Clip.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "73"
+            endingLineNumber = "73"
+            landmarkName = "createRTDBEntry()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "3429AD9B-2A5D-473F-BD66-A5F36DD425BB"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Hermes/Models/Project &amp; Clip.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "77"
+            endingLineNumber = "77"
+            landmarkName = "createRTDBEntry()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "075C1916-4A7D-4352-9DAC-51F169848D55"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Hermes/Models/Project &amp; Clip.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "87"
+            endingLineNumber = "87"
+            landmarkName = "saveToRTDB()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "4291A94D-BD2C-4A30-8AE7-C472CA20E835"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Hermes/Models/Project &amp; Clip.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "90"
+            endingLineNumber = "90"
+            landmarkName = "saveToRTDB()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "4291A94D-BD2C-4A30-8AE7-C472CA20E835 - 8beb1626f19a7325"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Hermes.Project.saveToRTDB() -&gt; ()"
+                  moduleName = "Hermes"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/davidcai/Documents/coding/Hermes/Hermes/Models/Project%20&amp;%20Clip.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "90"
+                  endingLineNumber = "90"
+                  offsetFromSymbolStart = "156">
+               </Location>
+               <Location
+                  uuid = "4291A94D-BD2C-4A30-8AE7-C472CA20E835 - 372033e89896a09e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (Hermes.Clip) -&gt; Swift.Bool in Hermes.Project.saveToRTDB() -&gt; ()"
+                  moduleName = "Hermes"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/davidcai/Documents/coding/Hermes/Hermes/Models/Project%20&amp;%20Clip.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "90"
+                  endingLineNumber = "90"
+                  offsetFromSymbolStart = "36">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "4F1369FC-6D45-4581-95B4-A2D7DA0CDF4D"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Hermes/Models/Project &amp; Clip.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "91"
+            endingLineNumber = "91"
+            landmarkName = "saveToRTDB()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "4F1369FC-6D45-4581-95B4-A2D7DA0CDF4D - 8beb1626f19a7344"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Hermes.Project.saveToRTDB() -&gt; ()"
+                  moduleName = "Hermes"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/davidcai/Documents/coding/Hermes/Hermes/Models/Project%20&amp;%20Clip.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "91"
+                  endingLineNumber = "91"
+                  offsetFromSymbolStart = "260">
+               </Location>
+               <Location
+                  uuid = "4F1369FC-6D45-4581-95B4-A2D7DA0CDF4D - 7519c0e4519c03ff"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #2 (Hermes.Clip) -&gt; () in Hermes.Project.saveToRTDB() -&gt; ()"
+                  moduleName = "Hermes"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/davidcai/Documents/coding/Hermes/Hermes/Models/Project%20&amp;%20Clip.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "92"
+                  endingLineNumber = "92"
+                  offsetFromSymbolStart = "460">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "2E9BEBEE-E20B-4FD8-842A-8EF40142F611"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Hermes/HermesApp.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "19"
+            endingLineNumber = "19"
+            landmarkName = "init()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>
