@@ -40,7 +40,12 @@ class ContentViewModel: ObservableObject {
     }
     
     func switchProjects(newProject: Project) {
+        // Switch currently active project
         self.project = newProject
+        self.recordingManager.project = self.project
+        
+        // Save before we quit
+        // Is this necessary since we save on background anyways?
         saveCurrentProject()
     }
     

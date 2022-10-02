@@ -10,17 +10,27 @@ import SwiftUI
 struct RecordingControlsView: View {
     var playbackCallback: () -> ()
     @ObservedObject var recordingManager: RecordingManager
-    @ObservedObject var project: Project
+    @ObservedObject var model: ContentViewModel
+    @State var projectSwitcherModalShowing = false
 
     var body: some View {
         VStack {
-            Button("Sync") {
-                project.createRTDBEntry()
-                project.saveToRTDB()
+            HStack {
+                Button("Sync") {
+                    model.project.createRTDBEntry()
+                    model.project.saveToRTDB()
+                }
+                Button("Switch") {
+                    projectSwitcherModalShowing = true
+                }
             }
             RecordButton(recordingManager: recordingManager)
-            ThumbnailReel(project: project)
+            ThumbnailReel(project: model.project)
         }.frame(height: 200)
+            .popover(isPresented: $projectSwitcherModalShowing) {
+                SwitchProjectsModal(model: model)
+                    .frame(height:200)
+            }
     }
 }
 
@@ -90,24 +100,26 @@ struct Thumbnail: View {
 }
 
 
-//struct SwitchProjectsButton: View {
-//    @State all
-//
-//    var body: some View {
-//        if recordingManager.isRecording {
-//            Button(action: recordingManager.toggleRecording) {
-//                RoundedRectangle(cornerSize: CGSize.init(width: 10, height: 10))
-//                    .fill(Color.black)
-//            }
-//            .frame(width: 75, height: 75)
-//
-//        } else {
-//            Button(action: recordingManager.toggleRecording) {
-//                Circle()
-//                    .fill(Color.red)
-//            }
-//            .frame(width: 100, height: 100)
-//        }
-//    }
-//}
-
+struct SwitchProjectsModal: View {
+    @ObservedObject var model: ContentViewModel
+    
+    var body: some View {
+        VStack {
+            Button(action: {
+                model.createProject()
+            }) {
+                Text("Create new")
+            }
+            
+            List(model.allProjects.indices, id: \.self) { index in
+                Group {
+                    Text(model.allProjects[index].name)
+                }
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
+                .onTapGesture {
+                    model.switchProjects(newProject: model.allProjects[index])
+                }
+            }
+        }
+    }
+}

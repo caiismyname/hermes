@@ -85,10 +85,12 @@ class Project: ObservableObject, Codable {
     
     func saveToRTDB() {
         let dbRef = Database.database().reference()
+        let storageRef = Storage.storage().reference().child(self.id.uuidString)
         
-        // Save all local clips metadata
         let localClips = allClips.filter({ $0.location == .local })
-        localClips.forEach({ c in
+
+        localClips.forEach({c in
+            // Upload clip metadata
             dbRef.child(self.id.uuidString).child("clips").childByAutoId().setValue(
                 [
                     "id": c.id.uuidString,
@@ -96,13 +98,7 @@ class Project: ObservableObject, Codable {
                     "creator": me.id.uuidString
                 ]
             )
-        })
-        
-        
-        let storageRef = Storage.storage().reference().child(self.id.uuidString)
-        print(storageRef.name)
-        
-        localClips.forEach({c in
+            
             // Upload thumbnails
             if c.thumbnail != nil {
                 let thumbnailRef = storageRef.child("thumbnails").child(c.id.uuidString)

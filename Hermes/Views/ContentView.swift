@@ -24,7 +24,7 @@ struct ContentView: View {
                 RecordingControlsView(
                     playbackCallback: {self.playbackMode = !self.playbackMode},
                     recordingManager: model.recordingManager,
-                    project: model.project
+                    model: model
                 )
                     .position(x: geometry.size.width / 2, y: geometry.size.height - 100)
             }
