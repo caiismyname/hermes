@@ -15,45 +15,44 @@ import FirebaseStorage
 class Project: ObservableObject, Codable {
     
     var id: UUID
-    var name = "Temporary project name"
+    var name: String
     var me = Me(id: UUID(), name: "David")
-    @Published var allClips: [Clip] = []
+    @Published var allClips: [Clip]
     private var currentlyRecording = false
     private var currentClip: Clip? = nil
     
-    init(uuid: UUID = UUID()) {
+    init(uuid: UUID = UUID(), name: String = "Project \(Int.random(in: 0..<100))", allClips: [Clip] = []) {
         self.id = uuid
+        self.name = name
+        self.allClips = allClips
     }
-    
+
     func startClip() -> Clip? {
         guard !currentlyRecording else {
             return nil
         }
         
-        let clipUUID = UUID()
+        self.currentClip = Clip(projectId: id)
+        self.currentlyRecording = true
         
-        do {
-            let temporaryURL = URL(fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent((clipUUID.uuidString as NSString).appendingPathExtension("mov")!))
-            
-            let localStorageURL = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            let localStorageFileName = clipUUID.uuidString
-            let localStorageFilePath = localStorageURL.appendingPathComponent(localStorageFileName).appendingPathExtension("mov")
-            
-            self.currentClip = Clip(id: clipUUID, timestamp: Date(), projectId: id, temporaryURL: temporaryURL, finalURL: localStorageFilePath)
-            self.currentlyRecording = true
-            
-            print("Allocated a new clip \(self.currentClip!.id.uuidString) with temp URL \(self.currentClip!.temporaryURL)")
-            
-            return self.currentClip
-        } catch {
-            print("Could not create temporary file for movie output")
-            return nil
-        }
+        print("Allocated a new clip \(self.currentClip!.id.uuidString) with temp URL \(self.currentClip!.temporaryURL)")
+        
+        return self.currentClip
     }
     
     func endClip() {
         do {
-            try FileManager.default.moveItem(at: currentClip!.temporaryURL, to: currentClip!.finalURL)
+            guard currentClip != nil else {
+                print("Error saving clip")
+                return
+            }
+
+            guard currentClip!.temporaryURL != nil && currentClip!.finalURL != nil else {
+                print("Error saving clip — missing temporary or final URL")
+                return
+            }
+            
+            try FileManager.default.moveItem(at: currentClip!.temporaryURL!, to: currentClip!.finalURL!)
 //            try FileManager.default.removeItem(at: currentClip.temporaryURL)
             
             self.currentClip!.status = .final
@@ -61,7 +60,7 @@ class Project: ObservableObject, Codable {
             self.allClips.append(self.currentClip!)
             self.currentlyRecording = false
             
-            print("Saved clip \(currentClip!.id.uuidString) to \(currentClip!.finalURL)")
+            print("Saved clip \(currentClip!.id.uuidString) to \(currentClip!.finalURL!)")
             self.currentClip = nil
         } catch {
             print ("Error moving clip from temp to user home directory")
@@ -90,6 +89,11 @@ class Project: ObservableObject, Codable {
         let localClips = allClips.filter({ $0.location == .local })
 
         localClips.forEach({c in
+            guard c.finalURL != nil else {
+                print("Error uploading clip \(c.id.uuidString) — missing finalURL")
+                return
+            }
+            
             // Upload clip metadata
             dbRef.child(self.id.uuidString).child("clips").childByAutoId().setValue(
                 [
@@ -113,7 +117,7 @@ class Project: ObservableObject, Codable {
             
             // Upload videos
             let videoRef = storageRef.child("videos").child(c.id.uuidString)
-            let uploadTask = videoRef.putFile(from: c.finalURL) { (metadata, error) in
+            let uploadTask = videoRef.putFile(from: c.finalURL!) { (metadata, error) in
                 guard let metadata = metadata else {
                     print(error?.localizedDescription)
                     return
@@ -128,18 +132,21 @@ class Project: ObservableObject, Codable {
     private enum CoderKeys: String, CodingKey {
         case id
         case allClips
+        case name
     }
     
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CoderKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(allClips, forKey: .allClips)
+        try container.encode(name, forKey: .name)
     }
     
     required init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CoderKeys.self)
         id = try values.decode(UUID.self, forKey: .id)
         allClips = try values.decode([Clip].self, forKey: .allClips)
+        name = try values.decode(String.self, forKey: .name)
     }
 }
 
@@ -149,8 +156,8 @@ class Clip: Identifiable, Codable, ObservableObject {
     let id: UUID
     var timestamp: Date
     let projectId: UUID
-    var finalURL: URL
-    var temporaryURL: URL
+    var finalURL: URL?
+    var temporaryURL: URL?
     @Published var status: ClipStatus
     @Published var thumbnail: Data?
     var location: ClipLocation
@@ -163,23 +170,29 @@ class Clip: Identifiable, Codable, ObservableObject {
     enum ClipLocation: Codable {
         case local // Only exists on the device
         case uploaded // Uploaded to DB (implies that it still remains on device)
+        case remoteUndownloaded // Local has metadata of the clip, but no video file yet
         case downloaded // Downloaded from the DB (no upload responsibility)
     }
     
-    init(id: UUID, timestamp: Date, projectId: UUID, temporaryURL: URL, finalURL: URL) {
+    init(id: UUID = UUID(), timestamp: Date = Date(), projectId: UUID, location: ClipLocation = .local) {
         self.id = id
         self.timestamp = timestamp
         self.projectId = projectId
-        self.temporaryURL = temporaryURL
-        self.finalURL = finalURL
         self.status = .temporary
-        self.location = .local
+        self.location = location
+        
+        self.temporaryURL = generateTempURL(uuid: id)
+        self.finalURL = generateFinalURL(uuid: id)
     }
     
     func generateThumbnail() {
         Task {
             do {
-                let asset = AVURLAsset(url: self.finalURL)
+                guard self.finalURL != nil else {
+                    print("Error generating thumbnail for \(self.id) — missing finalURL")
+                    return
+                }
+                let asset = AVURLAsset(url: self.finalURL!)
                 let imgGenerator = AVAssetImageGenerator(asset: asset)
                 imgGenerator.appliesPreferredTrackTransform = true
                 if #available(iOS 16, *) {
@@ -195,6 +208,26 @@ class Clip: Identifiable, Codable, ObservableObject {
             } catch {
                 print("Error generating thumbnail for \(self.id)")
             }
+        }
+    }
+    
+    func generateTempURL(uuid: UUID) -> URL? {
+        return URL(
+            fileURLWithPath:
+                (NSTemporaryDirectory() as NSString).appendingPathComponent(
+                    (uuid.uuidString as NSString).appendingPathExtension("mov")!
+                )
+        )
+    }
+    
+    func generateFinalURL(uuid: UUID) -> URL? {
+        do {
+            let localStorageURL = try FileManager.default.url(
+                for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            return localStorageURL.appendingPathComponent(uuid.uuidString).appendingPathExtension("mov")
+        } catch {
+            print("Could not generate finalURL")
+            return nil
         }
     }
     

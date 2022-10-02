@@ -105,10 +105,17 @@ struct SwitchProjectsModal: View {
     
     var body: some View {
         VStack {
-            Button(action: {
-                model.createProject()
-            }) {
-                Text("Create new")
+            HStack {
+                Button(action: {
+                    model.createProject()
+                }) {
+                    Text("Create new")
+                }
+                Button(action: {
+                    model.findRemoteProject(id: "0EA96313-CBF6-4C03-8BBD-F61B49E33CE7")
+                }) {
+                    Text("Find existing")
+                }
             }
             
             List(model.allProjects.indices, id: \.self) { index in

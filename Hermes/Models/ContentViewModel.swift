@@ -6,6 +6,9 @@
 //
 import CoreImage
 import SwiftUI
+import FirebaseCore
+import FirebaseDatabase
+import FirebaseStorage
 
 class ContentViewModel: ObservableObject {
     @Published var error: Error?
@@ -108,7 +111,6 @@ class ContentViewModel: ObservableObject {
                 completion(.failure(error))
             }
         }
-
     }
     
     func loadCurrentProject() {
@@ -128,4 +130,68 @@ class ContentViewModel: ObservableObject {
             self.recordingManager.project = self.project
         }
     }
+    
+    func findRemoteProject(id: String) {
+        let dbRef = Database.database().reference()
+        
+        dbRef.child(id).getData(completion: {error, snapshot in
+            guard error == nil && snapshot != nil else {
+                print(error!.localizedDescription)
+                return
+            }
+            
+            print(snapshot!.value)
+            
+            let info = snapshot!.value as! [String: Any]
+            
+            // Inflate a project
+            let projectName = info["name"] as! String
+            let projectId = UUID(uuidString: id)!
+            let formatter = ISO8601DateFormatter()
+            let projectClips = info["clips"] as! [String: Any]
+            var projectAllClips: [Clip] = []
+                
+            for(_, d) in projectClips {
+                let data = d as! [String: String]
+                let clipIdString = data["id"]!
+                let clipTimestampString = data["timestamp"]!
+                projectAllClips.append(
+                    Clip(
+                        id: UUID.init(uuidString: clipIdString)!,
+                        timestamp: formatter.date(from: clipTimestampString)!,
+                        projectId: projectId,
+                        location: .remoteUndownloaded
+                    )
+                )
+            }
+            
+            print(projectAllClips)
+            
+            
+            // Download videos
+            let storageRef = Storage.storage().reference().child(projectId.uuidString).child("videos")
+            for (clip) in projectAllClips {
+                print("Downloading video for \(clip.id.uuidString) from \(storageRef.child(clip.id.uuidString))")
+                storageRef.child(clip.id.uuidString).write(toFile: clip.finalURL!) { url, error in
+                    if error != nil {
+                        print("Error downloading video for \(clip.id.uuidString)")
+                        return
+                    }
+                    
+                    clip.generateThumbnail()
+                }
+            }
+
+            
+            // Save project
+            let remoteProject = Project(
+                uuid: projectId,
+                name: projectName,
+                allClips: projectAllClips
+            )
+            
+            self.allProjects.append(remoteProject)
+        })
+    }
+    
 }

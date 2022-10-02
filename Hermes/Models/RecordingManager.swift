@@ -62,7 +62,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
                 }
                 
                 if let clip = self.project.startClip() {
-                    movieFileOutput.startRecording(to: clip.temporaryURL, recordingDelegate: self)
+                    movieFileOutput.startRecording(to: clip.temporaryURL!, recordingDelegate: self)
                     print("Start recording")
                 }
             } else {
