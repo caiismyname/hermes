@@ -50,6 +50,16 @@ struct HermesApp: App {
                         }
                     }
                 }
+                .onOpenURL() {url in
+                    print(url)
+                    if let projectToOpenId = DeeplinkHandler.getProjectIdFromDeeplink(url: url) {
+                        contentViewModel.downloadRemoteProject(id: projectToOpenId.uuidString, switchToProject: true)
+                        print(projectToOpenId.uuidString)
+                    } else {
+                        print("Invalid UUID from deeplink")
+                    }
+                    
+                }
 //                .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }

@@ -26,6 +26,7 @@
 		2778E0B228D7A171003E901E /* Project & Clip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0B128D7A171003E901E /* Project & Clip.swift */; };
 		2778E0B428D9D291003E901E /* PlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E0B328D9D291003E901E /* PlaybackView.swift */; };
 		27E0CA0528E7462B0010B226 /* FirebaseDatabaseSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 27E0CA0428E7462B0010B226 /* FirebaseDatabaseSwift */; };
+		27ECF55228EBA50F00E7DF48 /* DeeplinkHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,6 +49,7 @@
 		2778E0AF28D674BA003E901E /* RecordingControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingControlsView.swift; sourceTree = "<group>"; };
 		2778E0B128D7A171003E901E /* Project & Clip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Project & Clip.swift"; sourceTree = "<group>"; };
 		2778E0B328D9D291003E901E /* PlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackView.swift; sourceTree = "<group>"; };
+		27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeeplinkHandler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,12 +88,10 @@
 			children = (
 				2706765328E7306F00CB0C96 /* GoogleService-Info.plist */,
 				2778E0AC28D664EE003E901E /* Info.plist */,
-				2778E0AA28D663DF003E901E /* Extensions.swift */,
-				2778E0A428D60877003E901E /* CameraError.swift */,
+				27ECF55428EBA9D400E7DF48 /* Helpers */,
 				2778E09D28D6032B003E901E /* Models */,
 				2778E09C28D60320003E901E /* Views */,
 				2778E08828D6023B003E901E /* HermesApp.swift */,
-				2778E08A28D6023B003E901E /* Persistence.swift */,
 				2778E09128D6023D003E901E /* Assets.xcassets */,
 				2778E09328D6023D003E901E /* Hermes.entitlements */,
 				2778E08C28D6023B003E901E /* Hermes.xcdatamodeld */,
@@ -135,6 +135,17 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		27ECF55428EBA9D400E7DF48 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				2778E0AA28D663DF003E901E /* Extensions.swift */,
+				2778E0A428D60877003E901E /* CameraError.swift */,
+				27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */,
+				2778E08A28D6023B003E901E /* Persistence.swift */,
+			);
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -224,6 +235,7 @@
 				2778E08E28D6023B003E901E /* Hermes.xcdatamodeld in Sources */,
 				2778E0A928D6165D003E901E /* ContentViewModel.swift in Sources */,
 				2778E0B428D9D291003E901E /* PlaybackView.swift in Sources */,
+				27ECF55228EBA50F00E7DF48 /* DeeplinkHandler.swift in Sources */,
 				2778E0AE28D66D27003E901E /* RecordingManager.swift in Sources */,
 				2778E09028D6023B003E901E /* ContentView.swift in Sources */,
 				2778E08B28D6023B003E901E /* Persistence.swift in Sources */,
@@ -360,6 +372,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Hermes/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Hermes requires acccess to your phone's camera to record videos for your vlog.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Hermes requires access to your phone's microphone to record audio.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -399,6 +413,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Hermes/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Hermes requires acccess to your phone's camera to record videos for your vlog.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Hermes requires access to your phone's microphone to record audio.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

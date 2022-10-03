@@ -137,11 +137,22 @@ class ContentViewModel: ObservableObject {
     
     // Firebase Handling
     
-    func findRemoteProject(id: String) {
+    func downloadRemoteProject(id: String, switchToProject: Bool = false) {
+        // First check the project doesn't exist locally
+        let projectId = UUID(uuidString: id)!
+        guard !self.allProjects.map({ p in p.id }).contains(projectId) else {
+            print("Project \(id) already exists on this device")
+            if switchToProject {
+                switchProjects(newProject: self.allProjects.filter({ p in p.id == projectId})[0])
+            }
+            return
+        }
+        
+        // Verified project doesn't not already exist. Look to DB
         let dbRef = Database.database().reference()
         
         dbRef.child(id).getData(completion: {error, snapshot in
-            guard error == nil && snapshot != nil else {
+            guard error == nil && snapshot != nil && !(snapshot!.value! is NSNull) else {
                 print(error!.localizedDescription)
                 return
             }
@@ -150,7 +161,6 @@ class ContentViewModel: ObservableObject {
             
             // Inflate a project
             let projectName = info["name"] as! String
-            let projectId = UUID(uuidString: id)!
             let dateFormatter = ISO8601DateFormatter()
             let projectClips = info["clips"] as! [String: Any]
             var projectAllClips: [Clip] = []
@@ -193,6 +203,11 @@ class ContentViewModel: ObservableObject {
                 allClips: projectAllClips
             )
             self.allProjects.append(remoteProject)
+            
+            // Switch, if told
+            if (switchToProject) {
+                self.switchProjects(newProject: remoteProject)
+            }
         })
     }
     
