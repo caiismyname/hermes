@@ -17,8 +17,9 @@ struct RecordingControlsView: View {
         VStack {
             HStack {
                 Button("Sync") {
-                    model.project.createRTDBEntry()
                     model.project.saveToRTDB()
+                    model.project.pullNewClipMetadata()
+                    model.project.pullNewClipVideos()
                 }
                 Button("Switch") {
                     projectSwitcherModalShowing = true
@@ -112,7 +113,7 @@ struct SwitchProjectsModal: View {
                     Text("Create new")
                 }
                 Button(action: {
-                    model.findRemoteProject(id: "0EA96313-CBF6-4C03-8BBD-F61B49E33CE7")
+                    model.findRemoteProject(id: "83BB2051-A8B6-459C-A5D1-C2B1F035E02E")
                 }) {
                     Text("Find existing")
                 }

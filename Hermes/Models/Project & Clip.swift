@@ -67,6 +67,12 @@ class Project: ObservableObject, Codable {
         }
     }
     
+    private func sortClips() {
+        self.allClips.sort { a, b in
+            a.timestamp < b.timestamp
+        }
+    }
+    
     // MARK: Firebase
     func createRTDBEntry() {
         let ref = Database.database().reference()
@@ -83,6 +89,7 @@ class Project: ObservableObject, Codable {
     }
     
     func saveToRTDB() {
+        print("Saving project \(self.id.uuidString) to RTDB")
         let dbRef = Database.database().reference()
         let storageRef = Storage.storage().reference().child(self.id.uuidString)
         
@@ -106,26 +113,92 @@ class Project: ObservableObject, Codable {
             // Upload thumbnails
             if c.thumbnail != nil {
                 let thumbnailRef = storageRef.child("thumbnails").child(c.id.uuidString)
-                let uploadTask = thumbnailRef.putData(c.thumbnail!) { (metadata, error) in
+                _ = thumbnailRef.putData(c.thumbnail!) { (metadata, error) in
                     guard let metadata = metadata else {
                         return
                     }
                     
-                    print("Uploading thumbnail for \(c.id.uuidString). [\(metadata.size)]")
+                    print("Uploaded thumbnail for \(c.id.uuidString). [\(metadata.size)]")
                 }
             }
             
             // Upload videos
             let videoRef = storageRef.child("videos").child(c.id.uuidString)
-            let uploadTask = videoRef.putFile(from: c.finalURL!) { (metadata, error) in
+            _ = videoRef.putFile(from: c.finalURL!) { (metadata, error) in
                 guard let metadata = metadata else {
-                    print(error?.localizedDescription)
+                    print(error?.localizedDescription ?? "Error uploading video for \(c.id.uuidString)")
                     return
                 }
                 
-                print("Uploading video for \(c.id.uuidString). [\(metadata.size)]")
+                print("Uploaded video for \(c.id.uuidString). [\(metadata.size)]")
+                c.location = .uploaded
             }
         })
+    }
+    
+    func pullNewClipMetadata() {
+        print("Pulling new clips")
+        let dbRef = Database.database().reference().child(id.uuidString).child("clips")
+        
+        dbRef.getData(completion: {error, snapshot in
+            guard error == nil && snapshot != nil else {
+                print(error!.localizedDescription)
+                return
+            }
+            
+            guard !(snapshot!.value! is NSNull) else {
+                // No clips in RTDB, nothing to sync
+                return
+            }
+            
+            let allClipsFromDB = snapshot!.value as! [String:[String:String]]
+            let allLocalClipIds = self.allClips.map { c in
+                c.id
+            }
+            let dateFormatter = ISO8601DateFormatter()
+            
+            for (_, d) in allClipsFromDB {
+                let clipId = UUID(uuidString: d["id"]!)!
+                if allLocalClipIds.contains(clipId) {
+                    continue
+                }
+                
+                // Clip has not been seen locally, create stub
+                let newClip = Clip(
+                    id: clipId,
+                    timestamp: dateFormatter.date(from: d["timestamp"]!)!,
+                    projectId: self.id,
+                    location: .remoteUndownloaded
+                )
+                
+                self.allClips.append(newClip)
+                print("Found new clip \(clipId.uuidString)")
+            }
+        })
+        
+        self.sortClips()
+    }
+    
+    func pullNewClipThumbnails() {
+        
+    }
+    
+    func pullNewClipVideos() {
+        let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
+        
+        for (clip) in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
+            print("Downloading video for \(clip.id.uuidString) from \(storageRef.child(clip.id.uuidString))")
+            storageRef.child(clip.id.uuidString).write(toFile: clip.finalURL!) { url, error in
+                if error != nil {
+                    print("Error downloading video for \(clip.id.uuidString)")
+                    return
+                }
+                
+                clip.generateThumbnail()
+                clip.location = .downloaded
+                clip.status = .final
+            }
+        }
     }
     
     // MARK: — Codable

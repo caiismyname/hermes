@@ -56,6 +56,7 @@ class ContentViewModel: ObservableObject {
         let newProject = Project()
         self.allProjects.append(newProject)
         saveProjects()
+        newProject.createRTDBEntry()
         
         switchProjects(newProject: newProject)
         
@@ -123,13 +124,18 @@ class ContentViewModel: ObservableObject {
                 if filteredProjects.count == 1 {
                     self.project = filteredProjects[0]
                 }
+            } else {
+                // If the UUID is not found, will just carry through the temp project
                 
-                // Does nothing if the UUID is not found, will just carry through the temp project
+                // Since the temp project is promoted to the "real" project, it needs to be pushed to the RTDB
+                self.project.createRTDBEntry()
             }
             
             self.recordingManager.project = self.project
         }
     }
+    
+    // Firebase Handling
     
     func findRemoteProject(id: String) {
         let dbRef = Database.database().reference()
@@ -140,14 +146,12 @@ class ContentViewModel: ObservableObject {
                 return
             }
             
-            print(snapshot!.value)
-            
             let info = snapshot!.value as! [String: Any]
             
             // Inflate a project
             let projectName = info["name"] as! String
             let projectId = UUID(uuidString: id)!
-            let formatter = ISO8601DateFormatter()
+            let dateFormatter = ISO8601DateFormatter()
             let projectClips = info["clips"] as! [String: Any]
             var projectAllClips: [Clip] = []
                 
@@ -158,15 +162,12 @@ class ContentViewModel: ObservableObject {
                 projectAllClips.append(
                     Clip(
                         id: UUID.init(uuidString: clipIdString)!,
-                        timestamp: formatter.date(from: clipTimestampString)!,
+                        timestamp: dateFormatter.date(from: clipTimestampString)!,
                         projectId: projectId,
                         location: .remoteUndownloaded
                     )
                 )
             }
-            
-            print(projectAllClips)
-            
             
             // Download videos
             let storageRef = Storage.storage().reference().child(projectId.uuidString).child("videos")
@@ -179,6 +180,8 @@ class ContentViewModel: ObservableObject {
                     }
                     
                     clip.generateThumbnail()
+                    clip.location = .downloaded
+                    clip.status = .final
                 }
             }
 
@@ -189,7 +192,6 @@ class ContentViewModel: ObservableObject {
                 name: projectName,
                 allClips: projectAllClips
             )
-            
             self.allProjects.append(remoteProject)
         })
     }
