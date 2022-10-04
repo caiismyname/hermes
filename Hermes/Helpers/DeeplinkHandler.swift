@@ -30,4 +30,6 @@ class URLSchema {
     static let schema = "hermesProject"
     static let identifier = "com.caiismyname.hermes"
     static let projectIdParam = "projectId"
+    
+    static var baseURL =  schema + "://" + identifier + "/?" + projectIdParam + "="
 }

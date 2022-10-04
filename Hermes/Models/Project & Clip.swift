@@ -73,6 +73,10 @@ class Project: ObservableObject, Codable {
         }
     }
     
+    func generateURL() -> URL {
+        return URL(string: "\(URLSchema.baseURL)\(self.id.uuidString)")!
+    }
+    
     // MARK: Firebase
     func createRTDBEntry() {
         let ref = Database.database().reference()

@@ -117,8 +117,14 @@ struct SwitchProjectsModal: View {
                 }) {
                     Text("Find existing")
                 }
+                
+                if #available(iOS 16.0, *) {
+                    ShareLink("Share", item: model.project.generateURL())
+                } else {
+                    // Fallback on earlier versions
+                }
             }
-            
+       
             List(model.allProjects.indices, id: \.self) { index in
                 Group {
                     Text(model.allProjects[index].name)
