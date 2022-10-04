@@ -112,11 +112,6 @@ struct SwitchProjectsModal: View {
                 }) {
                     Text("Create new")
                 }
-                Button(action: {
-                    model.downloadRemoteProject(id: "83BB2051-A8B6-459C-A5D1-C2B1F035E02E")
-                }) {
-                    Text("Find existing")
-                }
                 
                 if #available(iOS 16.0, *) {
                     ShareLink("Share", item: model.project.generateURL())
