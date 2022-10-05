@@ -10,15 +10,16 @@ import SwiftUI
 import AVKit
 
 struct PlaybackView: View {
-    var videoURL: URL?
+    @StateObject var playbackModel: PlaybackModel
     
     var body: some View {
-        VideoPlayer(player: AVPlayer(url: videoURL!))
+        VideoPlayer(player: playbackModel.currentVideo()!)
+            .frame(width: 400, height: 300, alignment: .center)
     }
 }
 
-struct PlaybackView_Preview: PreviewProvider {
-    static var previews: some View {
-        PlaybackView()
-    }
-}
+//struct PlaybackView_Preview: PreviewProvider {
+//    static var previews: some View {
+//        PlaybackView()
+//    }
+//}

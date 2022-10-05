@@ -233,8 +233,6 @@ class Clip: Identifiable, Codable, ObservableObject {
     let id: UUID
     var timestamp: Date
     let projectId: UUID
-    var finalURL: URL?
-    var temporaryURL: URL?
     @Published var status: ClipStatus
     @Published var thumbnail: Data?
     var location: ClipLocation
@@ -257,9 +255,6 @@ class Clip: Identifiable, Codable, ObservableObject {
         self.projectId = projectId
         self.status = .temporary
         self.location = location
-        
-        self.temporaryURL = generateTempURL(uuid: id)
-        self.finalURL = generateFinalURL(uuid: id)
     }
     
     func generateThumbnail() {
@@ -288,20 +283,21 @@ class Clip: Identifiable, Codable, ObservableObject {
         }
     }
     
-    func generateTempURL(uuid: UUID) -> URL? {
+    var temporaryURL: URL? {
         return URL(
             fileURLWithPath:
                 (NSTemporaryDirectory() as NSString).appendingPathComponent(
-                    (uuid.uuidString as NSString).appendingPathExtension("mov")!
+                    (self.id.uuidString as NSString).appendingPathExtension("mov")!
                 )
         )
     }
     
-    func generateFinalURL(uuid: UUID) -> URL? {
+    var finalURL: URL? {
         do {
             let localStorageURL = try FileManager.default.url(
                 for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            return localStorageURL.appendingPathComponent(uuid.uuidString).appendingPathExtension("mov")
+            
+            return localStorageURL.appendingPathComponent(id.uuidString).appendingPathExtension("mov")
         } catch {
             print("Could not generate finalURL")
             return nil
@@ -313,8 +309,6 @@ class Clip: Identifiable, Codable, ObservableObject {
         case id
         case timestamp
         case projectId
-        case temporaryURL
-        case finalURL
         case status
         case thumbnail
         case location
@@ -325,8 +319,6 @@ class Clip: Identifiable, Codable, ObservableObject {
         try container.encode(id, forKey: .id)
         try container.encode(timestamp, forKey: .timestamp)
         try container.encode(projectId, forKey: .projectId)
-        try container.encode(temporaryURL, forKey: .temporaryURL)
-        try container.encode(finalURL, forKey: .finalURL)
         try container.encode(status, forKey: .status)
         try container.encode(thumbnail, forKey: .thumbnail)
         try container.encode(location, forKey: .location)
@@ -337,8 +329,6 @@ class Clip: Identifiable, Codable, ObservableObject {
         id = try values.decode(UUID.self, forKey: .id)
         timestamp = try values.decode(Date.self, forKey: .timestamp)
         projectId = try values.decode(UUID.self, forKey: .projectId)
-        temporaryURL = try values.decode(URL.self, forKey: .temporaryURL)
-        finalURL = try values.decode(URL.self, forKey: .finalURL)
         status = try values.decode(ClipStatus.self, forKey: .status)
         thumbnail = try values.decode(Data.self, forKey: .thumbnail)
         location = try values.decode(ClipLocation.self, forKey: .location)

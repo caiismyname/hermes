@@ -18,8 +18,8 @@ struct ContentView: View {
                 CameraPreviewWrapper(session: model.cameraManager.session)
                     .ignoresSafeArea(.all)
                     .popover(isPresented: $playbackMode) {
-                        PlaybackView(videoURL: model.recordingManager.project.allClips.last?.finalURL)
-                            .frame(height:200)
+                        PlaybackView(playbackModel: PlaybackModel(allClips: model.project.allClips))
+                            .frame(height:300)
                     }
                 RecordingControlsView(
                     playbackCallback: {self.playbackMode = !self.playbackMode},

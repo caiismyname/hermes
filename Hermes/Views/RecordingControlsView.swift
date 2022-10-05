@@ -26,7 +26,7 @@ struct RecordingControlsView: View {
                 }
             }
             RecordButton(recordingManager: recordingManager)
-            ThumbnailReel(project: model.project)
+            ThumbnailReel(project: model.project, playbackCallback: playbackCallback)
         }.frame(height: 200)
             .popover(isPresented: $projectSwitcherModalShowing) {
                 SwitchProjectsModal(model: model)
@@ -69,6 +69,7 @@ struct RecordButton: View {
 
 struct ThumbnailReel: View {
     @ObservedObject var project: Project
+    var playbackCallback: () -> ()
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -76,6 +77,9 @@ struct ThumbnailReel: View {
                 HStack {
                     ForEach(project.allClips) { c in
                         Thumbnail(clip: c)
+                            .onTapGesture {
+                                playbackCallback()
+                            }
                     }
                 }
 //            }
