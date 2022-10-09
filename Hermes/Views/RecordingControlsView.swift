@@ -6,32 +6,28 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct RecordingControlsView: View {
-    var playbackCallback: (Int) -> ()
     @ObservedObject var recordingManager: RecordingManager
+    @State var playbackModalShowing = false
     @ObservedObject var model: ContentViewModel
-    @State var projectSwitcherModalShowing = false
 
     var body: some View {
-        VStack {
-            HStack {
-                Button("Sync") {
-                    model.project.saveToRTDB()
-                    model.project.pullNewClipMetadata()
-                    model.project.pullNewClipVideos()
-                }
-                Button("Switch") {
-                    projectSwitcherModalShowing = true
-                }
+        HStack {
+            Button(action: {
+                playbackModalShowing = !playbackModalShowing
+            }) {
+                Image(systemName: "photo.circle.fill")
             }
+            .frame(width: 100, height: 100)
             RecordButton(recordingManager: recordingManager)
-            ThumbnailReel(project: model.project, playbackCallback: playbackCallback)
-        }.frame(height: 200)
-            .popover(isPresented: $projectSwitcherModalShowing) {
-                SwitchProjectsModal(model: model)
-                    .frame(height:200)
+        }
+        .popover(isPresented: $playbackModalShowing, content:
+            {
+                PlaybackView(model: model)
             }
+        )
     }
 }
 
@@ -62,77 +58,6 @@ struct RecordButton: View {
                     .fill(Color.red)
             }
             .frame(width: 100, height: 100)
-        }
-    }
-}
-
-
-struct ThumbnailReel: View {
-    @ObservedObject var project: Project
-    var playbackCallback: (Int) -> ()
-    
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-//            ScrollViewReader { scrollReader in // This will eventually allow for programmatic scrolling
-                HStack {
-                    ForEach(project.allClips.indices, id: \.self) { idx in
-                        Thumbnail(clip: project.allClips[idx])
-                            .onTapGesture {
-                                playbackCallback(idx)
-                            }
-                    }
-                }
-//            }
-        }
-    }
-}
-
-struct Thumbnail: View {
-    @ObservedObject var clip: Clip
-    
-    var body: some View {
-        ZStack {
-            Rectangle()
-                .background(Color.red)
-            if clip.thumbnail != nil {
-                Image(uiImage: UIImage(data: clip.thumbnail!)!)
-                    .resizable(resizingMode: .stretch)
-                    .frame(width: 100, height: 100)
-            }
-        }
-        .frame(width: 100, height: 100)
-    }
-}
-
-
-struct SwitchProjectsModal: View {
-    @ObservedObject var model: ContentViewModel
-    
-    var body: some View {
-        VStack {
-            HStack {
-                Button(action: {
-                    model.createProject()
-                }) {
-                    Text("Create new")
-                }
-                
-                if #available(iOS 16.0, *) {
-                    ShareLink("Share", item: model.project.generateURL())
-                } else {
-                    // Fallback on earlier versions
-                }
-            }
-       
-            List(model.allProjects.indices, id: \.self) { index in
-                Group {
-                    Text(model.allProjects[index].name)
-                }
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
-                .onTapGesture {
-                    model.switchProjects(newProject: model.allProjects[index])
-                }
-            }
         }
     }
 }

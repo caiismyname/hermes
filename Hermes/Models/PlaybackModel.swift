@@ -9,20 +9,25 @@ import Foundation
 import AVKit
 
 class PlaybackModel:ObservableObject {
-    @Published var allClips: [Clip]
+    var project: Project
     @Published var currentVideoIdx: Int
     var player = AVPlayer()
     
-    init(allClips: [Clip], currentVideoIdx: Int = 0) {
-        self.allClips = allClips
+    init(project: Project, currentVideoIdx: Int = 0) {
+        self.project = project
         self.currentVideoIdx = currentVideoIdx
+        
+        if self.project.allClips.count > 0 {
+            player.replaceCurrentItem(with: generatePlayerItem(idx: 0))
+        }
     }
     
-    func currentVideo() -> AVPlayer? {
-        let clip = self.allClips[self.currentVideoIdx]
+
+    
+    private func generatePlayerItem(idx: Int) -> AVPlayerItem? {
+        let clip = self.project.allClips[idx]
         if let url = clip.finalURL {
             let playerItem = AVPlayerItem(url: url)
-            player.replaceCurrentItem(with: playerItem)
             player.actionAtItemEnd = .none // override this behavior with the Notification
             
             NotificationCenter.default.addObserver(
@@ -31,38 +36,30 @@ class PlaybackModel:ObservableObject {
                 name: .AVPlayerItemDidPlayToEndTime,
                 object: playerItem)
             
-            return player
+            return playerItem
         } else {
             return nil
         }
     }
     
+    func playCurrentVideo() {
+        if let item = generatePlayerItem(idx: self.currentVideoIdx) {
+            self.player.replaceCurrentItem(with: item)
+            self.player.play()
+        }
+    }
+    
     @objc func nextVideo(notification: Notification) {
         // Already played last video
-        if currentVideoIdx == allClips.count - 1 {
+        if currentVideoIdx == project.allClips.count - 1 {
             return
         } else {
             currentVideoIdx += 1
         }
         
-        if let url = self.allClips[currentVideoIdx].finalURL {
-            let playerItem = AVPlayerItem(url: url)
-            NotificationCenter.default.addObserver(
-                self,
-                selector:  #selector(nextVideo(notification:)),
-                name: .AVPlayerItemDidPlayToEndTime,
-                object: playerItem
-            )
-            
-            player.replaceCurrentItem(with: AVPlayerItem(url: url))
+        if let item = generatePlayerItem(idx: currentVideoIdx) {
+            player.replaceCurrentItem(with: item)
             player.play()
         }
     }
-    
-    
-    func firstVideo() -> URL? {
-        currentVideoIdx = 0
-        return allClips[currentVideoIdx].finalURL
-    }
-    
 }
