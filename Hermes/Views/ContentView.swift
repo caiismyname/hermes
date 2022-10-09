@@ -11,6 +11,7 @@ import CoreData
 struct ContentView: View {
     @StateObject var model: ContentViewModel
     @State var playbackMode = false
+    @State var playbackIdx = 0
    
     var body: some View {
         GeometryReader { geometry in
@@ -18,11 +19,14 @@ struct ContentView: View {
                 CameraPreviewWrapper(session: model.cameraManager.session)
                     .ignoresSafeArea(.all)
                     .popover(isPresented: $playbackMode) {
-                        PlaybackView(playbackModel: PlaybackModel(allClips: model.project.allClips))
+                        PlaybackView(playbackModel: PlaybackModel(allClips: model.project.allClips, currentVideoIdx: playbackIdx))
                             .frame(height:300)
                     }
                 RecordingControlsView(
-                    playbackCallback: {self.playbackMode = !self.playbackMode},
+                    playbackCallback: { idx in
+                        self.playbackMode = !self.playbackMode
+                        self.playbackIdx = idx
+                    },
                     recordingManager: model.recordingManager,
                     model: model
                 )

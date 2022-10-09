@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RecordingControlsView: View {
-    var playbackCallback: () -> ()
+    var playbackCallback: (Int) -> ()
     @ObservedObject var recordingManager: RecordingManager
     @ObservedObject var model: ContentViewModel
     @State var projectSwitcherModalShowing = false
@@ -69,16 +69,16 @@ struct RecordButton: View {
 
 struct ThumbnailReel: View {
     @ObservedObject var project: Project
-    var playbackCallback: () -> ()
+    var playbackCallback: (Int) -> ()
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
 //            ScrollViewReader { scrollReader in // This will eventually allow for programmatic scrolling
                 HStack {
-                    ForEach(project.allClips) { c in
-                        Thumbnail(clip: c)
+                    ForEach(project.allClips.indices, id: \.self) { idx in
+                        Thumbnail(clip: project.allClips[idx])
                             .onTapGesture {
-                                playbackCallback()
+                                playbackCallback(idx)
                             }
                     }
                 }
