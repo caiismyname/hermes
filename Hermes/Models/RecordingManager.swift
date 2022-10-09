@@ -7,6 +7,7 @@
 
 import AVFoundation
 import SwiftUI
+import Foundation
 
 class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, ObservableObject {
     
@@ -16,6 +17,9 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     var session: AVCaptureSession?
     var project: Project
     @Published var isRecording = false
+    var recordingStartTime = Date() // temp value to start
+    @Published var recordingDuration = TimeInterval(0)
+    var timer = Timer()
     
     init(project: Project) {
         self.project = project
@@ -72,9 +76,29 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
         }
     }
     
+    func startTimer() {
+        self.recordingDuration = TimeInterval(0)
+        self.recordingStartTime = Date()
+        self.timer = Timer.scheduledTimer(
+            timeInterval: TimeInterval(0.01),
+            target: self,
+            selector: (#selector(updateDuration)),
+            userInfo: nil,
+            repeats: true
+        )
+        RunLoop.main.add(timer, forMode: .common)
+    }
+    
+    @objc func updateDuration() {
+        let now = Date()
+        recordingDuration = now.timeIntervalSince(recordingStartTime)
+    }
+    
     /// - Tag: DidStartRecording
     func fileOutput(_ output: AVCaptureFileOutput, didStartRecordingTo fileURL: URL, from connections: [AVCaptureConnection]) {
         // Enable the Record button to let the user stop recording.
+        self.startTimer()
+        
         DispatchQueue.main.async {
             // TODO set proper control status here
         }
@@ -84,5 +108,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         self.project.endClip()
         self.isRecording = false
+        self.timer.invalidate()
+        self.recordingDuration = TimeInterval(0)
     }
 }

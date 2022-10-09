@@ -20,7 +20,6 @@ struct ContentView: View {
                     recordingManager: model.recordingManager,
                     model: model
                 )
-                    .position(x: geometry.size.width / 2, y: geometry.size.height - 100)
             }
         }
     }
