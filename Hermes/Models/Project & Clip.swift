@@ -62,6 +62,11 @@ class Project: ObservableObject, Codable {
             
             print("Saved clip \(currentClip!.id.uuidString) to \(currentClip!.finalURL!)")
             self.currentClip = nil
+            
+            // Run a sync to upload new clip
+            DispatchQueue.main.async {
+                self.networkAwareProjectUpload(shouldUploadVideo: false) // Just upload metadata for now
+            }
         } catch {
             print ("Error moving clip from temp to user home directory")
         }
@@ -92,8 +97,8 @@ class Project: ObservableObject, Codable {
         )
     }
     
-    func saveToRTDB() {
-        print("Saving project \(self.id.uuidString) to RTDB")
+    func saveMetadataToRTDB() {
+        print("Uploading metadata for project \(self.id.uuidString) to RTDB")
         let dbRef = Database.database().reference()
         let storageRef = Storage.storage().reference().child(self.id.uuidString)
         
@@ -126,7 +131,18 @@ class Project: ObservableObject, Codable {
                 }
             }
             
-            // Upload videos
+            c.location = .remoteUnuploaded
+        })
+    }
+    
+    func saveVideosToRTDB() {
+        print("Uploading videos for project \(self.id.uuidString) to DB")
+        let dbRef = Database.database().reference()
+        let storageRef = Storage.storage().reference().child(self.id.uuidString)
+        
+        let remoteUnuploadedClips = allClips.filter({ $0.location == .remoteUnuploaded })
+
+        remoteUnuploadedClips.forEach({c in
             let videoRef = storageRef.child("videos").child(c.id.uuidString)
             _ = videoRef.putFile(from: c.finalURL!) { (metadata, error) in
                 guard let metadata = metadata else {
@@ -140,9 +156,18 @@ class Project: ObservableObject, Codable {
         })
     }
     
+    func networkAwareProjectUpload(shouldUploadVideo: Bool = false) {
+        saveMetadataToRTDB()
+        
+        if shouldUploadVideo {
+            saveVideosToRTDB()
+        }
+    }
+    
     func pullNewClipMetadata() {
-        print("Pulling new clips")
+        print("Pulling new clip metadata")
         let dbRef = Database.database().reference().child(id.uuidString).child("clips")
+        let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
         
         dbRef.getData(completion: {error, snapshot in
             guard error == nil && snapshot != nil else {
@@ -167,6 +192,8 @@ class Project: ObservableObject, Codable {
                     continue
                 }
                 
+                print("Found new clip \(clipId.uuidString)")
+                
                 // Clip has not been seen locally, create stub
                 let newClip = Clip(
                     id: clipId,
@@ -175,17 +202,24 @@ class Project: ObservableObject, Codable {
                     location: .remoteUndownloaded
                 )
                 
+                // Pull clip thumbnail
+                storageRef.child(newClip.id.uuidString).getData(maxSize: 1 * 1920 * 1080) { data, error in
+                    if let error = error {
+                        print(error)
+                    } else {
+                        if let image = UIImage(data: data!) {
+                            newClip.thumbnail = image.pngData()
+                        }
+                    }
+                }
+                
                 self.allClips.append(newClip)
-                print("Found new clip \(clipId.uuidString)")
             }
         })
         
         self.sortClips()
     }
     
-    func pullNewClipThumbnails() {
-        
-    }
     
     func pullNewClipVideos() {
         let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
@@ -203,6 +237,19 @@ class Project: ObservableObject, Codable {
                 clip.status = .final
             }
         }
+    }
+    
+    func networkAwareProjectDownload(shouldDownloadVideo: Bool = false) {
+        pullNewClipMetadata()
+        
+        if shouldDownloadVideo {
+            pullNewClipVideos()
+        }
+    }
+    
+    func appStartSync() {
+        networkAwareProjectUpload()
+        networkAwareProjectDownload()
     }
     
     // MARK: — Codable
@@ -244,9 +291,10 @@ class Clip: Identifiable, Codable, ObservableObject {
     
     enum ClipLocation: Codable {
         case local // Only exists on the device
-        case uploaded // Uploaded to DB (implies that it still remains on device)
+        case remoteUnuploaded // Metadata in RTDB, video is not
+        case uploaded // Metadata and video both uploaded (implies that it still remains on device)
         case remoteUndownloaded // Local has metadata of the clip, but no video file yet
-        case downloaded // Downloaded from the DB (no upload responsibility)
+        case downloaded // Metadta and video both downloaded from the DB (no upload responsibility)
     }
     
     init(id: UUID = UUID(), timestamp: Date = Date(), projectId: UUID, location: ClipLocation = .local) {

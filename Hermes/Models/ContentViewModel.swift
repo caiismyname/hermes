@@ -9,6 +9,7 @@ import SwiftUI
 import FirebaseCore
 import FirebaseDatabase
 import FirebaseStorage
+import Network
 
 class ContentViewModel: ObservableObject {
     @Published var error: Error?
@@ -20,6 +21,11 @@ class ContentViewModel: ObservableObject {
     @Published var recordingManager: RecordingManager
     @Published var project: Project
     @Published var allProjects: [Project]
+
+    // Global variables to manage whether or not to up/download files
+    private var hasNetwork = false
+    private var networkIsExpensive = true
+    private var useNetworkEvenIfExpensive = true
     
     private let saveFileName = "projects"
     
@@ -31,6 +37,7 @@ class ContentViewModel: ObservableObject {
         self.allProjects = [tempProject]
         
         setupSubscriptions()
+        setupNetworkMonitor()
     }
     
     func setupSubscriptions() {
@@ -40,6 +47,23 @@ class ContentViewModel: ObservableObject {
             .assign(to: &$error)
         
         recordingManager.configureCaptureSession(session: cameraManager.session)
+    }
+    
+    func setupNetworkMonitor() {
+        let monitor = NWPathMonitor()
+        let queue = DispatchQueue(label: "Network Monitor")
+        
+        monitor.pathUpdateHandler = { path in
+            if path.status == .satisfied {
+                self.hasNetwork = true
+            } else {
+                self.hasNetwork = false
+            }
+            
+            self.networkIsExpensive = path.isExpensive
+        }
+        
+        monitor.start(queue: queue)
     }
     
     func switchProjects(newProject: Project) {
@@ -136,6 +160,26 @@ class ContentViewModel: ObservableObject {
     }
     
     // Firebase Handling
+    
+    func uploadCurrentProject() {
+        guard hasNetwork else { return }
+        
+        if !networkIsExpensive || (networkIsExpensive && useNetworkEvenIfExpensive) {
+            self.project.networkAwareProjectUpload(shouldUploadVideo: true)
+        } else {
+            self.project.networkAwareProjectUpload(shouldUploadVideo: false)
+        }
+    }
+    
+    func downloadCurrentProject() {
+        guard hasNetwork else { return }
+        
+        if !networkIsExpensive || (networkIsExpensive && useNetworkEvenIfExpensive) {
+            self.project.networkAwareProjectDownload(shouldDownloadVideo: true)
+        } else {
+            self.project.networkAwareProjectDownload(shouldDownloadVideo: false)
+        }
+    }
     
     func downloadRemoteProject(id: String, switchToProject: Bool = false) {
         // First check the project doesn't exist locally

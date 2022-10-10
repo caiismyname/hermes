@@ -24,7 +24,7 @@ struct PlaybackView: View {
             Spacer()
             HStack {
                 Button("Sync") {
-                    model.project.saveToRTDB()
+                    model.project.saveMetadataToRTDB()
                     model.project.pullNewClipMetadata()
                     model.project.pullNewClipVideos()
                 }
