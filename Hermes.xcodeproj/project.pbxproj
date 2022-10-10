@@ -29,6 +29,7 @@
 		27ECF55228EBA50F00E7DF48 /* DeeplinkHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */; };
 		27ECF55628ECF2E400E7DF48 /* PlaybackModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55528ECF2E400E7DF48 /* PlaybackModel.swift */; };
 		27ECF55828F45A8F00E7DF48 /* Sizes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55728F45A8E00E7DF48 /* Sizes.swift */; };
+		27ECF55A28F463D400E7DF48 /* ProjectSwitcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55928F463D400E7DF48 /* ProjectSwitcherView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,6 +55,7 @@
 		27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeeplinkHandler.swift; sourceTree = "<group>"; };
 		27ECF55528ECF2E400E7DF48 /* PlaybackModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackModel.swift; sourceTree = "<group>"; };
 		27ECF55728F45A8E00E7DF48 /* Sizes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sizes.swift; sourceTree = "<group>"; };
+		27ECF55928F463D400E7DF48 /* ProjectSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSwitcherView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +121,7 @@
 				2778E08F28D6023B003E901E /* ContentView.swift */,
 				2778E0AF28D674BA003E901E /* RecordingControlsView.swift */,
 				2778E0B328D9D291003E901E /* PlaybackView.swift */,
+				27ECF55928F463D400E7DF48 /* ProjectSwitcherView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -233,6 +236,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27ECF55A28F463D400E7DF48 /* ProjectSwitcherView.swift in Sources */,
 				2778E08928D6023B003E901E /* HermesApp.swift in Sources */,
 				2778E0B028D674BA003E901E /* RecordingControlsView.swift in Sources */,
 				2778E0AB28D663DF003E901E /* Extensions.swift in Sources */,

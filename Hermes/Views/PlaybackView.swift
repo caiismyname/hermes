@@ -60,7 +60,6 @@ struct PlaybackView: View {
 
 struct ThumbnailReel: View {
     @ObservedObject var project: Project
-//    var playbackCallback: (Int) -> ()
     @ObservedObject var playbackModel: PlaybackModel
     
     var body: some View {

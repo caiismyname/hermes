@@ -39,7 +39,13 @@ struct RecordingControlsView: View {
                         .font(.system(size: sizes.secondaryButtonSize))
                 }
                 .position(x: (geometry.size.width / 4) * 3, y: geometry.size.height - sizes.bottomOffset)
-                .popover(isPresented: $projectSwitcherModalShowing, content: {SwitchProjectsModal(model: model)})
+                .popover(isPresented: $projectSwitcherModalShowing, content: {
+                    SwitchProjectsModal(
+                        model: model,
+                        dismissCallback: {self.projectSwitcherModalShowing = !self.projectSwitcherModalShowing}
+                    )
+                    
+                })
                 
                 // Project Name
                 
@@ -115,40 +121,3 @@ struct RecordingTimeCounter: View {
     }
 }
 
-struct SwitchProjectsModal: View {
-    @ObservedObject var model: ContentViewModel
-    private let sizes = Sizes()
-    
-    var body: some View {
-        VStack {
-            Spacer()
-            
-            Button(action: { model.createProject() }) {
-                HStack {
-                    Image(systemName: "plus.square")
-                        .font(.system(size: sizes.secondaryButtonSize))
-                    
-                    Text("Create new")
-                        .font(.system(.title3).bold())
-                }
-                .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight * 1.5)
-                .background(Color.blue)
-                .foregroundColor(Color.white)
-                .cornerRadius(sizes.buttonCornerRadius)
-            }.padding()
-        
-            Spacer()
-            Text("Existing Projects")
-                .font(.system(.title).bold())
-                .padding()
-            
-            List(model.allProjects.indices, id: \.self) { index in
-                Text(model.allProjects[index].name)
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
-                .onTapGesture {
-                    model.switchProjects(newProject: model.allProjects[index])
-                }
-            }
-        }
-    }
-}
