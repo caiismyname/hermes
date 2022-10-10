@@ -56,6 +56,7 @@ struct RecordingControlsView: View {
                 Button(action: {playbackModalShowing = !playbackModalShowing}) {
                     Image(systemName: "film.stack")
                         .font(.system(size: sizes.secondaryButtonSize))
+                        .foregroundColor(Color.white)
                 }
                 .position(
                     x: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["x"]!,
@@ -67,6 +68,7 @@ struct RecordingControlsView: View {
                 Button(action: {projectSwitcherModalShowing = !projectSwitcherModalShowing}) {
                     Image(systemName: "square.stack.3d.up.fill")
                         .font(.system(size: sizes.secondaryButtonSize))
+                        .foregroundColor(Color.white)
                 }
                 .position(
                     x: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["x"]!,
@@ -119,20 +121,31 @@ struct RecordButton: View {
     var body: some View {
         if recordingManager.isRecording {
             Button(action: recordingManager.toggleRecording) {
-                RoundedRectangle(cornerSize: CGSize.init(width: 10, height: 10))
-                    .fill(Color.black)
+                ZStack {
+//                    RoundedRectangle(cornerSize: CGSize.init(width: 12, height: 12))
+//                        .stroke(lineWidth: sizes.stopButtonSize / 15)
+//                        .fill(Color.white)
+//                        .frame(width: (sizes.stopButtonSize * 1.07) + 6, height: (sizes.stopButtonSize * 1.07) + 6)
+                    
+                    Circle()
+                        .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 15)
+                        .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
+                    
+                    RoundedRectangle(cornerSize: CGSize.init(width: 10, height: 10))
+                        .fill(Color.red)
+                        .frame(width: sizes.stopButtonSize, height: sizes.stopButtonSize)
+                }
             }
-            .frame(width: sizes.primaryButtonSize, height: sizes.primaryButtonSize)
 
         } else {
             Button(action: recordingManager.toggleRecording) {
                 ZStack {
                     Circle()
-                        .strokeBorder(.white, lineWidth: sizes.primaryButtonSize / 15)
-                        .frame(width: (sizes.primaryButtonSize * 1.07) + 10, height: (sizes.primaryButtonSize * 1.07) + 10)
+                        .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 15)
+                        .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
                     Circle()
                         .fill(Color.red)
-                        .frame(width: sizes.primaryButtonSize, height: sizes.primaryButtonSize)
+                        .frame(width: sizes.recordButtonSize, height: sizes.recordButtonSize)
                 }
             }
         }

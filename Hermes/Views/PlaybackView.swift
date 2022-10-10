@@ -20,40 +20,47 @@ struct PlaybackView: View {
     }
     
     var body: some View {
-        VStack {
-            Spacer()
-            Text("\(model.project.name)")
-                .font(.system(.headline))
-                .padding([.leading, .trailing])
-            Spacer()
-            HStack {
-                Button(action: {
-                    model.project.saveMetadataToRTDB()
-                    model.project.pullNewClipMetadata()
-                    model.project.pullNewClipVideos()
-                }) {
-                    Text("Sync")
-                        .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
-                }
-                .foregroundColor(Color.white)
-                .background(Color.green)
-                .cornerRadius(sizes.buttonCornerRadius)
-                
-                if #available(iOS 16.0, *) {
-                    Button(action: {}) {
-                        ShareLink("Share", item: model.project.generateURL())
+        ZStack {
+            Rectangle()
+                .fill(Color.black)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack {
+                Spacer()
+                Text("\(model.project.name)")
+                    .font(.system(.title2).bold())
+                    .padding([.leading, .trailing])
+                Spacer()
+                HStack {
+                    Button(action: {
+                        model.project.saveMetadataToRTDB()
+                        model.project.pullNewClipMetadata()
+                        model.project.pullNewClipVideos()
+                    }) {
+                        Text("Sync")
                             .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
                     }
                     .foregroundColor(Color.white)
-                    .background(Color.orange)
+                    .background(Color.green)
                     .cornerRadius(sizes.buttonCornerRadius)
-                } else {
-                    // Fallback on earlier versions
+                    
+                    if #available(iOS 16.0, *) {
+                        Button(action: {}) {
+                            ShareLink("Share", item: model.project.generateURL())
+                                .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
+                        }
+                        .foregroundColor(Color.white)
+                        .background(Color.blue)
+                        .cornerRadius(sizes.buttonCornerRadius)
+                    } else {
+                        // Fallback on earlier versions
+                    }
                 }
+                .padding([.leading, .trailing])
+                VideoPlayer(player: playbackModel.player)
+                ThumbnailReel(project: model.project, playbackModel: playbackModel)
             }
-            .padding([.leading, .trailing])
-            ThumbnailReel(project: model.project, playbackModel: playbackModel)
-            VideoPlayer(player: playbackModel.player)
         }
     }
 }
