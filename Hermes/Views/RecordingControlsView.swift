@@ -12,8 +12,36 @@ struct RecordingControlsView: View {
     @ObservedObject var recordingManager: RecordingManager
     @State var playbackModalShowing = false
     @State var projectSwitcherModalShowing = false
+    @Binding var orientation: UIDeviceOrientation
     
     private let sizes = Sizes()
+    
+    func computeControlPositions(geometry: GeometryProxy, relativePosition: Double) -> [String: Double] {
+        var results = [String: Double]()
+        
+        switch orientation {
+        case .portrait, .unknown:
+            results["x"] = geometry.size.width * relativePosition
+            results["y"] = geometry.size.height - sizes.bottomOffset
+        case .portraitUpsideDown:
+            results["x"] = geometry.size.width * relativePosition
+            results["y"] = sizes.bottomOffset
+        case .landscapeLeft:
+            results["x"] = geometry.size.width - sizes.bottomOffset
+            results["y"] = geometry.size.height * relativePosition
+        case .landscapeRight:
+            results["x"] = sizes.bottomOffset
+            results["y"] = geometry.size.height * relativePosition
+        case .faceUp, .faceDown:
+            results["x"] = geometry.size.width * relativePosition
+            results["y"] = geometry.size.height - sizes.bottomOffset
+        @unknown default:
+            results["x"] = geometry.size.width * relativePosition
+            results["y"] = geometry.size.height - sizes.bottomOffset
+        }
+        
+        return results
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -23,14 +51,16 @@ struct RecordingControlsView: View {
                     .position(x: geometry.size.width / 2, y: sizes.topOffset)
             }
             
-            
             if !(recordingManager.isRecording) {
                 // Playback button
                 Button(action: {playbackModalShowing = !playbackModalShowing}) {
                     Image(systemName: "film.stack")
                         .font(.system(size: sizes.secondaryButtonSize))
                 }
-                .position(x: geometry.size.width / 4, y: geometry.size.height - sizes.bottomOffset)
+                .position(
+                    x: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["x"]!,
+                    y: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["y"]!
+                )
                 .popover(isPresented: $playbackModalShowing, content: { PlaybackView(model: model) })
             
                 // Projects button
@@ -38,7 +68,10 @@ struct RecordingControlsView: View {
                     Image(systemName: "square.stack.3d.up.fill")
                         .font(.system(size: sizes.secondaryButtonSize))
                 }
-                .position(x: (geometry.size.width / 4) * 3, y: geometry.size.height - sizes.bottomOffset)
+                .position(
+                    x: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["x"]!,
+                    y: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["y"]!
+                )
                 .popover(isPresented: $projectSwitcherModalShowing, content: {
                     SwitchProjectsModal(
                         model: model,
@@ -60,7 +93,10 @@ struct RecordingControlsView: View {
             
             // Record button
             RecordButton(recordingManager: recordingManager)
-                .position(x: geometry.size.width / 2, y: geometry.size.height - sizes.bottomOffset)
+                .position(
+                    x: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["x"]!,
+                    y: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["y"]!
+                )
             
         }
     }

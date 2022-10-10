@@ -17,6 +17,8 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     var session: AVCaptureSession?
     var project: Project
     @Published var isRecording = false
+    
+    // For the duration UI
     var recordingStartTime = Date() // temp value to start
     @Published var recordingDuration = TimeInterval(0)
     var timer = Timer()
@@ -57,17 +59,18 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
         self.isRecording = true
         sessionQueue.async {
             if !movieFileOutput.isRecording {
-                let movieFileOutputConnection = movieFileOutput.connection(with: .video)
-                // TODO match orientations
-                
-                if movieFileOutput.availableVideoCodecTypes.contains(.hevc) {
-                    movieFileOutput.setOutputSettings(
-                        [AVVideoCodecKey: AVVideoCodecType.hevc], for: movieFileOutputConnection!)
-                }
-                
-                if let clip = self.project.startClip() {
-                    movieFileOutput.startRecording(to: clip.temporaryURL!, recordingDelegate: self)
-                    print("Start recording")
+                if let movieFileOutputConnection = movieFileOutput.connection(with: .video) {
+                    movieFileOutputConnection.videoOrientation = AVCaptureVideoOrientation(rawValue:  UIDevice.current.orientation.rawValue)!
+                    
+                    if movieFileOutput.availableVideoCodecTypes.contains(.hevc) {
+                        movieFileOutput.setOutputSettings(
+                            [AVVideoCodecKey: AVVideoCodecType.hevc], for: movieFileOutputConnection)
+                    }
+                    
+                    if let clip = self.project.startClip() {
+                        movieFileOutput.startRecording(to: clip.temporaryURL!, recordingDelegate: self)
+                        print("Start recording")
+                    }
                 }
             } else {
                 movieFileOutput.stopRecording()
