@@ -14,11 +14,17 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                Rectangle()
+                    .fill(Color.black)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .edgesIgnoringSafeArea(.all)
+                
                 CameraPreviewWrapper(session: model.cameraManager.session)
                     .ignoresSafeArea(.all)
+                
                 RecordingControlsView(
-                    recordingManager: model.recordingManager,
-                    model: model
+                    model: model,
+                    recordingManager: model.recordingManager
                 )
             }
         }

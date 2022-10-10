@@ -12,7 +12,7 @@ import AVKit
 struct PlaybackView: View {
     @ObservedObject var model: ContentViewModel
     var playbackModel: PlaybackModel
-    @State var projectSwitcherModalShowing = false
+    private let sizes = Sizes()
     
     init(model: ContentViewModel) {
         self.model = model
@@ -22,21 +22,38 @@ struct PlaybackView: View {
     var body: some View {
         VStack {
             Spacer()
+            Text("\(model.project.name)")
+                .font(.system(.headline))
+                .padding([.leading, .trailing])
+            Spacer()
             HStack {
-                Button("Sync") {
+                Button(action: {
                     model.project.saveMetadataToRTDB()
                     model.project.pullNewClipMetadata()
                     model.project.pullNewClipVideos()
+                }) {
+                    Text("Sync")
+                        .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
                 }
-                Button("Switch") {
-                    projectSwitcherModalShowing = true
+                .foregroundColor(Color.white)
+                .background(Color.green)
+                .cornerRadius(sizes.buttonCornerRadius)
+                
+                if #available(iOS 16.0, *) {
+                    Button(action: {}) {
+                        ShareLink("Share", item: model.project.generateURL())
+                            .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
+                    }
+                    .foregroundColor(Color.white)
+                    .background(Color.orange)
+                    .cornerRadius(sizes.buttonCornerRadius)
+                } else {
+                    // Fallback on earlier versions
                 }
             }
+            .padding([.leading, .trailing])
             ThumbnailReel(project: model.project, playbackModel: playbackModel)
             VideoPlayer(player: playbackModel.player)
-        }
-        .popover(isPresented: $projectSwitcherModalShowing) {
-            SwitchProjectsModal(model: model)
         }
     }
 }
@@ -77,39 +94,6 @@ struct Thumbnail: View {
             }
         }
         .frame(width: 100, height: 100)
-    }
-}
-
-
-struct SwitchProjectsModal: View {
-    @ObservedObject var model: ContentViewModel
-    
-    var body: some View {
-        VStack {
-            HStack {
-                Button(action: {
-                    model.createProject()
-                }) {
-                    Text("Create new")
-                }
-                
-                if #available(iOS 16.0, *) {
-                    ShareLink("Share", item: model.project.generateURL())
-                } else {
-                    // Fallback on earlier versions
-                }
-            }
-       
-            List(model.allProjects.indices, id: \.self) { index in
-                Group {
-                    Text(model.allProjects[index].name)
-                }
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
-                .onTapGesture {
-                    model.switchProjects(newProject: model.allProjects[index])
-                }
-            }
-        }
     }
 }
 

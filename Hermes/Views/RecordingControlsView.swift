@@ -8,32 +8,54 @@
 import SwiftUI
 
 struct RecordingControlsView: View {
+    @ObservedObject var model: ContentViewModel
     @ObservedObject var recordingManager: RecordingManager
     @State var playbackModalShowing = false
-    @ObservedObject var model: ContentViewModel
+    @State var projectSwitcherModalShowing = false
+    
+    private let sizes = Sizes()
 
     var body: some View {
         GeometryReader { geometry in
+            // Recording indicator at top of screen, with duration counter
             if recordingManager.isRecording {
                 RecordingTimeCounter(recordingManager: recordingManager)
-                    .position(x: geometry.size.width / 2, y: 60)
+                    .position(x: geometry.size.width / 2, y: sizes.topOffset)
             }
             
-            HStack {
-                Button(action: {
-                    playbackModalShowing = !playbackModalShowing
-                }) {
-                    Image(systemName: "photo.circle.fill")
+            
+            if !(recordingManager.isRecording) {
+                // Playback button
+                Button(action: {playbackModalShowing = !playbackModalShowing}) {
+                    Image(systemName: "film.stack")
+                        .font(.system(size: sizes.secondaryButtonSize))
                 }
-                .frame(width: 100, height: 100)
-                RecordButton(recordingManager: recordingManager)
+                .position(x: geometry.size.width / 4, y: geometry.size.height - sizes.bottomOffset)
+                .popover(isPresented: $playbackModalShowing, content: { PlaybackView(model: model) })
+            
+                // Projects button
+                Button(action: {projectSwitcherModalShowing = !projectSwitcherModalShowing}) {
+                    Image(systemName: "square.stack.3d.up.fill")
+                        .font(.system(size: sizes.secondaryButtonSize))
+                }
+                .position(x: (geometry.size.width / 4) * 3, y: geometry.size.height - sizes.bottomOffset)
+                .popover(isPresented: $projectSwitcherModalShowing, content: {SwitchProjectsModal(model: model)})
+                
+                // Project Name
+                
+                Text("\(model.project.name)")
+                    .font(.system(size: sizes.fontSize, weight: .regular , design: .monospaced))
+                    .foregroundColor(Color.white)
+                    .minimumScaleFactor(0.01)
+                    .lineLimit(1)
+                    .position(x: geometry.size.width / 2, y: sizes.topOffset)
             }
-            .position(x: geometry.size.width / 2, y: geometry.size.height - 100)
-            .popover(isPresented: $playbackModalShowing, content:
-                {
-                    PlaybackView(model: model)
-                }
-            )
+            
+            
+            // Record button
+            RecordButton(recordingManager: recordingManager)
+                .position(x: geometry.size.width / 2, y: geometry.size.height - sizes.bottomOffset)
+            
         }
     }
 }
@@ -50,8 +72,7 @@ struct RecordingControlsView: View {
 
 struct RecordButton: View {
     @ObservedObject var recordingManager: RecordingManager
-    
-    let buttonSize = 65.0
+    private let sizes = Sizes()
     
     var body: some View {
         if recordingManager.isRecording {
@@ -59,17 +80,17 @@ struct RecordButton: View {
                 RoundedRectangle(cornerSize: CGSize.init(width: 10, height: 10))
                     .fill(Color.black)
             }
-            .frame(width: 75, height: 75)
+            .frame(width: sizes.primaryButtonSize, height: sizes.primaryButtonSize)
 
         } else {
             Button(action: recordingManager.toggleRecording) {
                 ZStack {
                     Circle()
-                        .strokeBorder(.white, lineWidth: buttonSize / 15)
-                        .frame(width: (buttonSize * 1.07) + 10, height: (buttonSize * 1.07) + 10)
+                        .strokeBorder(.white, lineWidth: sizes.primaryButtonSize / 15)
+                        .frame(width: (sizes.primaryButtonSize * 1.07) + 10, height: (sizes.primaryButtonSize * 1.07) + 10)
                     Circle()
                         .fill(Color.red)
-                        .frame(width: buttonSize, height: buttonSize)
+                        .frame(width: sizes.primaryButtonSize, height: sizes.primaryButtonSize)
                 }
             }
         }
@@ -78,17 +99,56 @@ struct RecordButton: View {
 
 struct RecordingTimeCounter: View {
     @ObservedObject var recordingManager: RecordingManager
+    private let sizes = Sizes()
     
     var body: some View {
         ZStack {
             Rectangle()
                 .fill(Color.red)
-                .frame(width: 125, height: 40)
-                .cornerRadius(15)
+                .frame(width: 125, height: 30)
+                .cornerRadius(sizes.buttonCornerRadius)
             
             Text("\(recordingManager.recordingDuration.formattedTimeNoMilliLeadingZero)")
-                .font(.system(size: 20, weight: .regular , design: .monospaced))
+                .font(.system(size: sizes.fontSize, weight: .regular , design: .monospaced))
                 .foregroundColor(Color.white)
+        }
+    }
+}
+
+struct SwitchProjectsModal: View {
+    @ObservedObject var model: ContentViewModel
+    private let sizes = Sizes()
+    
+    var body: some View {
+        VStack {
+            Spacer()
+            
+            Button(action: { model.createProject() }) {
+                HStack {
+                    Image(systemName: "plus.square")
+                        .font(.system(size: sizes.secondaryButtonSize))
+                    
+                    Text("Create new")
+                        .font(.system(.title3).bold())
+                }
+                .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight * 1.5)
+                .background(Color.blue)
+                .foregroundColor(Color.white)
+                .cornerRadius(sizes.buttonCornerRadius)
+            }.padding()
+        
+            Spacer()
+            Text("Existing Projects")
+                .font(.system(.title).bold())
+                .padding()
+            
+            List(model.allProjects.indices, id: \.self) { index in
+                Text(model.allProjects[index].name)
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
+                .onTapGesture {
+                    model.switchProjects(newProject: model.allProjects[index])
+                }
+            }
         }
     }
 }

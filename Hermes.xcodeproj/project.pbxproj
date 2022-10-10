@@ -28,6 +28,7 @@
 		27E0CA0528E7462B0010B226 /* FirebaseDatabaseSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 27E0CA0428E7462B0010B226 /* FirebaseDatabaseSwift */; };
 		27ECF55228EBA50F00E7DF48 /* DeeplinkHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */; };
 		27ECF55628ECF2E400E7DF48 /* PlaybackModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55528ECF2E400E7DF48 /* PlaybackModel.swift */; };
+		27ECF55828F45A8F00E7DF48 /* Sizes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55728F45A8E00E7DF48 /* Sizes.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +53,7 @@
 		2778E0B328D9D291003E901E /* PlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackView.swift; sourceTree = "<group>"; };
 		27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeeplinkHandler.swift; sourceTree = "<group>"; };
 		27ECF55528ECF2E400E7DF48 /* PlaybackModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackModel.swift; sourceTree = "<group>"; };
+		27ECF55728F45A8E00E7DF48 /* Sizes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sizes.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +149,7 @@
 				2778E0A428D60877003E901E /* CameraError.swift */,
 				27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */,
 				2778E08A28D6023B003E901E /* Persistence.swift */,
+				27ECF55728F45A8E00E7DF48 /* Sizes.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -234,6 +237,7 @@
 				2778E0B028D674BA003E901E /* RecordingControlsView.swift in Sources */,
 				2778E0AB28D663DF003E901E /* Extensions.swift in Sources */,
 				27ECF55628ECF2E400E7DF48 /* PlaybackModel.swift in Sources */,
+				27ECF55828F45A8F00E7DF48 /* Sizes.swift in Sources */,
 				2778E0A328D607C0003E901E /* CameraManager.swift in Sources */,
 				2778E09F28D6033F003E901E /* CameraPreview.swift in Sources */,
 				2778E08E28D6023B003E901E /* Hermes.xcdatamodeld in Sources */,
