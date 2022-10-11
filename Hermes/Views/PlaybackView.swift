@@ -13,6 +13,7 @@ struct PlaybackView: View {
     @ObservedObject var model: ContentViewModel
     var playbackModel: PlaybackModel
     private let sizes = Sizes()
+    @State var showingRenameAlert = false
     
     init(model: ContentViewModel) {
         self.model = model
@@ -27,11 +28,20 @@ struct PlaybackView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack {
-                Spacer()
-                Text("\(model.project.name)")
-                    .font(.system(.title2).bold())
-                    .padding([.leading, .trailing])
-                Spacer()
+                HStack{
+                    // TODO This code works for editing, but not sure how to handle db updates with it
+//                    Image(systemName: "pencil.circle")
+//                        .font(.system(.title2))
+//                        .onTapGesture {
+//                            showingRenameAlert = !showingRenameAlert
+//                        }
+//                        .alert("Rename Project", isPresented: $showingRenameAlert, actions: {
+//                            TextField("New name value", text: $model.project.name)
+//                                .foregroundColor(Color.black)
+//                        })
+                    Text("\(model.project.name)")
+                        .font(.system(.title2).bold())
+                }.padding()
                 HStack {
                     Button(action: {
                         model.project.saveMetadataToRTDB()

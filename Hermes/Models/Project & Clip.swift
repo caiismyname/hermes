@@ -15,7 +15,7 @@ import FirebaseStorage
 class Project: ObservableObject, Codable {
     
     var id: UUID
-    var name: String
+    @Published var name: String
     var me = Me(id: UUID(), name: "David")
     @Published var allClips: [Clip]
     private var currentlyRecording = false

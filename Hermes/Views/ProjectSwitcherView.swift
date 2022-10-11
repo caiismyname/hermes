@@ -13,11 +13,15 @@ struct SwitchProjectsModal: View {
     private let sizes = Sizes()
     var dismissCallback: () -> ()
     
+    // For creating a new project
+    @State private var showingTitleAlert = false
+    @State private var newProjectName = ""
+    
     var body: some View {
         VStack {
             Spacer()
             
-            Button(action: { model.createProject() }) {
+            Button(action: { showingTitleAlert = !showingTitleAlert }) {
                 HStack {
                     Image(systemName: "plus.square")
                         .font(.system(size: sizes.secondaryButtonSize))
@@ -29,6 +33,15 @@ struct SwitchProjectsModal: View {
                 .background(Color.blue)
                 .foregroundColor(Color.white)
                 .cornerRadius(sizes.buttonCornerRadius)
+                .alert("New Project Name", isPresented: $showingTitleAlert, actions: {
+                    TextField("new project name", text: $newProjectName, prompt: Text(""))
+                        .foregroundColor(Color.black)
+                    Button("Create", action: {
+                        let newProject = model.createProject(name: newProjectName)
+                        model.switchProjects(newProject: newProject)
+                        dismissCallback()
+                    })
+                })
             }.padding()
         
             Spacer()

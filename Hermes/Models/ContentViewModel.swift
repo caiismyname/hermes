@@ -76,8 +76,8 @@ class ContentViewModel: ObservableObject {
         saveCurrentProject()
     }
     
-    func createProject() -> Project {
-        let newProject = Project()
+    func createProject(name: String = "") -> Project {
+        let newProject = Project(name: name)
         self.allProjects.append(newProject)
         saveProjects()
         newProject.createRTDBEntry()
