@@ -21,6 +21,7 @@ class ContentViewModel: ObservableObject {
     @Published var recordingManager: RecordingManager
     @Published var project: Project
     @Published var allProjects: [Project]
+    @Published var me = Me(id: UUID(), name: "Chameleon")
 
     // Global variables to manage whether or not to up/download files
     private var hasNetwork = false
@@ -38,6 +39,22 @@ class ContentViewModel: ObservableObject {
         
         setupSubscriptions()
         setupNetworkMonitor()
+        
+        // Load name
+        if let myId = UserDefaults.standard.string(forKey: "myId") {
+            // Overwrite temp UUID with the store UUID
+            me.id = UUID(uuidString: myId)!
+        } else {
+            // If no UUID saved, use the temp one we created. This should only happen on first run
+            UserDefaults.standard.setValue(me.id.uuidString, forKey: "myId")
+        }
+        
+        if let myName = UserDefaults.standard.string(forKey: "myName") {
+            me.name = myName
+        } else {
+            UserDefaults.standard.setValue(me.name, forKey: "myName")
+        }
+        self.project.me = me
     }
     
     func setupSubscriptions() {
@@ -71,6 +88,9 @@ class ContentViewModel: ObservableObject {
         self.project = newProject
         self.recordingManager.project = self.project
         
+        // Set name, since it has to be passed in from here
+        self.project.me = self.me
+        
         // Save before we quit
         // Is this necessary since we save on background anyways?
         saveCurrentProject()
@@ -78,13 +98,17 @@ class ContentViewModel: ObservableObject {
     
     func createProject(name: String = "") -> Project {
         let newProject = Project(name: name)
+        switchProjects(newProject: newProject) // This needs to go immediately so we set the Me object
         self.allProjects.append(newProject)
         saveProjects()
         newProject.createRTDBEntry()
         
-        switchProjects(newProject: newProject)
-        
         return newProject
+    }
+    
+    func updateName(newName: String) {
+        me.name = newName
+        UserDefaults.setValue(newName, forKey: "myName")
     }
     
     // Saving projects locally
@@ -141,21 +165,21 @@ class ContentViewModel: ObservableObject {
     func loadCurrentProject() {
         DispatchQueue.main.async {
             let currentProjectIdString = UserDefaults.standard.string(forKey: "currentProjectId") ?? ""
-            print(currentProjectIdString)
+            print("Loading project \(currentProjectIdString)")
             if currentProjectIdString != "" {
                 let currentProjectUUID = UUID(uuidString: currentProjectIdString)
                 let filteredProjects = self.allProjects.filter({p in p.id == currentProjectUUID})
                 if filteredProjects.count == 1 {
-                    self.project = filteredProjects[0]
+                    self.switchProjects(newProject: filteredProjects[0])
                 }
             } else {
                 // If the UUID is not found, will just carry through the temp project
+                self.project.me = self.me
+                self.recordingManager.project = self.project
                 
                 // Since the temp project is promoted to the "real" project, it needs to be pushed to the RTDB
                 self.project.createRTDBEntry()
             }
-            
-            self.recordingManager.project = self.project
         }
     }
     
@@ -248,6 +272,9 @@ class ContentViewModel: ObservableObject {
             )
             self.allProjects.append(remoteProject)
             
+            // Add self to creators list
+            dbRef.child(id).child("creators").child(self.me.id.uuidString).setValue(self.me.name)
+            
             // Switch, if told
             if (switchToProject) {
                 self.switchProjects(newProject: remoteProject)
@@ -255,4 +282,9 @@ class ContentViewModel: ObservableObject {
         })
     }
     
+}
+
+struct Me {
+    var id: UUID
+    var name: String
 }

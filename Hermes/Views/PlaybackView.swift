@@ -44,9 +44,10 @@ struct PlaybackView: View {
                 }.padding()
                 HStack {
                     Button(action: {
-                        model.project.saveMetadataToRTDB()
                         model.project.pullNewClipMetadata()
                         model.project.pullNewClipVideos()
+                        model.project.saveMetadataToRTDB()
+                        model.project.saveVideosToRTDB()
                     }) {
                         Text("Sync")
                             .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)

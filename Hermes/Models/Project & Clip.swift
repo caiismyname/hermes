@@ -16,7 +16,8 @@ class Project: ObservableObject, Codable {
     
     var id: UUID
     @Published var name: String
-    var me = Me(id: UUID(), name: "David")
+    var me: Me?
+    private var creators: [String: String] = [String: String]()
     @Published var allClips: [Clip]
     private var currentlyRecording = false
     private var currentClip: Clip? = nil
@@ -92,7 +93,7 @@ class Project: ObservableObject, Codable {
             [
                 "name": self.name,
                 "clips": [], // should be empty right now
-                "members": [me.id.uuidString: me.name]
+                "creators": [me!.id.uuidString: me!.name]
             ]
         )
     }
@@ -115,7 +116,7 @@ class Project: ObservableObject, Codable {
                 [
                     "id": c.id.uuidString,
                     "timestamp": c.timestamp.ISO8601Format(),
-                    "creator": me.id.uuidString
+                    "creator": me!.id.uuidString
                 ]
             )
             
@@ -130,9 +131,12 @@ class Project: ObservableObject, Codable {
                     print("Uploaded thumbnail for \(c.id.uuidString). [\(metadata.size)]")
                 }
             }
-            
             c.location = .remoteUnuploaded
         })
+        
+        // Upload project metadata
+        dbRef.child(self.id.uuidString).child("name").setValue(self.name)
+        dbRef.child(self.id.uuidString).child("creators").child(self.me!.id.uuidString).setValue(self.me!.name) // only update your own name, not the whole list
     }
     
     func saveVideosToRTDB() {
@@ -218,6 +222,36 @@ class Project: ObservableObject, Codable {
         })
         
         self.sortClips()
+        
+        // Pull project metadata
+        let dbRefCreators = Database.database().reference().child(id.uuidString).child("creators")
+        dbRefCreators.getData(completion: { error, snapshot in
+            guard error == nil && snapshot != nil else {
+                print(error!.localizedDescription)
+                return
+            }
+            
+            guard !(snapshot!.value! is NSNull) else {
+                // No clips in RTDB, nothing to sync
+                return
+            }
+            
+            self.creators = snapshot!.value! as! [String: String]
+        })
+        
+        let dbRefName = Database.database().reference().child(id.uuidString).child("name")
+        dbRefName.getData(completion: {error, snapshot in
+            guard error == nil && snapshot != nil else {
+                print(error!.localizedDescription)
+                return
+            }
+            
+            guard !(snapshot!.value! is NSNull) else {
+                // No clips in RTDB, nothing to sync
+                return
+            }
+            self.name = snapshot!.value! as! String
+        })
     }
     
     
@@ -248,8 +282,8 @@ class Project: ObservableObject, Codable {
     }
     
     func appStartSync() {
+        networkAwareProjectDownload() // Download remote changes before pushing up yours.
         networkAwareProjectUpload()
-        networkAwareProjectDownload()
     }
     
     // MARK: — Codable
@@ -279,6 +313,7 @@ class Project: ObservableObject, Codable {
 class Clip: Identifiable, Codable, ObservableObject {
     let id: UUID
     var timestamp: Date
+    var creator: String
     let projectId: UUID
     @Published var status: ClipStatus
     @Published var thumbnail: Data?
@@ -297,9 +332,10 @@ class Clip: Identifiable, Codable, ObservableObject {
         case downloaded // Metadta and video both downloaded from the DB (no upload responsibility)
     }
     
-    init(id: UUID = UUID(), timestamp: Date = Date(), projectId: UUID, location: ClipLocation = .local) {
+    init(id: UUID = UUID(), timestamp: Date = Date(), creator: String = "Unknown", projectId: UUID, location: ClipLocation = .local) {
         self.id = id
         self.timestamp = timestamp
+        self.creator = creator
         self.projectId = projectId
         self.status = .temporary
         self.location = location
@@ -356,6 +392,7 @@ class Clip: Identifiable, Codable, ObservableObject {
     private enum CoderKeys: String, CodingKey {
         case id
         case timestamp
+        case creator
         case projectId
         case status
         case thumbnail
@@ -366,6 +403,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         var container = encoder.container(keyedBy: CoderKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(creator, forKey: .creator)
         try container.encode(projectId, forKey: .projectId)
         try container.encode(status, forKey: .status)
         try container.encode(thumbnail, forKey: .thumbnail)
@@ -376,6 +414,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         let values = try decoder.container(keyedBy: CoderKeys.self)
         id = try values.decode(UUID.self, forKey: .id)
         timestamp = try values.decode(Date.self, forKey: .timestamp)
+        creator = try values.decode(String.self, forKey: .creator)
         projectId = try values.decode(UUID.self, forKey: .projectId)
         status = try values.decode(ClipStatus.self, forKey: .status)
         thumbnail = try values.decode(Data.self, forKey: .thumbnail)
@@ -383,7 +422,3 @@ class Clip: Identifiable, Codable, ObservableObject {
     }
 }
 
-struct Me {
-    var id: UUID
-    var name: String
-}

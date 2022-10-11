@@ -18,7 +18,7 @@ struct SwitchProjectsModal: View {
     @State private var newProjectName = ""
     
     var body: some View {
-        VStack {
+        VStack(alignment: .leading) {
             Spacer()
             
             Button(action: { showingTitleAlert = !showingTitleAlert }) {
@@ -61,6 +61,21 @@ struct SwitchProjectsModal: View {
                         dismissCallback()
                     }
             }
+            
+            Spacer()
+            Text("Settings")
+                .font(.system(.title).bold())
+                .padding()
+            
+            List {
+                Group {
+                    VStack {
+                        Text("Your name")
+                        TextField("your name", text: $model.me.name)
+                    }
+                }
+            }
+            
         }
     }
 }
