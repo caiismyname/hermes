@@ -20,21 +20,18 @@ struct RecordingControlsView: View {
         var results = [String: Double]()
         
         switch orientation {
-        case .portrait, .unknown:
+        case .portrait, .unknown, .faceUp, .faceDown: // Last three should be filtered out before it reaches here. This is just for completeness of the switch.
             results["x"] = geometry.size.width * relativePosition
             results["y"] = geometry.size.height - sizes.bottomOffset
-        case .portraitUpsideDown:
+        case .portraitUpsideDown: // Not currently supported
             results["x"] = geometry.size.width * relativePosition
             results["y"] = sizes.bottomOffset
         case .landscapeLeft:
             results["x"] = geometry.size.width - sizes.bottomOffset
-            results["y"] = geometry.size.height * relativePosition
+            results["y"] = geometry.size.height * (1.0 - relativePosition) // (1.0 - ... is to maintain ordering of the icons relative to portrait
         case .landscapeRight:
             results["x"] = sizes.bottomOffset
             results["y"] = geometry.size.height * relativePosition
-        case .faceUp, .faceDown:
-            results["x"] = geometry.size.width * relativePosition
-            results["y"] = geometry.size.height - sizes.bottomOffset
         @unknown default:
             results["x"] = geometry.size.width * relativePosition
             results["y"] = geometry.size.height - sizes.bottomOffset
