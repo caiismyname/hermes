@@ -29,7 +29,7 @@ struct PlaybackView: View {
             
             VStack {
                 HStack{
-                    // TODO This code works for editing, but not sure how to handle db updates with it
+                    // TODO This code works for editing, but not sure how to handle dirty db updates with it
 //                    Image(systemName: "pencil.circle")
 //                        .font(.system(.title2))
 //                        .onTapGesture {

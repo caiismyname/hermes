@@ -64,10 +64,6 @@ class Project: ObservableObject, Codable {
             print("Saved clip \(currentClip!.id.uuidString) to \(currentClip!.finalURL!)")
             self.currentClip = nil
             
-            // Run a sync to upload new clip
-            DispatchQueue.main.async {
-                self.networkAwareProjectUpload(shouldUploadVideo: false) // Just upload metadata for now
-            }
         } catch {
             print ("Error moving clip from temp to user home directory")
         }
@@ -169,7 +165,7 @@ class Project: ObservableObject, Codable {
     }
     
     func pullNewClipMetadata() {
-        print("Pulling new clip metadata")
+        print("Pulling new clip metadata for project \(id.uuidString)")
         let dbRef = Database.database().reference().child(id.uuidString).child("clips")
         let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
         

@@ -71,6 +71,7 @@ class ContentViewModel: ObservableObject {
         let queue = DispatchQueue(label: "Network Monitor")
         
         monitor.pathUpdateHandler = { path in
+            print("Network: \(path.isExpensive)")
             if path.status == .satisfied {
                 self.hasNetwork = true
             } else {
@@ -218,6 +219,7 @@ class ContentViewModel: ObservableObject {
         
         // Verified project doesn't not already exist. Look to DB
         let dbRef = Database.database().reference()
+        let storageRef = Storage.storage().reference().child(id)
         
         dbRef.child(id).getData(completion: {error, snapshot in
             guard error == nil && snapshot != nil && !(snapshot!.value! is NSNull) else {
@@ -237,27 +239,40 @@ class ContentViewModel: ObservableObject {
                 let data = d as! [String: String]
                 let clipIdString = data["id"]!
                 let clipTimestampString = data["timestamp"]!
-                projectAllClips.append(
-                    Clip(
-                        id: UUID.init(uuidString: clipIdString)!,
-                        timestamp: dateFormatter.date(from: clipTimestampString)!,
-                        projectId: projectId,
-                        location: .remoteUndownloaded
-                    )
+                
+                var newClip = Clip(
+                    id: UUID.init(uuidString: clipIdString)!,
+                    timestamp: dateFormatter.date(from: clipTimestampString)!,
+                    projectId: projectId,
+                    location: .remoteUndownloaded
                 )
+                
+                // Pull thumbnail for clip TODO make this a bulk call that matches thumbnails to clips
+                storageRef.child("thumbnails").child(newClip.id.uuidString).getData(maxSize: 1 * 1920 * 1080) { data, error in
+                    if let error = error {
+                        print(error)
+                    } else {
+                        if let image = UIImage(data: data!) {
+                            newClip.thumbnail = image.pngData()
+                        }
+                    }
+                }
+                projectAllClips.append(newClip)
             }
             
+            
+            
+            
             // Download videos
-            let storageRef = Storage.storage().reference().child(projectId.uuidString).child("videos")
             for (clip) in projectAllClips {
-                print("Downloading video for \(clip.id.uuidString) from \(storageRef.child(clip.id.uuidString))")
-                storageRef.child(clip.id.uuidString).write(toFile: clip.finalURL!) { url, error in
+                print("Downloading video for \(clip.id.uuidString) from \(storageRef.child("videos").child(clip.id.uuidString))")
+                storageRef.child("videos").child(clip.id.uuidString).write(toFile: clip.finalURL!) { url, error in
                     if error != nil {
                         print("Error downloading video for \(clip.id.uuidString)")
                         return
                     }
                     
-                    clip.generateThumbnail()
+//                    clip.generateThumbnail()
                     clip.location = .downloaded
                     clip.status = .final
                 }
