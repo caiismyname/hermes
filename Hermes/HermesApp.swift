@@ -11,7 +11,7 @@ import FirebaseCore
 @main
 struct HermesApp: App {
 //    let persistenceController = PersistenceController.shared
-    let contentViewModel = ContentViewModel()
+    var contentViewModel = ContentViewModel()
     @Environment(\.scenePhase) private var scenePhase // Used for detecting when this scene is backgrounded and isn't currently visible.
     
     // AppDelegate equivalent

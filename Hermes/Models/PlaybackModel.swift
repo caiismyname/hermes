@@ -22,8 +22,6 @@ class PlaybackModel:ObservableObject {
         }
     }
     
-
-    
     private func generatePlayerItem(idx: Int) -> AVPlayerItem? {
         let clip = self.project.allClips[idx]
         if let url = clip.finalURL {

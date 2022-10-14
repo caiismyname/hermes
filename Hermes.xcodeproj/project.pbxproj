@@ -129,10 +129,10 @@
 		2778E09D28D6032B003E901E /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				2778E0A828D6165D003E901E /* ContentViewModel.swift */,
+				2778E0B128D7A171003E901E /* Project & Clip.swift */,
 				2778E0A228D607C0003E901E /* CameraManager.swift */,
 				2778E0AD28D66D27003E901E /* RecordingManager.swift */,
-				2778E0B128D7A171003E901E /* Project & Clip.swift */,
-				2778E0A828D6165D003E901E /* ContentViewModel.swift */,
 				27ECF55528ECF2E400E7DF48 /* PlaybackModel.swift */,
 			);
 			path = Models;

@@ -9,6 +9,7 @@ import SwiftUI
 import FirebaseCore
 import FirebaseDatabase
 import FirebaseStorage
+import FirebaseAuth
 import Network
 
 class ContentViewModel: ObservableObject {
@@ -21,12 +22,13 @@ class ContentViewModel: ObservableObject {
     @Published var recordingManager: RecordingManager
     @Published var project: Project
     @Published var allProjects: [Project]
-    @Published var me = Me(id: UUID(), name: "Chameleon")
+    @Published var me = Me(id: "", name: "Chameleon")
 
     // Global variables to manage whether or not to up/download files
     private var hasNetwork = false
     private var networkIsExpensive = true
     private var useNetworkEvenIfExpensive = true
+    private var hasFirebaseAuth = false
     
     private let saveFileName = "projects"
     
@@ -43,10 +45,10 @@ class ContentViewModel: ObservableObject {
         // Load name
         if let myId = UserDefaults.standard.string(forKey: "myId") {
             // Overwrite temp UUID with the store UUID
-            me.id = UUID(uuidString: myId)!
+            me.id = myId
         } else {
-            // If no UUID saved, use the temp one we created. This should only happen on first run
-            UserDefaults.standard.setValue(me.id.uuidString, forKey: "myId")
+            // If no UUID exists yet, just keep the temp ID for now. It'll be overwritten with the Firebase ID in from the callback in Firebase config
+            UserDefaults.standard.setValue(me.id, forKey: "myId")
         }
         
         if let myName = UserDefaults.standard.string(forKey: "myName") {
@@ -55,6 +57,14 @@ class ContentViewModel: ObservableObject {
             UserDefaults.standard.setValue(me.name, forKey: "myName")
         }
         self.project.me = me
+    }
+    
+    func updateMeId(meFirebaseID: String) {
+        me.id = meFirebaseID
+        UserDefaults.standard.setValue(me.id, forKey: "myId")
+        self.project.me = me // Unsure if we need this, but just to be safe.
+        
+        print("receive id \(me.id)")
     }
     
     func setupSubscriptions() {
@@ -186,8 +196,22 @@ class ContentViewModel: ObservableObject {
     
     // Firebase Handling
     
+    func firebaseAuth() async {
+        if !hasFirebaseAuth {
+            Auth.auth().signInAnonymously { authResult, error in
+                guard let user = authResult?.user else { return }
+                let isAnonymous = user.isAnonymous  // true
+                let uid = user.uid // ignore this id for now
+                
+                self.hasFirebaseAuth = true
+            }
+        }
+    }
+    
     func uploadCurrentProject() {
         guard hasNetwork else { return }
+        Task { await firebaseAuth() }
+        guard hasFirebaseAuth else { return }
         
         if !networkIsExpensive || (networkIsExpensive && useNetworkEvenIfExpensive) {
             self.project.networkAwareProjectUpload(shouldUploadVideo: true)
@@ -198,6 +222,8 @@ class ContentViewModel: ObservableObject {
     
     func downloadCurrentProject() {
         guard hasNetwork else { return }
+        Task { await firebaseAuth() }
+        guard hasFirebaseAuth else { return }
         
         if !networkIsExpensive || (networkIsExpensive && useNetworkEvenIfExpensive) {
             self.project.networkAwareProjectDownload(shouldDownloadVideo: true)
@@ -207,6 +233,9 @@ class ContentViewModel: ObservableObject {
     }
     
     func downloadRemoteProject(id: String, switchToProject: Bool = false) {
+        Task { await firebaseAuth() }
+        guard hasFirebaseAuth else { return }
+        
         // First check the project doesn't exist locally
         let projectId = UUID(uuidString: id)!
         guard !self.allProjects.map({ p in p.id }).contains(projectId) else {
@@ -288,7 +317,7 @@ class ContentViewModel: ObservableObject {
             self.allProjects.append(remoteProject)
             
             // Add self to creators list
-            dbRef.child(id).child("creators").child(self.me.id.uuidString).setValue(self.me.name)
+            dbRef.child(id).child("creators").child(self.me.id).setValue(self.me.name)
             
             // Switch, if told
             if (switchToProject) {
@@ -300,6 +329,6 @@ class ContentViewModel: ObservableObject {
 }
 
 struct Me {
-    var id: UUID
+    var id: String
     var name: String
 }

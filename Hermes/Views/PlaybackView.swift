@@ -44,10 +44,14 @@ struct PlaybackView: View {
                 }.padding()
                 HStack {
                     Button(action: {
-                        model.project.pullNewClipMetadata()
-                        model.project.pullNewClipVideos()
-                        model.project.saveMetadataToRTDB()
-                        model.project.saveVideosToRTDB()
+                        // Go through the model so it does the firebase auth
+                        model.downloadCurrentProject()
+                        model.uploadCurrentProject()
+                    
+//                        model.project.pullNewClipMetadata()
+//                        model.project.pullNewClipVideos()
+//                        model.project.saveMetadataToRTDB()
+//                        model.project.saveVideosToRTDB()
                     }) {
                         Text("Sync")
                             .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)

@@ -89,7 +89,7 @@ class Project: ObservableObject, Codable {
             [
                 "name": self.name,
                 "clips": [], // should be empty right now
-                "creators": [me!.id.uuidString: me!.name]
+                "creators": [me!.id: me!.name]
             ]
         )
     }
@@ -112,7 +112,7 @@ class Project: ObservableObject, Codable {
                 [
                     "id": c.id.uuidString,
                     "timestamp": c.timestamp.ISO8601Format(),
-                    "creator": me!.id.uuidString
+                    "creator": me!.id
                 ]
             )
             
@@ -132,7 +132,7 @@ class Project: ObservableObject, Codable {
         
         // Upload project metadata
         dbRef.child(self.id.uuidString).child("name").setValue(self.name)
-        dbRef.child(self.id.uuidString).child("creators").child(self.me!.id.uuidString).setValue(self.me!.name) // only update your own name, not the whole list
+        dbRef.child(self.id.uuidString).child("creators").child(self.me!.id).setValue(self.me!.name) // only update your own name, not the whole list
     }
     
     func saveVideosToRTDB() {
