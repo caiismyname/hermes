@@ -60,7 +60,8 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
         sessionQueue.async {
             if !movieFileOutput.isRecording {
                 if let movieFileOutputConnection = movieFileOutput.connection(with: .video) {
-                    movieFileOutputConnection.videoOrientation = AVCaptureVideoOrientation(rawValue:  UIDevice.current.orientation.rawValue)!
+                    let orientation = AVCaptureVideoOrientation(rawValue:  UIDevice.current.orientation.rawValue)!
+                    movieFileOutputConnection.videoOrientation = orientation
                     
                     if movieFileOutput.availableVideoCodecTypes.contains(.hevc) {
                         movieFileOutput.setOutputSettings(
@@ -69,6 +70,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
                     
                     if let clip = self.project.startClip() {
                         movieFileOutput.startRecording(to: clip.temporaryURL!, recordingDelegate: self)
+                        clip.orientation = orientation
                         print("Start recording")
                     }
                 }

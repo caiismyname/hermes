@@ -81,7 +81,7 @@ class ContentViewModel: ObservableObject {
         let queue = DispatchQueue(label: "Network Monitor")
         
         monitor.pathUpdateHandler = { path in
-            print("Network: \(path.isExpensive)")
+            print("Network is expensive? --> \(path.isExpensive)")
             if path.status == .satisfied {
                 self.hasNetwork = true
             } else {

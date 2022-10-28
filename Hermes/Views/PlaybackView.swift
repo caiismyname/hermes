@@ -8,16 +8,19 @@
 import Foundation
 import SwiftUI
 import AVKit
+import Photos
 
 struct PlaybackView: View {
     @ObservedObject var model: ContentViewModel
     var playbackModel: PlaybackModel
     private let sizes = Sizes()
     @State var showingRenameAlert = false
+    @ObservedObject var exporter: Exporter
     
     init(model: ContentViewModel) {
         self.model = model
         self.playbackModel = PlaybackModel(project: model.project)
+        self.exporter = Exporter(project: model.project)
     }
     
     var body: some View {
@@ -71,6 +74,24 @@ struct PlaybackView: View {
                     } else {
                         // Fallback on earlier versions
                     }
+                    
+                    Button(action: {
+                        let exporter = Exporter(project: model.project)
+                        Task {
+                            await exporter.export()
+                        }
+                    }) {
+                        if exporter.isProcessing {
+                            Text("Exporting...")
+                                .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
+                        } else {
+                            Text("Export")
+                                .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
+                        }
+                    }
+                    .foregroundColor(Color.white)
+                    .background(Color.purple)
+                    .cornerRadius(sizes.buttonCornerRadius)
                 }
                 .padding([.leading, .trailing])
                 VideoPlayer(player: playbackModel.player)
