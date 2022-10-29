@@ -150,7 +150,7 @@ class Project: ObservableObject, Codable {
                     return
                 }
                 
-                print("Uploaded video for \(c.id.uuidString). [\(metadata.size)]")
+                print("Uploaded video for \(c.id.uuidString). [\(metadata.size) bytes]")
                 c.location = .uploaded
             }
         })
@@ -203,7 +203,7 @@ class Project: ObservableObject, Codable {
                 )
                 
                 // Pull clip thumbnail
-                storageRef.child(newClip.id.uuidString).getData(maxSize: 1 * 1920 * 1080) { data, error in
+                storageRef.child(newClip.id.uuidString).getData(maxSize: 30 * 30 * 1920 * 1080) { data, error in
                     if let error = error {
                         print(error)
                     } else {
@@ -281,14 +281,6 @@ class Project: ObservableObject, Codable {
         networkAwareProjectDownload() // Download remote changes before pushing up yours.
         networkAwareProjectUpload()
     }
-    
-    // MARK: Exporting
-    
-//    func export() {
-//        let exporter = Exporter(project: self)
-//        await let fullMovie = exporter.export()
-//
-//    }
     
     // MARK: — Codable
     private enum CoderKeys: String, CodingKey {

@@ -31,10 +31,13 @@ class ContentViewModel: ObservableObject {
     private var hasFirebaseAuth = false
     
     private let saveFileName = "projects"
+    private let maxThumbnailDownloadSize = Int64(2000 * 2000 * 10)
+    private let maxVideoDownloadSize = Int64(1920 * 1080 * 30 * 30)
     
     init() {
         // Temporary placeholders
         let tempProject = Project()
+        print("TEMP PROJECT ID: \(tempProject.id.uuidString)")
         self.recordingManager = RecordingManager(project: tempProject)
         self.project = tempProject
         self.allProjects = [tempProject]
@@ -43,12 +46,12 @@ class ContentViewModel: ObservableObject {
         setupNetworkMonitor()
         
         // Load name
-        if let myId = UserDefaults.standard.string(forKey: "myId") {
-            // Overwrite temp UUID with the store UUID
-            me.id = myId
+        if let meId = UserDefaults.standard.string(forKey: "meId") {
+            // Overwrite temp UUID with the stored UUID
+            me.id = meId
         } else {
             // If no UUID exists yet, just keep the temp ID for now. It'll be overwritten with the Firebase ID in from the callback in Firebase config
-            UserDefaults.standard.setValue(me.id, forKey: "myId")
+            UserDefaults.standard.setValue(me.id, forKey: "meId")
         }
         
         if let myName = UserDefaults.standard.string(forKey: "myName") {
@@ -61,13 +64,13 @@ class ContentViewModel: ObservableObject {
     
     func updateMeId(meFirebaseID: String) {
         me.id = meFirebaseID
-        UserDefaults.standard.setValue(me.id, forKey: "myId")
+        UserDefaults.standard.setValue(me.id, forKey: "meId")
         self.project.me = me // Unsure if we need this, but just to be safe.
         
-        print("receive id \(me.id)")
+        print("Updated meId to \(me.id)")
     }
     
-    func setupSubscriptions() {
+    private func setupSubscriptions() {
         cameraManager.$error
             .receive(on: RunLoop.main)
             .map { $0 }
@@ -76,7 +79,7 @@ class ContentViewModel: ObservableObject {
         recordingManager.configureCaptureSession(session: cameraManager.session)
     }
     
-    func setupNetworkMonitor() {
+    private func setupNetworkMonitor() {
         let monitor = NWPathMonitor()
         let queue = DispatchQueue(label: "Network Monitor")
         
@@ -95,6 +98,7 @@ class ContentViewModel: ObservableObject {
     }
     
     func switchProjects(newProject: Project) {
+        print("Switching to \(newProject.name) \(newProject.id)")
         // Switch currently active project
         self.project = newProject
         self.recordingManager.project = self.project
@@ -102,8 +106,7 @@ class ContentViewModel: ObservableObject {
         // Set name, since it has to be passed in from here
         self.project.me = self.me
         
-        // Save before we quit
-        // Is this necessary since we save on background anyways?
+        // Save before app might quit
         saveCurrentProject()
     }
     
@@ -136,6 +139,9 @@ class ContentViewModel: ObservableObject {
     }
     
     func saveProjects() {
+        for p in allProjects {
+            print("Saving \(p.name) \(p.id)")
+        }
         if let encoded = try? JSONEncoder().encode(["allProjects": allProjects]) {
             do {
                 try encoded.write(to: contentViewModelURL())
@@ -160,12 +166,14 @@ class ContentViewModel: ObservableObject {
             do {
                 guard let file = try? FileHandle(forReadingFrom: self.contentViewModelURL()) else {
                     // If loading fails
-                    completion(.success(["allProjects": [self.project]]))
+//                    completion(.success(["allProjects": [self.project]]))
+                    completion(.failure(NSError()))
                     return
                 }
                 
                 // Successfully loaded projects
                 let results = try JSONDecoder().decode([String: [Project]].self, from: file.availableData)
+                print("Loaded \(results["allProjects"]!.count) projects: \(results["allProjects"]!.map({p in return p.name + " " + p.id.uuidString}))")
                 completion(.success(results))
             } catch {
                 completion(.failure(error))
@@ -176,15 +184,19 @@ class ContentViewModel: ObservableObject {
     func loadCurrentProject() {
         DispatchQueue.main.async {
             let currentProjectIdString = UserDefaults.standard.string(forKey: "currentProjectId") ?? ""
-            print("Loading project \(currentProjectIdString)")
             if currentProjectIdString != "" {
+                print("Current project is \(currentProjectIdString)")
                 let currentProjectUUID = UUID(uuidString: currentProjectIdString)
                 let filteredProjects = self.allProjects.filter({p in p.id == currentProjectUUID})
                 if filteredProjects.count == 1 {
                     self.switchProjects(newProject: filteredProjects[0])
+                } else {
+                    print("ERROR current project not in loaded project list. Didn't find \(currentProjectIdString)")
                 }
             } else {
                 // If the UUID is not found, will just carry through the temp project
+                print("No current project saved. Carrying through initial temp project")
+                
                 self.project.me = self.me
                 self.recordingManager.project = self.project
                 
@@ -198,12 +210,14 @@ class ContentViewModel: ObservableObject {
     
     func firebaseAuth() async {
         if !hasFirebaseAuth {
-            Auth.auth().signInAnonymously { authResult, error in
-                guard let user = authResult?.user else { return }
-                let isAnonymous = user.isAnonymous  // true
-                let uid = user.uid // ignore this id for now
+            do {
+                let authResult = try await Auth.auth().signInAnonymously()
+                let uid = authResult.user.uid
                 
+                self.updateMeId(meFirebaseID: uid)
                 self.hasFirebaseAuth = true
+            } catch {
+                return
             }
         }
     }
@@ -277,7 +291,7 @@ class ContentViewModel: ObservableObject {
                 )
                 
                 // Pull thumbnail for clip TODO make this a bulk call that matches thumbnails to clips
-                storageRef.child("thumbnails").child(newClip.id.uuidString).getData(maxSize: 1 * 1920 * 1080) { data, error in
+                storageRef.child("thumbnails").child(newClip.id.uuidString).getData(maxSize: self.maxThumbnailDownloadSize) { data, error in
                     if let error = error {
                         print(error)
                     } else {
@@ -288,8 +302,6 @@ class ContentViewModel: ObservableObject {
                 }
                 projectAllClips.append(newClip)
             }
-            
-            
             
             
             // Download videos
