@@ -49,35 +49,34 @@ struct RecordingControlsView: View {
             }
             
             if !(recordingManager.isRecording) {
-                // Playback button
-                Button(action: {playbackModalShowing = !playbackModalShowing}) {
-                    Image(systemName: "film.stack")
-                        .font(.system(size: sizes.secondaryButtonSize))
-                        .foregroundColor(Color.white)
-                }
-                .position(
-                    x: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["x"]!,
-                    y: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["y"]!
-                )
-                .popover(isPresented: $playbackModalShowing, content: { PlaybackView(model: model) })
+                PlaybackButton(project: model.project, tapCallback: {playbackModalShowing = !playbackModalShowing})
+                    .position(
+                        x: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["x"]!,
+                        y: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["y"]!
+                    )
+                    .popover(isPresented: $playbackModalShowing, content: { PlaybackView(model: model) })
             
                 // Projects button
                 Button(action: {projectSwitcherModalShowing = !projectSwitcherModalShowing}) {
-                    Image(systemName: "square.stack.3d.up.fill")
-                        .font(.system(size: sizes.secondaryButtonSize))
-                        .foregroundColor(Color.white)
+                    ZStack {
+                        Circle()
+                            .fill(Color.black)
+                            .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
+                        Image(systemName: "square.stack.3d.up.fill")
+                            .font(.system(size: sizes.secondaryButtonSize))
+                            .foregroundColor(Color.white)
+                    }
                 }
-                .position(
-                    x: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["x"]!,
-                    y: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["y"]!
-                )
-                .popover(isPresented: $projectSwitcherModalShowing, content: {
-                    SwitchProjectsModal(
-                        model: model,
-                        dismissCallback: {self.projectSwitcherModalShowing = !self.projectSwitcherModalShowing}
+                    .position(
+                        x: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["x"]!,
+                        y: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["y"]!
                     )
-                    
-                })
+                    .popover(isPresented: $projectSwitcherModalShowing, content: {
+                        SwitchProjectsModal(
+                            model: model,
+                            dismissCallback: {self.projectSwitcherModalShowing = !self.projectSwitcherModalShowing}
+                        )
+                    })
                 
                 // Project Name
                 
@@ -167,3 +166,31 @@ struct RecordingTimeCounter: View {
     }
 }
 
+struct PlaybackButton: View {
+    @ObservedObject var project: Project
+    private let sizes = Sizes()
+    let tapCallback: () -> Void
+    
+    var body: some View {
+        Button(action: {tapCallback()}) {
+            ZStack {
+                Circle()
+                    .fill(Color.black)
+                    .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
+                Image(systemName: "film.stack")
+                    .font(.system(size: sizes.secondaryButtonSize))
+                    .foregroundColor(Color.white)
+                if project.unseenClips.count > 0 {
+                    ZStack {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 30, height: 30)
+                        Text("\(project.unseenClips.count)")
+                            .foregroundColor(Color.white)
+                    }
+                    .offset(CGSize(width: (sizes.secondaryButtonSize * (4/5)), height: -1 * (sizes.secondaryButtonSize * (4/5)) ))
+                }
+            }
+        }
+    }
+}

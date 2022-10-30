@@ -45,7 +45,7 @@ struct HermesApp: App {
                     if newPhase == .background {
                         contentViewModel.saveProjects() // saveCurrentProject is called in saveProjects()
 //                        contentViewModel.uploadCurrentProject() // This call is network aware
-                        Task { await contentViewModel.networkSync() }
+                        Task { await contentViewModel.networkSync(shouldDownload: false) }
                     }
                 }
                 .onAppear {

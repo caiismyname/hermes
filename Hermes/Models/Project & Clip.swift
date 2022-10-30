@@ -21,6 +21,7 @@ class Project: ObservableObject, Codable {
     @Published var allClips: [Clip]
     private var currentlyRecording = false
     private var currentClip: Clip? = nil
+    @Published var unseenClips = [UUID]()
     
     init(uuid: UUID = UUID(), name: String = "Project \(Int.random(in: 0..<100))", allClips: [Clip] = []) {
         self.id = uuid
@@ -36,8 +37,7 @@ class Project: ObservableObject, Codable {
         self.currentClip = Clip(projectId: id)
         self.currentlyRecording = true
         
-        print("Allocated a new clip \(self.currentClip!.id.uuidString) with temp URL \(self.currentClip!.temporaryURL)")
-        
+        print("Allocated a new clip \(self.currentClip!.id.uuidString) with temp URL \(String(describing: self.currentClip!.temporaryURL))")
         return self.currentClip
     }
     
@@ -79,10 +79,19 @@ class Project: ObservableObject, Codable {
         return URL(string: "\(URLSchema.baseURL)\(self.id.uuidString)")!
     }
     
+    func clearUnseenVideos() {
+        self.unseenClips = [UUID]()
+    }
+    
+    func markClipAsSeen(id: UUID) {
+        self.unseenClips = self.unseenClips.filter { c in
+            c != id
+        }
+    }
+    
     // MARK: Firebase
     func createRTDBEntry() {
         let ref = Database.database().reference()
-        print(ref.url)
         
         // Create DB
         ref.child(self.id.uuidString).setValue(
@@ -217,6 +226,7 @@ class Project: ObservableObject, Codable {
                 }
                 
                 self.allClips.append(newClip)
+                self.unseenClips.append(newClip.id)
             }
             self.sortClips()
             

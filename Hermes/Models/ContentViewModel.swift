@@ -256,10 +256,13 @@ class ContentViewModel: ObservableObject {
     }
     
     @MainActor
-    func networkSync() async {
+    func networkSync(shouldDownload: Bool = true) async {
         self.startWork()
-        await downloadCurrentProject()
+        if shouldDownload {
+            await downloadCurrentProject()
+        }
         await uploadCurrentProject()
+        print("Network sync complete (did download? --> \(shouldDownload))")
         self.stopWork()
     }
     
@@ -310,6 +313,7 @@ class ContentViewModel: ObservableObject {
                 // Pull thumbnail for clip TODO make this a bulk call that matches thumbnails to clips
                 storageRef.child("thumbnails").child(newClip.id.uuidString).getData(maxSize: self.maxThumbnailDownloadSize) { data, error in
                     if let error = error {
+                        print("ERROR could not download thumbnail for clip \(newClip.id.uuidString)")
                         print(error)
                     } else {
                         if let image = UIImage(data: data!) {
@@ -326,7 +330,7 @@ class ContentViewModel: ObservableObject {
                 print("Downloading video for \(clip.id.uuidString) from \(storageRef.child("videos").child(clip.id.uuidString))")
                 storageRef.child("videos").child(clip.id.uuidString).write(toFile: clip.finalURL!) { url, error in
                     if error != nil {
-                        print("Error downloading video for \(clip.id.uuidString)")
+                        print("ERROR could not download video for \(clip.id.uuidString)")
                         return
                     }
                     
@@ -343,7 +347,13 @@ class ContentViewModel: ObservableObject {
                 name: projectName,
                 allClips: projectAllClips
             )
+            
+            // Set all clips in the project as unseen
+            remoteProject.unseenClips = remoteProject.allClips.map({ c in c.id })
+
+            // Add project to local projects
             self.allProjects.append(remoteProject)
+            self.saveProjects()
             
             // Add self to creators list
             dbRef.child(id).child("creators").child(self.me.id).setValue(self.me.name)

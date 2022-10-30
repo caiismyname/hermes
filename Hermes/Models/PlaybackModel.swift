@@ -34,6 +34,8 @@ class PlaybackModel:ObservableObject {
                 name: .AVPlayerItemDidPlayToEndTime,
                 object: playerItem)
             
+            self.project.markClipAsSeen(id: clip.id)
+            
             return playerItem
         } else {
             return nil
