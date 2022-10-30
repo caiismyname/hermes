@@ -23,6 +23,7 @@ class ContentViewModel: ObservableObject {
     @Published var project: Project
     @Published var allProjects: [Project]
     @Published var me = Me(id: "", name: "Chameleon")
+    @Published var isWorking = false
 
     // Global variables to manage whether or not to up/download files
     private var hasNetwork = false
@@ -95,6 +96,14 @@ class ContentViewModel: ObservableObject {
         }
         
         monitor.start(queue: queue)
+    }
+    
+    func startWork() {
+        self.isWorking = true
+    }
+    
+    func stopWork() {
+        self.isWorking = false
     }
     
     func switchProjects(newProject: Project) {
@@ -208,7 +217,7 @@ class ContentViewModel: ObservableObject {
     
     // Firebase Handling
     
-    func firebaseAuth() async {
+    private func firebaseAuth() async {
         if !hasFirebaseAuth {
             do {
                 let authResult = try await Auth.auth().signInAnonymously()
@@ -222,28 +231,36 @@ class ContentViewModel: ObservableObject {
         }
     }
     
-    func uploadCurrentProject() {
+    private func uploadCurrentProject() async {
         guard hasNetwork else { return }
-        Task { await firebaseAuth() }
+        await firebaseAuth()
         guard hasFirebaseAuth else { return }
         
         if !networkIsExpensive || (networkIsExpensive && useNetworkEvenIfExpensive) {
-            self.project.networkAwareProjectUpload(shouldUploadVideo: true)
+            await self.project.networkAwareProjectUpload(shouldUploadVideo: true)
         } else {
-            self.project.networkAwareProjectUpload(shouldUploadVideo: false)
+            await self.project.networkAwareProjectUpload(shouldUploadVideo: false)
         }
     }
     
-    func downloadCurrentProject() {
+    private func downloadCurrentProject() async {
         guard hasNetwork else { return }
-        Task { await firebaseAuth() }
+        await firebaseAuth()
         guard hasFirebaseAuth else { return }
         
         if !networkIsExpensive || (networkIsExpensive && useNetworkEvenIfExpensive) {
-            self.project.networkAwareProjectDownload(shouldDownloadVideo: true)
+            await self.project.networkAwareProjectDownload(shouldDownloadVideo: true)
         } else {
-            self.project.networkAwareProjectDownload(shouldDownloadVideo: false)
+            await self.project.networkAwareProjectDownload(shouldDownloadVideo: false)
         }
+    }
+    
+    @MainActor
+    func networkSync() async {
+        self.startWork()
+        await downloadCurrentProject()
+        await uploadCurrentProject()
+        self.stopWork()
     }
     
     func downloadRemoteProject(id: String, switchToProject: Bool = false) {
@@ -283,7 +300,7 @@ class ContentViewModel: ObservableObject {
                 let clipIdString = data["id"]!
                 let clipTimestampString = data["timestamp"]!
                 
-                var newClip = Clip(
+                let newClip = Clip(
                     id: UUID.init(uuidString: clipIdString)!,
                     timestamp: dateFormatter.date(from: clipTimestampString)!,
                     projectId: projectId,

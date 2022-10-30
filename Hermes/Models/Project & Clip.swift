@@ -94,96 +94,99 @@ class Project: ObservableObject, Codable {
         )
     }
     
-    func saveMetadataToRTDB() {
+    func saveMetadataToRTDB() async {
         print("Uploading metadata for project \(self.id.uuidString) to RTDB")
-        let dbRef = Database.database().reference()
-        let storageRef = Storage.storage().reference().child(self.id.uuidString)
-        
-        let localClips = allClips.filter({ $0.location == .local })
-
-        localClips.forEach({c in
-            guard c.finalURL != nil else {
-                print("Error uploading clip \(c.id.uuidString) — missing finalURL")
-                return
-            }
+        do {
+            let dbRef = Database.database().reference()
+            let storageRef = Storage.storage().reference().child(self.id.uuidString)
             
-            // Upload clip metadata
-            dbRef.child(self.id.uuidString).child("clips").childByAutoId().setValue(
-                [
-                    "id": c.id.uuidString,
-                    "timestamp": c.timestamp.ISO8601Format(),
-                    "creator": me!.id
-                ]
-            )
+            let localClips = allClips.filter({ $0.location == .local })
             
-            // Upload thumbnails
-            if c.thumbnail != nil {
-                let thumbnailRef = storageRef.child("thumbnails").child(c.id.uuidString)
-                _ = thumbnailRef.putData(c.thumbnail!) { (metadata, error) in
-                    guard let metadata = metadata else {
-                        return
-                    }
-                    
-                    print("Uploaded thumbnail for \(c.id.uuidString). [\(metadata.size)]")
+            for c in localClips {
+                guard c.finalURL != nil else {
+                    print("Error uploading clip \(c.id.uuidString) — missing finalURL")
+                    return
                 }
+                
+                // Upload clip metadata
+                await withCheckedContinuation { continuation in
+                    dbRef.child(self.id.uuidString).child("clips").childByAutoId().setValue(
+                        [
+                            "id": c.id.uuidString,
+                            "timestamp": c.timestamp.ISO8601Format(),
+                            "creator": me!.id
+                        ]
+                    ) { _,_  in
+                        continuation.resume()
+                    }
+                }
+                
+                // Upload thumbnails
+                if c.thumbnail != nil {
+                    let thumbnailRef = storageRef.child("thumbnails").child(c.id.uuidString)
+                    _ = thumbnailRef.putData(c.thumbnail!) { (metadata, error) in
+                        guard let metadata = metadata else {
+                            return
+                        }
+                        
+                        print("Uploaded thumbnail for \(c.id.uuidString). [\(metadata.size)]")
+                    }
+                }
+                c.location = .remoteUnuploaded
             }
-            c.location = .remoteUnuploaded
-        })
-        
-        // Upload project metadata
-        dbRef.child(self.id.uuidString).child("name").setValue(self.name)
-        dbRef.child(self.id.uuidString).child("creators").child(self.me!.id).setValue(self.me!.name) // only update your own name, not the whole list
+            
+            // Upload project metadata
+            try await dbRef.child(self.id.uuidString).child("name").setValue(self.name)
+            try await dbRef.child(self.id.uuidString).child("creators").child(self.me!.id).setValue(self.me!.name) // only update your own name, not the whole list
+        } catch {
+            print(error)
+        }
     }
     
-    func saveVideosToRTDB() {
+    func saveVideosToRTDB() async {
         print("Uploading videos for project \(self.id.uuidString) to DB")
         let dbRef = Database.database().reference()
         let storageRef = Storage.storage().reference().child(self.id.uuidString)
         
         let remoteUnuploadedClips = allClips.filter({ $0.location == .remoteUnuploaded })
 
-        remoteUnuploadedClips.forEach({c in
+        for c in remoteUnuploadedClips {
             let videoRef = storageRef.child("videos").child(c.id.uuidString)
-            _ = videoRef.putFile(from: c.finalURL!) { (metadata, error) in
-                guard let metadata = metadata else {
-                    print(error?.localizedDescription ?? "Error uploading video for \(c.id.uuidString)")
-                    return
+            await withCheckedContinuation { continuation in
+                videoRef.putFile(from: c.finalURL!) { (metadata, error) in
+                    guard let metadata = metadata else {
+                        print(error?.localizedDescription ?? "Error uploading video for \(c.id.uuidString)")
+                        continuation.resume()
+                        return
+                    }
+                    
+                    print("Uploaded video for \(c.id.uuidString). [\(metadata.size) bytes]")
+                    c.location = .uploaded
+                    continuation.resume()
                 }
-                
-                print("Uploaded video for \(c.id.uuidString). [\(metadata.size) bytes]")
-                c.location = .uploaded
             }
-        })
-    }
-    
-    func networkAwareProjectUpload(shouldUploadVideo: Bool = false) {
-        saveMetadataToRTDB()
-        
-        if shouldUploadVideo {
-            saveVideosToRTDB()
         }
     }
     
-    func pullNewClipMetadata() {
-        print("Pulling new clip metadata for project \(id.uuidString)")
-        let dbRef = Database.database().reference().child(id.uuidString).child("clips")
-        let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
+    func networkAwareProjectUpload(shouldUploadVideo: Bool = false) async {
+        await saveMetadataToRTDB()
         
-        dbRef.getData(completion: {error, snapshot in
-            guard error == nil && snapshot != nil else {
-                print(error!.localizedDescription)
-                return
-            }
+        if shouldUploadVideo {
+            await saveVideosToRTDB()
+        }
+    }
+    
+    func pullNewClipMetadata() async {
+        do {
+            print("Pulling new clip metadata for project \(id.uuidString)")
+            let dbRef = Database.database().reference().child(id.uuidString).child("clips")
+            let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
             
-            guard !(snapshot!.value! is NSNull) else {
-                // No clips in RTDB, nothing to sync
-                return
-            }
+            let snapshot = try await dbRef.getData()
+            guard !(snapshot.value! is NSNull) else { return } // No clips in RTDB, nothing to sync
             
-            let allClipsFromDB = snapshot!.value as! [String:[String:String]]
-            let allLocalClipIds = self.allClips.map { c in
-                c.id
-            }
+            let allClipsFromDB = snapshot.value as! [String:[String:String]]
+            let allLocalClipIds = self.allClips.map { c in c.id }
             let dateFormatter = ISO8601DateFormatter()
             
             for (_, d) in allClipsFromDB {
@@ -215,75 +218,56 @@ class Project: ObservableObject, Codable {
                 
                 self.allClips.append(newClip)
             }
-        })
-        
-        self.sortClips()
-        
-        // Pull project metadata
-        let dbRefCreators = Database.database().reference().child(id.uuidString).child("creators")
-        dbRefCreators.getData(completion: { error, snapshot in
-            guard error == nil && snapshot != nil else {
-                print(error!.localizedDescription)
-                return
-            }
+            self.sortClips()
             
-            guard !(snapshot!.value! is NSNull) else {
-                // No clips in RTDB, nothing to sync
-                return
-            }
+            // Pull project metadata
+            let dbRefCreators = Database.database().reference().child(id.uuidString).child("creators")
+            let creatorsSnapshot = try await dbRefCreators.getData()
+            guard !(creatorsSnapshot.value! is NSNull) else { return } // No clips in RTDB, nothing to sync
+            self.creators = creatorsSnapshot.value! as! [String: String]
             
-            self.creators = snapshot!.value! as! [String: String]
-        })
-        
-        let dbRefName = Database.database().reference().child(id.uuidString).child("name")
-        dbRefName.getData(completion: {error, snapshot in
-            guard error == nil && snapshot != nil else {
-                print(error!.localizedDescription)
-                return
-            }
-            
-            guard !(snapshot!.value! is NSNull) else {
-                // No clips in RTDB, nothing to sync
-                return
-            }
-            self.name = snapshot!.value! as! String
-        })
+            let dbRefName = Database.database().reference().child(id.uuidString).child("name")
+            let projectNameSnapshot = try await dbRefName.getData()
+            guard !(projectNameSnapshot.value! is NSNull) else { return } // No clips in RTDB, nothing to sync
+            self.name = projectNameSnapshot.value! as! String
+        } catch {
+            print(error)
+        }
     }
     
     
-    func pullNewClipVideos() {
-        let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
-        
-        for (clip) in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
-            print("Downloading video for \(clip.id.uuidString) from \(storageRef.child(clip.id.uuidString))")
-            storageRef.child(clip.id.uuidString).write(toFile: clip.finalURL!) { url, error in
-                if error != nil {
-                    print("Error downloading video for \(clip.id.uuidString)")
-                    return
-                }
+    func pullNewClipVideos() async {
+        do {
+            let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
+            
+            for (clip) in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
+                print("Downloading video for \(clip.id.uuidString) from \(storageRef.child(clip.id.uuidString))")
                 
+                try await storageRef.child(clip.id.uuidString).writeAsync(toFile: clip.finalURL!)
                 clip.generateThumbnail()
                 clip.location = .downloaded
                 clip.status = .final
             }
+        } catch {
+            print(error)
         }
     }
     
-    func networkAwareProjectDownload(shouldDownloadVideo: Bool = false) {
-        pullNewClipMetadata()
+    func networkAwareProjectDownload(shouldDownloadVideo: Bool = false) async {
+        await pullNewClipMetadata()
         
         if shouldDownloadVideo {
-            pullNewClipVideos()
+            await pullNewClipVideos()
         }
     }
     
-    func appStartSync() {
-        networkAwareProjectDownload() // Download remote changes before pushing up yours.
-        networkAwareProjectUpload()
+    func appStartSync() async {
+        await networkAwareProjectDownload() // Download remote changes before pushing up yours.
+        await networkAwareProjectUpload()
     }
     
     // MARK: — Codable
-    private enum CoderKeys: String, CodingKey {
+    enum CoderKeys: String, CodingKey {
         case id
         case allClips
         case name

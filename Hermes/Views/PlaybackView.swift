@@ -16,6 +16,7 @@ struct PlaybackView: View {
     private let sizes = Sizes()
     @State var showingRenameAlert = false
     @ObservedObject var exporter: Exporter
+    @State var spinnerLabel = ""
     
     init(model: ContentViewModel) {
         self.model = model
@@ -47,14 +48,11 @@ struct PlaybackView: View {
                 }.padding()
                 HStack {
                     Button(action: {
+                        spinnerLabel = "Syncing clips to cloud"
                         // Go through the model so it does the firebase auth
-                        model.downloadCurrentProject()
-                        model.uploadCurrentProject()
-                    
-//                        model.project.pullNewClipMetadata()
-//                        model.project.pullNewClipVideos()
-//                        model.project.saveMetadataToRTDB()
-//                        model.project.saveVideosToRTDB()
+                        Task {
+                            await model.networkSync()
+                        }
                     }) {
                         Text("Sync")
                             .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
@@ -62,6 +60,7 @@ struct PlaybackView: View {
                     .foregroundColor(Color.white)
                     .background(Color.green)
                     .cornerRadius(sizes.buttonCornerRadius)
+                    .disabled(model.isWorking)
                     
                     if #available(iOS 16.0, *) {
                         Button(action: {}) {
@@ -71,14 +70,18 @@ struct PlaybackView: View {
                         .foregroundColor(Color.white)
                         .background(Color.blue)
                         .cornerRadius(sizes.buttonCornerRadius)
+                        .disabled(model.isWorking)
                     } else {
                         // Fallback on earlier versions
                     }
                     
                     Button(action: {
-                        let exporter = Exporter(project: model.project)
+                        spinnerLabel = "Exporting vlog to your photos library"
                         Task {
+                            model.startWork()
+                            let exporter = Exporter(project: model.project)
                             await exporter.export()
+                            model.stopWork()
                         }
                     }) {
                         if exporter.isProcessing {
@@ -92,10 +95,33 @@ struct PlaybackView: View {
                     .foregroundColor(Color.white)
                     .background(Color.purple)
                     .cornerRadius(sizes.buttonCornerRadius)
+                    .disabled(model.isWorking)
                 }
                 .padding([.leading, .trailing])
                 VideoPlayer(player: playbackModel.player)
                 ThumbnailReel(project: model.project, playbackModel: playbackModel)
+            }
+            
+            if (model.isWorking) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
+                        .fill(Color.white)
+                    VStack (alignment: .center) {
+                        if spinnerLabel != "" {
+                            Text("\(spinnerLabel)")
+                                .foregroundColor(Color.black)
+                                .padding()
+                        }
+                        Spacer()
+                        ProgressView()
+                            .controlSize(ControlSize.large)
+                            .colorInvert()
+                        Spacer()
+                    }
+                }
+                .frame(width: 175, height: 175)
+            } else {
+                
             }
         }
     }

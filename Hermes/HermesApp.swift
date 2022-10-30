@@ -44,7 +44,8 @@ struct HermesApp: App {
                 .onChange(of: scenePhase) { newPhase in
                     if newPhase == .background {
                         contentViewModel.saveProjects() // saveCurrentProject is called in saveProjects()
-                        contentViewModel.uploadCurrentProject() // This call is network aware
+//                        contentViewModel.uploadCurrentProject() // This call is network aware
+                        Task { await contentViewModel.networkSync() }
                     }
                 }
                 .onAppear {
@@ -55,11 +56,13 @@ struct HermesApp: App {
                                     if loaded.count != 0 {
                                         self.contentViewModel.allProjects = loaded
                                         self.contentViewModel.loadCurrentProject()
-    //
-    //                                    DispatchQueue.main.async {
-    //                                        self.contentViewModel.uploadCurrentProject() // This call is network aware
-    //                                        self.contentViewModel.downloadCurrentProject() // This call is network aware
-    //                                    }
+
+                                        DispatchQueue.main.async {
+//                                            self.contentViewModel.uploadCurrentProject() // This call is network aware
+//                                            self.contentViewModel.downloadCurrentProject() // This call is network aware
+                                            
+                                            Task { await self.contentViewModel.networkSync() }
+                                        }
                                     } else {
                                         // If loaded set is empty, noop and carry through the temp projects
                                         print("Empty loaded projects set")
