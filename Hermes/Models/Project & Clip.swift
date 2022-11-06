@@ -130,17 +130,17 @@ class Project: ObservableObject, Codable {
                     }
                 }
                 
-                // Upload thumbnails
-                if c.thumbnail != nil {
-                    let thumbnailRef = storageRef.child("thumbnails").child(c.id.uuidString)
-                    _ = thumbnailRef.putData(c.thumbnail!) { (metadata, error) in
-                        guard let metadata = metadata else {
-                            return
-                        }
-                        
-                        print("Uploaded thumbnail for \(c.id.uuidString). [\(metadata.size)]")
-                    }
-                }
+//                // Upload thumbnails
+//                if c.thumbnail != nil {
+//                    let thumbnailRef = storageRef.child("thumbnails").child(c.id.uuidString)
+//                    _ = thumbnailRef.putData(c.thumbnail!) { (metadata, error) in
+//                        guard let metadata = metadata else {
+//                            return
+//                        }
+//
+//                        print("Uploaded thumbnail for \(c.id.uuidString). [\(metadata.size)]")
+//                    }
+//                }
                 c.location = .remoteUnuploaded
             }
             
@@ -214,16 +214,18 @@ class Project: ObservableObject, Codable {
                     location: .remoteUndownloaded
                 )
                 
+                newClip.generateThumbnail()
+                
                 // Pull clip thumbnail
-                storageRef.child(newClip.id.uuidString).getData(maxSize: 30 * 30 * 1920 * 1080) { data, error in
-                    if let error = error {
-                        print(error)
-                    } else {
-                        if let image = UIImage(data: data!) {
-                            newClip.thumbnail = image.pngData()
-                        }
-                    }
-                }
+//                storageRef.child(newClip.id.uuidString).getData(maxSize: 30 * 30 * 1920 * 1080) { data, error in
+//                    if let error = error {
+//                        print(error)
+//                    } else {
+//                        if let image = UIImage(data: data!) {
+//                            newClip.thumbnail = image.pngData()
+//                        }
+//                    }
+//                }
                 
                 self.allClips.append(newClip)
                 self.unseenClips.append(newClip.id)
@@ -246,7 +248,7 @@ class Project: ObservableObject, Codable {
     }
     
     
-    func pullNewClipVideos() async {
+    func pullVideosForNewClips() async {
         do {
             let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
             
@@ -267,7 +269,7 @@ class Project: ObservableObject, Codable {
         await pullNewClipMetadata()
         
         if shouldDownloadVideo {
-            await pullNewClipVideos()
+            await pullVideosForNewClips()
         }
     }
     

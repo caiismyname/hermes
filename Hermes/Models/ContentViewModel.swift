@@ -32,7 +32,7 @@ class ContentViewModel: ObservableObject {
     private var hasFirebaseAuth = false
     
     private let saveFileName = "projects"
-    private let maxThumbnailDownloadSize = Int64(2000 * 2000 * 10)
+//    private let maxThumbnailDownloadSize = Int64(2000 * 2000 * 10)
     private let maxVideoDownloadSize = Int64(1920 * 1080 * 30 * 30)
     
     init() {
@@ -266,8 +266,9 @@ class ContentViewModel: ObservableObject {
         self.stopWork()
     }
     
-    func downloadRemoteProject(id: String, switchToProject: Bool = false) {
-        Task { await firebaseAuth() }
+    func downloadRemoteProject(id: String, switchToProject: Bool = false) async {
+        startWork()
+        await firebaseAuth()
         guard hasFirebaseAuth else { return }
         
         // First check the project doesn't exist locally
@@ -279,25 +280,20 @@ class ContentViewModel: ObservableObject {
             }
             return
         }
-        
-        // Verified project doesn't not already exist. Look to DB
-        let dbRef = Database.database().reference()
-        let storageRef = Storage.storage().reference().child(id)
-        
-        dbRef.child(id).getData(completion: {error, snapshot in
-            guard error == nil && snapshot != nil && !(snapshot!.value! is NSNull) else {
-                print(error!.localizedDescription)
-                return
-            }
+        do {
+            // Verified project doesn't not already exist. Look to DB
+            let dbRef = Database.database().reference()
+            let storageRef = Storage.storage().reference().child(id)
             
-            let info = snapshot!.value as! [String: Any]
+            let metadataSnapshot = try await dbRef.child(id).getData()
+            let info = metadataSnapshot.value as! [String: Any]
             
             // Inflate a project
             let projectName = info["name"] as! String
             let dateFormatter = ISO8601DateFormatter()
             let projectClips = info["clips"] as! [String: Any]
             var projectAllClips: [Clip] = []
-                
+            
             for(_, d) in projectClips {
                 let data = d as! [String: String]
                 let clipIdString = data["id"]!
@@ -311,35 +307,33 @@ class ContentViewModel: ObservableObject {
                 )
                 
                 // Pull thumbnail for clip TODO make this a bulk call that matches thumbnails to clips
-                storageRef.child("thumbnails").child(newClip.id.uuidString).getData(maxSize: self.maxThumbnailDownloadSize) { data, error in
-                    if let error = error {
-                        print("ERROR could not download thumbnail for clip \(newClip.id.uuidString)")
-                        print(error)
-                    } else {
-                        if let image = UIImage(data: data!) {
-                            newClip.thumbnail = image.pngData()
-                        }
-                    }
-                }
+                //                storageRef.child("thumbnails").child(newClip.id.uuidString).getData(maxSize: self.maxThumbnailDownloadSize) { data, error in
+                //                    if let error = error {
+                //                        print("ERROR could not download thumbnail for clip \(newClip.id.uuidString)")
+                //                        print(error)
+                //                    } else {
+                //                        if let image = UIImage(data: data!) {
+                //                            newClip.thumbnail = image.pngData()
+                //                        }
+                //                    }
+                //                }
                 projectAllClips.append(newClip)
             }
             
             
             // Download videos
-            for (clip) in projectAllClips {
-                print("Downloading video for \(clip.id.uuidString) from \(storageRef.child("videos").child(clip.id.uuidString))")
-                storageRef.child("videos").child(clip.id.uuidString).write(toFile: clip.finalURL!) { url, error in
-                    if error != nil {
-                        print("ERROR could not download video for \(clip.id.uuidString)")
-                        return
+            await withThrowingTaskGroup(of: Void.self) { group in
+                for (clip) in projectAllClips {
+                    group.addTask {
+                        print("Downloading video for \(clip.id.uuidString) from \(storageRef.child("videos").child(clip.id.uuidString))")
+                        try await storageRef.child("videos").child(clip.id.uuidString).writeAsync(toFile: clip.finalURL!)
+                        
+                        clip.generateThumbnail()
+                        clip.location = .downloaded
+                        clip.status = .final
                     }
-                    
-//                    clip.generateThumbnail()
-                    clip.location = .downloaded
-                    clip.status = .final
                 }
             }
-
             
             // Save project
             let remoteProject = Project(
@@ -350,21 +344,23 @@ class ContentViewModel: ObservableObject {
             
             // Set all clips in the project as unseen
             remoteProject.unseenClips = remoteProject.allClips.map({ c in c.id })
-
+            
             // Add project to local projects
             self.allProjects.append(remoteProject)
             self.saveProjects()
             
             // Add self to creators list
-            dbRef.child(id).child("creators").child(self.me.id).setValue(self.me.name)
+            try await dbRef.child(id).child("creators").child(self.me.id).setValue(self.me.name)
             
             // Switch, if told
             if (switchToProject) {
                 self.switchProjects(newProject: remoteProject)
             }
-        })
+            stopWork()
+        } catch {
+            print(error)
+        }
     }
-    
 }
 
 struct Me {

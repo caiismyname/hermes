@@ -81,8 +81,10 @@ struct HermesApp: App {
                 .onOpenURL() {url in
                     print(url)
                     if let projectToOpenId = DeeplinkHandler.getProjectIdFromDeeplink(url: url) {
-                        contentViewModel.downloadRemoteProject(id: projectToOpenId.uuidString, switchToProject: true)
-                        print(projectToOpenId.uuidString)
+                        Task {
+                            print(projectToOpenId.uuidString)
+                            await contentViewModel.downloadRemoteProject(id: projectToOpenId.uuidString, switchToProject: true)
+                        }
                     } else {
                         print("Invalid UUID from deeplink")
                     }

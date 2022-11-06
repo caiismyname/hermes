@@ -11,14 +11,15 @@ import AVKit
 class PlaybackModel:ObservableObject {
     var project: Project
     @Published var currentVideoIdx: Int
-    var player = AVPlayer()
+    var player = AVQueuePlayer()
     
     init(project: Project, currentVideoIdx: Int = 0) {
         self.project = project
         self.currentVideoIdx = currentVideoIdx
         
         if self.project.allClips.count > 0 {
-            player.replaceCurrentItem(with: generatePlayerItem(idx: 0))
+            player.removeAllItems()
+            player.insert(generatePlayerItem(idx: 0)!, after: nil)
         }
     }
     
@@ -44,7 +45,9 @@ class PlaybackModel:ObservableObject {
     
     func playCurrentVideo() {
         if let item = generatePlayerItem(idx: self.currentVideoIdx) {
-            self.player.replaceCurrentItem(with: item)
+//            self.player.replaceCurrentItem(with: item)
+            self.player.removeAllItems()
+            self.player.insert(item, after: nil)
             self.player.play()
         }
     }
@@ -58,7 +61,9 @@ class PlaybackModel:ObservableObject {
         }
         
         if let item = generatePlayerItem(idx: currentVideoIdx) {
-            player.replaceCurrentItem(with: item)
+//            player.replaceCurrentItem(with: item)
+            self.player.removeAllItems()
+            self.player.insert(item, after: nil)
             player.play()
         }
     }

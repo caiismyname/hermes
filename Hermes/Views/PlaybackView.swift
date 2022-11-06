@@ -16,7 +16,6 @@ struct PlaybackView: View {
     private let sizes = Sizes()
     @State var showingRenameAlert = false
     @ObservedObject var exporter: Exporter
-    @State var spinnerLabel = ""
     
     init(model: ContentViewModel) {
         self.model = model
@@ -48,7 +47,7 @@ struct PlaybackView: View {
                 }.padding()
                 HStack {
                     Button(action: {
-                        spinnerLabel = "Syncing clips to cloud"
+//                        spinnerLabel = "Syncing clips to cloud"
                         // Go through the model so it does the firebase auth
                         Task {
                             await model.networkSync()
@@ -76,7 +75,7 @@ struct PlaybackView: View {
                     }
                     
                     Button(action: {
-                        spinnerLabel = "Exporting vlog to your photos library"
+//                        spinnerLabel = "Exporting vlog to your photos library"
                         Task {
                             model.startWork()
                             let exporter = Exporter(project: model.project)
@@ -102,27 +101,35 @@ struct PlaybackView: View {
                 ThumbnailReel(project: model.project, playbackModel: playbackModel)
             }
             
-            if (model.isWorking) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
-                        .fill(Color.white)
-                    VStack (alignment: .center) {
-                        if spinnerLabel != "" {
-                            Text("\(spinnerLabel)")
-                                .foregroundColor(Color.black)
-                                .padding()
-                        }
-                        Spacer()
-                        ProgressView()
-                            .controlSize(ControlSize.large)
-                            .colorInvert()
-                        Spacer()
+            WaitingSpinner(spinnerLabel: "", model: model)
+        }
+    }
+}
+
+struct WaitingSpinner: View {
+    @State var spinnerLabel = ""
+    @ObservedObject var model: ContentViewModel
+    private let sizes = Sizes()
+    
+    var body: some View {
+        if model.isWorking {
+            ZStack {
+                RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
+                    .fill(Color.white)
+                VStack (alignment: .center) {
+                    if spinnerLabel != "" {
+                        Text("\(spinnerLabel)")
+                            .foregroundColor(Color.black)
+                            .padding()
                     }
+                    Spacer()
+                    ProgressView()
+                        .controlSize(ControlSize.large)
+                        .colorInvert()
+                    Spacer()
                 }
-                .frame(width: 175, height: 175)
-            } else {
-                
             }
+            .frame(width: 175, height: 175)
         }
     }
 }

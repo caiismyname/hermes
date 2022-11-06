@@ -119,8 +119,8 @@
 		2778E09C28D60320003E901E /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				2778E09E28D6033F003E901E /* CameraPreview.swift */,
 				2778E08F28D6023B003E901E /* ContentView.swift */,
+				2778E09E28D6033F003E901E /* CameraPreview.swift */,
 				2778E0AF28D674BA003E901E /* RecordingControlsView.swift */,
 				2778E0B328D9D291003E901E /* PlaybackView.swift */,
 				27ECF55928F463D400E7DF48 /* ProjectSwitcherView.swift */,
