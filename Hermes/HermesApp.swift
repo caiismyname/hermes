@@ -44,7 +44,7 @@ struct HermesApp: App {
                 .onChange(of: scenePhase) { newPhase in
                     if newPhase == .background {
                         contentViewModel.saveProjects() // saveCurrentProject is called in saveProjects()
-//                        contentViewModel.uploadCurrentProject() // This call is network aware
+                        contentViewModel.notificationManager.resetReminders()
                         Task { await contentViewModel.networkSync(shouldDownload: false) }
                     }
                 }

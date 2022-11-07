@@ -13,7 +13,6 @@ import FirebaseDatabase
 import FirebaseStorage
 
 class Project: ObservableObject, Codable {
-    
     var id: UUID
     @Published var name: String
     var me: Me?

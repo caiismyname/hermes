@@ -35,6 +35,8 @@ class ContentViewModel: ObservableObject {
 //    private let maxThumbnailDownloadSize = Int64(2000 * 2000 * 10)
     private let maxVideoDownloadSize = Int64(1920 * 1080 * 30 * 30)
     
+    let notificationManager = NotificationsManager()
+    
     init() {
         // Temporary placeholders
         let tempProject = Project()
