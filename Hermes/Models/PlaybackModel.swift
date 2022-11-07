@@ -35,8 +35,6 @@ class PlaybackModel:ObservableObject {
                 name: .AVPlayerItemDidPlayToEndTime,
                 object: playerItem)
             
-            self.project.markClipAsSeen(id: clip.id)
-            
             return playerItem
         } else {
             return nil
@@ -65,6 +63,7 @@ class PlaybackModel:ObservableObject {
             self.player.removeAllItems()
             self.player.insert(item, after: nil)
             player.play()
+            self.project.markClipAsSeen(id: self.project.allClips[currentVideoIdx].id)
         }
     }
 }

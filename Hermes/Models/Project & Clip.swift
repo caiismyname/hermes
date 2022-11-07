@@ -71,7 +71,7 @@ class Project: ObservableObject, Codable {
     
     private func sortClips() {
         self.allClips.sort { a, b in
-            a.timestamp < b.timestamp
+            return (a.timestamp < b.timestamp)
         }
     }
     
@@ -86,6 +86,12 @@ class Project: ObservableObject, Codable {
     func markClipAsSeen(id: UUID) {
         self.unseenClips = self.unseenClips.filter { c in
             c != id
+        }
+        
+        if let playedClip = self.allClips.first(where: { c in
+            c.id == id
+        }) {
+            playedClip.seen = true
         }
     }
     
@@ -107,8 +113,6 @@ class Project: ObservableObject, Codable {
         print("Uploading metadata for project \(self.id.uuidString) to RTDB")
         do {
             let dbRef = Database.database().reference()
-            let storageRef = Storage.storage().reference().child(self.id.uuidString)
-            
             let localClips = allClips.filter({ $0.location == .local })
             
             for c in localClips {
@@ -154,10 +158,8 @@ class Project: ObservableObject, Codable {
     
     func saveVideosToRTDB() async {
         print("Uploading videos for project \(self.id.uuidString) to DB")
-        let dbRef = Database.database().reference()
         let storageRef = Storage.storage().reference().child(self.id.uuidString)
-        
-        let remoteUnuploadedClips = allClips.filter({ $0.location == .remoteUnuploaded })
+        let remoteUnuploadedClips = allClips.filter({ $0.location == .remoteUnuploaded }) // Metadata has to be uploaded first, hence .remoteUnuploaded
 
         for c in remoteUnuploadedClips {
             let videoRef = storageRef.child("videos").child(c.id.uuidString)
@@ -189,7 +191,6 @@ class Project: ObservableObject, Codable {
         do {
             print("Pulling new clip metadata for project \(id.uuidString)")
             let dbRef = Database.database().reference().child(id.uuidString).child("clips")
-            let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
             
             let snapshot = try await dbRef.getData()
             guard !(snapshot.value! is NSNull) else { return } // No clips in RTDB, nothing to sync
@@ -214,8 +215,6 @@ class Project: ObservableObject, Codable {
                     location: .remoteUndownloaded
                 )
                 
-                newClip.generateThumbnail()
-                
                 // Pull clip thumbnail
 //                storageRef.child(newClip.id.uuidString).getData(maxSize: 30 * 30 * 1920 * 1080) { data, error in
 //                    if let error = error {
@@ -230,6 +229,7 @@ class Project: ObservableObject, Codable {
                 self.allClips.append(newClip)
                 self.unseenClips.append(newClip.id)
             }
+            
             self.sortClips()
             
             // Pull project metadata
@@ -311,6 +311,7 @@ class Clip: Identifiable, Codable, ObservableObject {
     @Published var thumbnail: Data?
     var location: ClipLocation
     var orientation: AVCaptureVideoOrientation
+    @Published var seen: Bool
     
     enum ClipStatus: Codable {
         case temporary
@@ -325,7 +326,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         case downloaded // Metadta and video both downloaded from the DB (no upload responsibility)
     }
     
-    init(id: UUID = UUID(), timestamp: Date = Date(), creator: String = "Unknown", projectId: UUID, location: ClipLocation = .local, orientation: AVCaptureVideoOrientation = .portrait) {
+    init(id: UUID = UUID(), timestamp: Date = Date(), creator: String = "Unknown", projectId: UUID, location: ClipLocation = .local, orientation: AVCaptureVideoOrientation = .portrait, seen: Bool = false) {
         self.id = id
         self.timestamp = timestamp
         self.creator = creator
@@ -333,6 +334,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         self.status = .temporary
         self.location = location
         self.orientation = orientation
+        self.seen = seen
     }
     
     func generateThumbnail() {
@@ -392,6 +394,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         case thumbnail
         case location
         case orientation
+        case seen
     }
     
     func encode(to encoder: Encoder) throws {
@@ -404,6 +407,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         try container.encode(thumbnail, forKey: .thumbnail)
         try container.encode(location, forKey: .location)
         try container.encode(orientation.rawValue, forKey: .orientation)
+        try container.encode(seen, forKey: .seen)
     }
     
     required init(from decoder: Decoder) throws {
@@ -416,6 +420,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         thumbnail = try values.decode(Data.self, forKey: .thumbnail)
         location = try values.decode(ClipLocation.self, forKey: .location)
         orientation = try AVCaptureVideoOrientation(rawValue: values.decode(AVCaptureVideoOrientation.RawValue.self, forKey: .orientation))!
+        seen = try values.decode(Bool.self, forKey: .seen)
     }
 }
 

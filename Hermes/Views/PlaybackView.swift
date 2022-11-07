@@ -96,7 +96,7 @@ struct PlaybackView: View {
                     .cornerRadius(sizes.buttonCornerRadius)
                     .disabled(model.isWorking)
                 }
-                .padding([.leading, .trailing])
+                    .padding([.leading, .trailing])
                 VideoPlayer(player: playbackModel.player)
                 ThumbnailReel(project: model.project, playbackModel: playbackModel)
             }
@@ -143,10 +143,12 @@ struct ThumbnailReel: View {
             ScrollViewReader { reader in
                 HStack {
                     ForEach(project.allClips.indices, id: \.self) { idx in
-                        Thumbnail(clip: project.allClips[idx])
+                        let clip = project.allClips[idx]
+                        Thumbnail(clip: clip)
                             .onTapGesture {
                                 playbackModel.currentVideoIdx = idx
                                 playbackModel.playCurrentVideo()
+                                self.project.markClipAsSeen(id: clip.id)
                             }
                     }
                 }
@@ -169,6 +171,11 @@ struct Thumbnail: View {
             }
         }
         .frame(width: 100, height: 100)
+        .overlay() {
+            if !clip.seen {
+                 Rectangle().stroke(.blue, lineWidth: 2.0)
+            }
+        }
     }
 }
 

@@ -62,10 +62,57 @@
             filePath = "Hermes/Models/Project &amp; Clip.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "109"
-            endingLineNumber = "109"
+            startingLineNumber = "115"
+            endingLineNumber = "115"
             landmarkName = "saveMetadataToRTDB()"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "D05DE8BB-382F-42FB-95F8-1F054E32182B - 611d8ad58227ff12"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for Hermes.Project.saveMetadataToRTDB() async -&gt; ()"
+                  moduleName = "Hermes"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/davidcai/Documents/coding/Hermes/Hermes/Models/Project%20&amp;%20Clip.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "115"
+                  endingLineNumber = "115"
+                  offsetFromSymbolStart = "724">
+               </Location>
+               <Location
+                  uuid = "D05DE8BB-382F-42FB-95F8-1F054E32182B - 6984a96b9529620f"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(2) await resume partial function for Hermes.Project.saveMetadataToRTDB() async -&gt; ()"
+                  moduleName = "Hermes"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/davidcai/Documents/coding/Hermes/Hermes/Models/Project%20&amp;%20Clip.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "115"
+                  endingLineNumber = "115"
+                  offsetFromSymbolStart = "40">
+               </Location>
+               <Location
+                  uuid = "D05DE8BB-382F-42FB-95F8-1F054E32182B - d7928400c503251c"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(3) suspend resume partial function for Hermes.Project.saveMetadataToRTDB() async -&gt; ()"
+                  moduleName = "Hermes"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/davidcai/Documents/coding/Hermes/Hermes/Models/Project%20&amp;%20Clip.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "115"
+                  endingLineNumber = "115"
+                  offsetFromSymbolStart = "512">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -78,8 +125,8 @@
             filePath = "Hermes/Models/Project &amp; Clip.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "107"
-            endingLineNumber = "107"
+            startingLineNumber = "113"
+            endingLineNumber = "113"
             landmarkName = "saveMetadataToRTDB()"
             landmarkType = "7">
          </BreakpointContent>

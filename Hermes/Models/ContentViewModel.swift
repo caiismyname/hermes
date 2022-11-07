@@ -281,6 +281,7 @@ class ContentViewModel: ObservableObject {
             return
         }
         do {
+            print("Downloading project \(projectId) from firebase")
             // Verified project doesn't not already exist. Look to DB
             let dbRef = Database.database().reference()
             let storageRef = Storage.storage().reference().child(id)
