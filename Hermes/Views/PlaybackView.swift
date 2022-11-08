@@ -139,8 +139,8 @@ struct ThumbnailReel: View {
     @ObservedObject var playbackModel: PlaybackModel
     
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            ScrollViewReader { reader in
+        ScrollViewReader { reader in
+            ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
                     ForEach(project.allClips.indices, id: \.self) { idx in
                         let clip = project.allClips[idx]
@@ -150,6 +150,10 @@ struct ThumbnailReel: View {
                                 playbackModel.playCurrentVideo()
                                 self.project.markClipAsSeen(id: clip.id)
                             }
+                            .id(clip.id)
+                    }
+                    .onAppear {
+                        reader.scrollTo(project.allClips.last?.id)
                     }
                 }
             }
