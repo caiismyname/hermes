@@ -81,11 +81,11 @@ struct RecordingControlsView: View {
                 // Project Name
                 
                 Text("\(model.project.name)")
-                    .font(.system(size: sizes.fontSize, weight: .regular , design: .monospaced))
+                    .font(.system(.title2).bold())
                     .foregroundColor(Color.white)
                     .minimumScaleFactor(0.01)
                     .lineLimit(1)
-                    .position(x: geometry.size.width / 2, y: sizes.topOffset)
+                    .position(x: geometry.size.width / 2, y: sizes.topOffset - 10)
             }
             
             
