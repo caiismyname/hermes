@@ -167,7 +167,6 @@ struct Thumbnail: View {
             if clip.thumbnail != nil {
                 Image(uiImage: UIImage(data: clip.thumbnail!)!)
                     .resizable(resizingMode: .stretch)
-                    .frame(width: 100, height: 100)
             }
         }
         .frame(width: 100, height: 100)

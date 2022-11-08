@@ -348,7 +348,26 @@ class Clip: Identifiable, Codable, ObservableObject {
                 imgGenerator.appliesPreferredTrackTransform = true
                 if #available(iOS 16, *) {
                     let cgImage = try await imgGenerator.image(at: CMTime(value: 0, timescale: 1)).image
-                    let png = UIImage(cgImage: cgImage).pngData()
+                    
+                    // Crop to center
+                    var xPos: CGFloat = 0.0
+                    var yPos: CGFloat = 0.0
+                    let size = UIImage(cgImage: cgImage).size
+                    var width = size.width
+                    var height = size.height
+                    
+                    if size.width > size.height {
+                        xPos = (width - height) / 2
+                        width = size.height
+                    } else {
+                        yPos = (height - width) / 2
+                        height = size.width
+                    }
+                    
+                    let cropRect = CGRect(x: xPos, y: yPos, width: width, height: height)
+                    let croppedImage = cgImage.cropping(to: cropRect)
+                    
+                    let png = UIImage(cgImage: croppedImage!).pngData()
                     self.thumbnail = png
                 } else {
                     // Fallback on earlier versions
