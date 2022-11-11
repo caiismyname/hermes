@@ -28,7 +28,7 @@ class Project: ObservableObject, Codable {
         self.allClips = allClips
         self.sortClips()
         
-        self.unseenCount = self.allClips.filter { c in (!c.seen && c.status == .final) }.count
+        computeUnseenCount()
     }
 
     func startClip() -> Clip? {
@@ -36,7 +36,7 @@ class Project: ObservableObject, Codable {
             return nil
         }
         
-        self.currentClip = Clip(projectId: id)
+        self.currentClip = Clip(projectId: id, seen: true) // Mark as seen because we created it
         self.currentlyRecording = true
         
         print("Allocated a new clip \(self.currentClip!.id.uuidString) with temp URL \(String(describing: self.currentClip!.temporaryURL))")
@@ -77,9 +77,8 @@ class Project: ObservableObject, Codable {
         }
     }
     
-    func decrementUnseenCount() {
-        guard self.unseenCount != 0 else { return }
-        self.unseenCount -= 1
+    func computeUnseenCount() {
+        self.unseenCount = self.allClips.filter { c in (!c.seen && c.status == .final) }.count
     }
     
     func generateURL() -> URL {
@@ -260,6 +259,8 @@ class Project: ObservableObject, Codable {
         if shouldDownloadVideo {
             await pullVideosForNewClips()
         }
+        
+        computeUnseenCount()
     }
     
     func appStartSync() async {

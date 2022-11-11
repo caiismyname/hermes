@@ -55,6 +55,7 @@ class PlaybackModel:ObservableObject {
             self.player.insert(item, after: nil)
             self.player.play()
             self.model.project.allClips[currentVideoIdx].seen = true
+            self.model.project.computeUnseenCount()
         }
     }
     
@@ -71,6 +72,7 @@ class PlaybackModel:ObservableObject {
             self.player.insert(item, after: nil)
             player.play()
             self.model.project.allClips[currentVideoIdx].seen = true
+            self.model.project.computeUnseenCount()
         }
     }
 }
