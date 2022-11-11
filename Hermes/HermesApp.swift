@@ -70,11 +70,13 @@ struct HermesApp: App {
                                 } else {
                                     print("nil check failed")
                                 }
-                            case .failure (let error):
+                            case .failure (_):
                                 // No need to set anything since initializer already created everything
                                 print("Error loading projects, will carry through inital temp project.")
                                 break
                         }
+                        
+                        contentViewModel.ready = true
                     }
                 }
                 .onOpenURL() {url in
@@ -86,6 +88,8 @@ struct HermesApp: App {
                     } else {
                         print("Invalid UUID from deeplink")
                     }
+                    
+                    contentViewModel.ready = true
                     
                 }
 //                .environment(\.managedObjectContext, persistenceController.container.viewContext)

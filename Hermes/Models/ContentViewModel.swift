@@ -16,7 +16,7 @@ class ContentViewModel: ObservableObject {
     @Published var error: Error?
     @Published var frame: CGImage?
     
-    private let context = CIContext()
+    @Published var ready = false
     
     let cameraManager = CameraManager()
     @Published var recordingManager: RecordingManager

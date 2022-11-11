@@ -14,6 +14,7 @@ struct Sizes {
     
     // Recording controls
     let recordButtonSize = 60.0
+    let recordButtonOuterSize = (60.0 * 1.07) + 10
     let stopButtonSize = 45.0
     let secondaryButtonSize = 30.0
     let bottomOffset = 100.0

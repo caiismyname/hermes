@@ -42,31 +42,40 @@ struct RecordingControlsView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            // Recording indicator at top of screen, with duration counter
-            if recordingManager.isRecording {
-                RecordingTimeCounter(recordingManager: recordingManager)
-                    .position(x: geometry.size.width / 2, y: sizes.topOffset)
-            }
-            
-            if !(recordingManager.isRecording) {
-                PlaybackButton(project: model.project, tapCallback: {playbackModalShowing = !playbackModalShowing})
+            if !model.ready {
+                Circle()
+                    .strokeBorder(.gray, lineWidth: sizes.recordButtonSize / 10)
+                    .frame(width: sizes.recordButtonOuterSize, height: sizes.recordButtonOuterSize)
                     .position(
-                        x: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["x"]!,
-                        y: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["y"]!
+                        x: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["x"]!,
+                        y: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["y"]!
                     )
-                    .popover(isPresented: $playbackModalShowing, content: { PlaybackView(model: model) })
-            
-                // Projects button
-                Button(action: {projectSwitcherModalShowing = !projectSwitcherModalShowing}) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.black)
-                            .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
-                        Image(systemName: "square.stack.3d.up.fill")
-                            .font(.system(size: sizes.secondaryButtonSize))
-                            .foregroundColor(Color.white)
-                    }
+            } else {
+                // Recording indicator at top of screen, with duration counter
+                if recordingManager.isRecording {
+                    RecordingTimeCounter(recordingManager: recordingManager)
+                        .position(x: geometry.size.width / 2, y: sizes.topOffset)
                 }
+                
+                if !(recordingManager.isRecording) {
+                    PlaybackButton(project: model.project, tapCallback: {playbackModalShowing = !playbackModalShowing})
+                        .position(
+                            x: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["x"]!,
+                            y: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["y"]!
+                        )
+                        .popover(isPresented: $playbackModalShowing, content: { PlaybackView(model: model) })
+                    
+                    // Projects button
+                    Button(action: {projectSwitcherModalShowing = !projectSwitcherModalShowing}) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.black)
+                                .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
+                            Image(systemName: "square.stack.3d.up.fill")
+                                .font(.system(size: sizes.secondaryButtonSize))
+                                .foregroundColor(Color.white)
+                        }
+                    }
                     .position(
                         x: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["x"]!,
                         y: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["y"]!
@@ -77,26 +86,26 @@ struct RecordingControlsView: View {
                             dismissCallback: {self.projectSwitcherModalShowing = !self.projectSwitcherModalShowing}
                         )
                     })
+                    
+                    // Project Name
+                    
+                    Text("\(model.project.name)")
+                        .font(.system(.title2).bold())
+                        .foregroundColor(Color.white)
+                        .minimumScaleFactor(0.01)
+                        .lineLimit(1)
+                        .position(x: geometry.size.width / 2, y: sizes.topOffset - 10)
+                }
                 
-                // Project Name
                 
-                Text("\(model.project.name)")
-                    .font(.system(.title2).bold())
-                    .foregroundColor(Color.white)
-                    .minimumScaleFactor(0.01)
-                    .lineLimit(1)
-                    .position(x: geometry.size.width / 2, y: sizes.topOffset - 10)
+                // Record button
+                //            RecordButtonCameraStyle(recordingManager: recordingManager)
+                RecordButtonSnapchatStyle(recordingManager: recordingManager)
+                    .position(
+                        x: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["x"]!,
+                        y: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["y"]!
+                    )
             }
-            
-            
-            // Record button
-//            RecordButtonCameraStyle(recordingManager: recordingManager)
-            RecordButtonSnapchatStyle(recordingManager: recordingManager)
-                .position(
-                    x: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["x"]!,
-                    y: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["y"]!
-                )
-            
         }
     }
 }
@@ -120,7 +129,7 @@ struct RecordButtonCameraStyle: View {
             ZStack {
                 Circle()
                     .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 15)
-                    .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
+                    .frame(width: sizes.recordButtonOuterSize, height: sizes.recordButtonOuterSize)
                 
                 if recordingManager.isRecording {
                     RoundedRectangle(cornerSize: CGSize.init(width: 10, height: 10))
@@ -144,7 +153,7 @@ struct RecordButtonSnapchatStyle: View {
         ZStack {
             Circle()
                 .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 10)
-                .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
+                .frame(width: sizes.recordButtonOuterSize, height: sizes.recordButtonOuterSize)
             
             if recordingManager.isRecording {
                 Circle()
@@ -156,12 +165,12 @@ struct RecordButtonSnapchatStyle: View {
                 
                 Circle()
                     .fill(.white)
-                    .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
+                    .frame(width: sizes.recordButtonOuterSize, height: sizes.recordButtonOuterSize)
             }
         }
         .contentShape(Circle())
         .onLongPressGesture(minimumDuration: recordingManager.snapchatFullTime, maximumDistance: 200) {
-        } onPressingChanged: { foo in
+        } onPressingChanged: { _ in
             recordingManager.toggleRecording()
         }
     }

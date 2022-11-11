@@ -11,6 +11,7 @@ import CoreData
 struct ContentView: View {
     @StateObject var model: ContentViewModel
     @State var orientation = UIDeviceOrientation.portrait // default assume portrait
+    private let sizes = Sizes()
     
     func updateOrientation(newOrientation: UIDeviceOrientation) {
         switch newOrientation {
@@ -32,9 +33,11 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .edgesIgnoringSafeArea(.all)
                 
-                CameraPreviewWrapper(session: model.cameraManager.session, orientation: $orientation)
-                    .ignoresSafeArea(.all)
-                
+                if model.ready {
+                    CameraPreviewWrapper(session: model.cameraManager.session, orientation: $orientation)
+                        .ignoresSafeArea(.all)
+                }
+                    
                 RecordingControlsView(
                     model: model,
                     recordingManager: model.recordingManager,
@@ -44,6 +47,7 @@ struct ContentView: View {
                     updateOrientation(newOrientation: newOrientation)
                 }
             }
+                
         }.preferredColorScheme(.dark)
     }
 }
