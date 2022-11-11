@@ -90,7 +90,8 @@ struct RecordingControlsView: View {
             
             
             // Record button
-            RecordButton(recordingManager: recordingManager)
+//            RecordButtonCameraStyle(recordingManager: recordingManager)
+            RecordButtonSnapchatStyle(recordingManager: recordingManager)
                 .position(
                     x: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["x"]!,
                     y: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["y"]!
@@ -110,40 +111,58 @@ struct RecordingControlsView: View {
 //}
 
 
-struct RecordButton: View {
+struct RecordButtonCameraStyle: View {
     @ObservedObject var recordingManager: RecordingManager
     private let sizes = Sizes()
     
     var body: some View {
-        if recordingManager.isRecording {
-            Button(action: recordingManager.toggleRecording) {
-                ZStack {
-//                    RoundedRectangle(cornerSize: CGSize.init(width: 12, height: 12))
-//                        .stroke(lineWidth: sizes.stopButtonSize / 15)
-//                        .fill(Color.white)
-//                        .frame(width: (sizes.stopButtonSize * 1.07) + 6, height: (sizes.stopButtonSize * 1.07) + 6)
-                    
-                    Circle()
-                        .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 15)
-                        .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
-                    
+        Button(action: recordingManager.toggleRecording) {
+            ZStack {
+                Circle()
+                    .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 15)
+                    .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
+                
+                if recordingManager.isRecording {
                     RoundedRectangle(cornerSize: CGSize.init(width: 10, height: 10))
                         .fill(Color.red)
                         .frame(width: sizes.stopButtonSize, height: sizes.stopButtonSize)
-                }
-            }
-
-        } else {
-            Button(action: recordingManager.toggleRecording) {
-                ZStack {
-                    Circle()
-                        .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 15)
-                        .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
+                } else {
                     Circle()
                         .fill(Color.red)
                         .frame(width: sizes.recordButtonSize, height: sizes.recordButtonSize)
                 }
             }
+        }
+    }
+}
+
+struct RecordButtonSnapchatStyle: View {
+    @ObservedObject var recordingManager: RecordingManager
+    private let sizes = Sizes()
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 10)
+                .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
+            
+            if recordingManager.isRecording {
+                Circle()
+                    .trim(from: 0.0, to: Double(recordingManager.snapchatStyleProgress))
+                    .stroke(style: StrokeStyle(lineWidth: sizes.recordButtonSize / 6, lineCap:.round))
+                    .foregroundColor(.red)
+                    .frame(width: (sizes.recordButtonSize * 1.7), height: sizes.recordButtonSize * 1.7)
+                    .rotationEffect(Angle(degrees: 270.0))
+                
+                Circle()
+                    .fill(.white)
+                    .frame(width: (sizes.recordButtonSize * 1.07) + 10, height: (sizes.recordButtonSize * 1.07) + 10)
+            }
+        }
+        .contentShape(Circle())
+        .onLongPressGesture(minimumDuration: recordingManager.snapchatFullTime, maximumDistance: 200) {
+        } onPressingChanged: { foo in
+            recordingManager.toggleRecording()
         }
     }
 }
@@ -180,12 +199,12 @@ struct PlaybackButton: View {
                 Image(systemName: "film.stack")
                     .font(.system(size: sizes.secondaryButtonSize))
                     .foregroundColor(Color.white)
-                if project.unseenClips.count > 0 {
+                if project.unseenCount > 0 {
                     ZStack {
                         Circle()
                             .fill(Color.red)
                             .frame(width: 30, height: 30)
-                        Text("\(project.unseenClips.count)")
+                        Text("\(project.unseenCount)")
                             .foregroundColor(Color.white)
                     }
                     .offset(CGSize(width: (sizes.secondaryButtonSize * (4/5)), height: -1 * (sizes.secondaryButtonSize * (4/5)) ))

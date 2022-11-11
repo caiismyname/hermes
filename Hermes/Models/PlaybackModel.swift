@@ -9,22 +9,30 @@ import Foundation
 import AVKit
 
 class PlaybackModel:ObservableObject {
-    var project: Project
+    var model: ContentViewModel
     @Published var currentVideoIdx: Int
     var player = AVQueuePlayer()
     
-    init(project: Project, currentVideoIdx: Int = 0) {
-        self.project = project
+    init(model: ContentViewModel, currentVideoIdx: Int = 0) {
+        self.model = model
         self.currentVideoIdx = currentVideoIdx
         
-        if self.project.allClips.count > 0 {
+        if self.model.project.allClips.count > 0 {
             player.removeAllItems()
             player.insert(generatePlayerItem(idx: 0)!, after: nil)
         }
     }
     
     private func generatePlayerItem(idx: Int) -> AVPlayerItem? {
-        let clip = self.project.allClips[idx]
+        let clip = self.model.project.allClips[idx]
+        if clip.location == .remoteUndownloaded {
+            Task {
+                model.startWork()
+                await clip.downloadVideo()
+                model.stopWork()
+            }
+        }
+        
         if let url = clip.finalURL {
             let playerItem = AVPlayerItem(url: url)
             player.actionAtItemEnd = .none // override this behavior with the Notification
@@ -43,27 +51,26 @@ class PlaybackModel:ObservableObject {
     
     func playCurrentVideo() {
         if let item = generatePlayerItem(idx: self.currentVideoIdx) {
-//            self.player.replaceCurrentItem(with: item)
             self.player.removeAllItems()
             self.player.insert(item, after: nil)
             self.player.play()
+            self.model.project.allClips[currentVideoIdx].seen = true
         }
     }
     
     @objc func nextVideo(notification: Notification) {
         // Already played last video
-        if currentVideoIdx == project.allClips.count - 1 {
+        if currentVideoIdx == model.project.allClips.count - 1 {
             return
         } else {
             currentVideoIdx += 1
         }
         
         if let item = generatePlayerItem(idx: currentVideoIdx) {
-//            player.replaceCurrentItem(with: item)
             self.player.removeAllItems()
             self.player.insert(item, after: nil)
             player.play()
-            self.project.markClipAsSeen(id: self.project.allClips[currentVideoIdx].id)
+            self.model.project.allClips[currentVideoIdx].seen = true
         }
     }
 }

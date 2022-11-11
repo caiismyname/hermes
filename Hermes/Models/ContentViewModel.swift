@@ -328,15 +328,12 @@ class ContentViewModel: ObservableObject {
             await withThrowingTaskGroup(of: Void.self) { group in
                 for (clip) in projectAllClips {
                     group.addTask {
-                        print("Downloading video for \(clip.id.uuidString) from \(storageRef.child("videos").child(clip.id.uuidString))")
-                        try await storageRef.child("videos").child(clip.id.uuidString).writeAsync(toFile: clip.finalURL!)
-                        
-                        clip.generateThumbnail()
-                        clip.location = .downloaded
-                        clip.status = .final
+                        await clip.downloadVideo()
                     }
                 }
             }
+            
+            projectAllClips = projectAllClips.filter { c in c.status != .invalid }
             
             // Save project
             let remoteProject = Project(
@@ -346,7 +343,7 @@ class ContentViewModel: ObservableObject {
             )
             
             // Set all clips in the project as unseen
-            remoteProject.unseenClips = remoteProject.allClips.map({ c in c.id })
+//            remoteProject.unseenClips = remoteProject.allClips.map({ c in c.id })
             
             // Add project to local projects
             self.allProjects.append(remoteProject)

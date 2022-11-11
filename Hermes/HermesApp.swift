@@ -72,8 +72,7 @@ struct HermesApp: App {
                                 }
                             case .failure (let error):
                                 // No need to set anything since initializer already created everything
-                                print("Error loading projects, will carry through inital temp project")
-//                                print(error.localizedDescription)
+                                print("Error loading projects, will carry through inital temp project.")
                                 break
                         }
                     }

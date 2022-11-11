@@ -20,12 +20,15 @@ class Project: ObservableObject, Codable {
     @Published var allClips: [Clip]
     private var currentlyRecording = false
     private var currentClip: Clip? = nil
-    @Published var unseenClips = [UUID]()
+    @Published var unseenCount = 0
     
     init(uuid: UUID = UUID(), name: String = "Project \(Int.random(in: 0..<100))", allClips: [Clip] = []) {
         self.id = uuid
         self.name = name
         self.allClips = allClips
+        self.sortClips()
+        
+        self.unseenCount = self.allClips.filter { c in (!c.seen && c.status == .final) }.count
     }
 
     func startClip() -> Clip? {
@@ -74,24 +77,13 @@ class Project: ObservableObject, Codable {
         }
     }
     
+    func decrementUnseenCount() {
+        guard self.unseenCount != 0 else { return }
+        self.unseenCount -= 1
+    }
+    
     func generateURL() -> URL {
         return URL(string: "\(URLSchema.baseURL)\(self.id.uuidString)")!
-    }
-    
-    func clearUnseenVideos() {
-        self.unseenClips = [UUID]()
-    }
-    
-    func markClipAsSeen(id: UUID) {
-        self.unseenClips = self.unseenClips.filter { c in
-            c != id
-        }
-        
-        if let playedClip = self.allClips.first(where: { c in
-            c.id == id
-        }) {
-            playedClip.seen = true
-        }
     }
     
     // MARK: Firebase
@@ -226,7 +218,7 @@ class Project: ObservableObject, Codable {
 //                }
                 
                 self.allClips.append(newClip)
-                self.unseenClips.append(newClip.id)
+
             }
             
             self.sortClips()
@@ -248,20 +240,18 @@ class Project: ObservableObject, Codable {
     
     
     func pullVideosForNewClips() async {
-        do {
-            let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
-            
-            for (clip) in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
-                print("Downloading video for \(clip.id.uuidString) from \(storageRef.child(clip.id.uuidString))")
-                
-                try await storageRef.child(clip.id.uuidString).writeAsync(toFile: clip.finalURL!)
-                clip.generateThumbnail()
-                clip.location = .downloaded
-                clip.status = .final
+        let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
+        
+        await withThrowingTaskGroup(of: Void.self) { group in
+            for clip in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
+                group.addTask {
+                    await clip.downloadVideo()
+                }
             }
-        } catch {
-            print(error)
         }
+        
+        self.allClips = self.allClips.filter({ c in c.status != .invalid })
+        self.sortClips()
     }
     
     func networkAwareProjectDownload(shouldDownloadVideo: Bool = false) async {
@@ -315,11 +305,12 @@ class Clip: Identifiable, Codable, ObservableObject {
     enum ClipStatus: Codable {
         case temporary
         case final
+        case invalid
     }
     
     enum ClipLocation: Codable {
         case local // Only exists on the device
-        case remoteUnuploaded // Metadata in RTDB, video is not
+        case remoteUnuploaded // Metadata in RTDB, video is not (implies that it still remains on device)
         case uploaded // Metadata and video both uploaded (implies that it still remains on device)
         case remoteUndownloaded // Local has metadata of the clip, but no video file yet
         case downloaded // Metadta and video both downloaded from the DB (no upload responsibility)
@@ -334,6 +325,22 @@ class Clip: Identifiable, Codable, ObservableObject {
         self.location = location
         self.orientation = orientation
         self.seen = seen
+    }
+    
+    func downloadVideo() async {
+        do {
+            let storageRef = Storage.storage().reference().child(projectId.uuidString).child("videos")
+            print("Downloading video for \(id.uuidString) from \(storageRef.child(id.uuidString))")
+            
+            try await storageRef.child(id.uuidString).writeAsync(toFile: finalURL!)
+            generateThumbnail()
+            location = .downloaded
+            status = .final
+            
+        } catch {
+            print("Error downloading clip \(id.uuidString): \(error)")
+            status = .invalid
+        }
     }
     
     func generateThumbnail() {

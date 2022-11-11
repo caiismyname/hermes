@@ -16,15 +16,23 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     private let sessionQueue = DispatchQueue(label: "com.caiismyname.SessionQ")
     var session: AVCaptureSession?
     var project: Project
+    var recordingStyle: RecordingStyle
     @Published var isRecording = false
     
     // For the duration UI
     var recordingStartTime = Date() // temp value to start
     @Published var recordingDuration = TimeInterval(0)
     var timer = Timer()
+    let snapchatFullTime = TimeInterval(10.0)
+    
+    enum RecordingStyle: Codable {
+        case snapchat
+        case camera
+    }
     
     init(project: Project) {
         self.project = project
+        self.recordingStyle = .snapchat
     }
     
     func configureCaptureSession(session: AVCaptureSession) {
@@ -85,7 +93,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
         self.recordingDuration = TimeInterval(0)
         self.recordingStartTime = Date()
         self.timer = Timer.scheduledTimer(
-            timeInterval: TimeInterval(0.01),
+            timeInterval: TimeInterval(0.02),
             target: self,
             selector: (#selector(updateDuration)),
             userInfo: nil,
@@ -97,6 +105,13 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     @objc func updateDuration() {
         let now = Date()
         recordingDuration = now.timeIntervalSince(recordingStartTime)
+        if isRecording && recordingStyle == .snapchat && recordingDuration > snapchatFullTime {
+            toggleRecording() // stops the recording
+        }
+    }
+    
+    var snapchatStyleProgress: Double {
+        return (snapchatFullTime - recordingDuration) / snapchatFullTime
     }
     
     /// - Tag: DidStartRecording

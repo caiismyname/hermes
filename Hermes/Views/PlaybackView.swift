@@ -19,7 +19,7 @@ struct PlaybackView: View {
     
     init(model: ContentViewModel) {
         self.model = model
-        self.playbackModel = PlaybackModel(project: model.project)
+        self.playbackModel = PlaybackModel(model: model)
         self.exporter = Exporter(project: model.project)
     }
     
@@ -146,9 +146,10 @@ struct ThumbnailReel: View {
                         let clip = project.allClips[idx]
                         Thumbnail(clip: clip)
                             .onTapGesture {
+                                print(clip.id, clip.finalURL, clip.location)
                                 playbackModel.currentVideoIdx = idx
                                 playbackModel.playCurrentVideo()
-                                self.project.markClipAsSeen(id: clip.id)
+                                clip.seen = true
                             }
                             .id(clip.id)
                     }
