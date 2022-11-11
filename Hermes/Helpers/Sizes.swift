@@ -19,6 +19,7 @@ struct Sizes {
     let secondaryButtonSize = 30.0
     let bottomOffset = 100.0
     let topOffset = 15.0
+    let cameraPreviewCornerRadius = 15.0
     
     let fontSize = 20.0
 }

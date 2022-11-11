@@ -35,7 +35,11 @@ struct ContentView: View {
                 
                 if model.ready {
                     CameraPreviewWrapper(session: model.cameraManager.session, orientation: $orientation)
-                        .ignoresSafeArea(.all)
+                        .mask {
+                            Rectangle()
+                                .cornerRadius(sizes.cameraPreviewCornerRadius)
+                                .frame(width: geometry.size.width, height: geometry.size.width * (16/9))
+                        }
                 }
                     
                 RecordingControlsView(
