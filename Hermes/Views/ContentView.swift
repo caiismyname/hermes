@@ -50,6 +50,12 @@ struct ContentView: View {
                 .onRotate { newOrientation in // Note this .onRotate handles the orientation for all aspects of the recording UI
                     updateOrientation(newOrientation: newOrientation)
                 }
+                .popover(isPresented: $model.shouldShowProjects, content: {
+                    SwitchProjectsModal(
+                        model: model,
+                        dismissCallback: {model.shouldShowProjects = !model.shouldShowProjects}
+                    )
+                })
             }
                 
         }.preferredColorScheme(.dark)

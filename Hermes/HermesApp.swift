@@ -83,14 +83,15 @@ struct HermesApp: App {
                     print(url)
                     if let projectToOpenId = DeeplinkHandler.getProjectIdFromDeeplink(url: url) {
                         Task {
+                            contentViewModel.startWork()
                             await contentViewModel.downloadRemoteProject(id: projectToOpenId.uuidString, switchToProject: true)
+                            contentViewModel.stopWork()
                         }
                     } else {
                         print("Invalid UUID from deeplink")
                     }
                     
                     contentViewModel.ready = true
-                    
                 }
 //                .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }

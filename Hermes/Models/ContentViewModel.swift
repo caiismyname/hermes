@@ -17,6 +17,7 @@ class ContentViewModel: ObservableObject {
     @Published var frame: CGImage?
     
     @Published var ready = false
+    @Published var shouldShowProjects = false
     
     let cameraManager = CameraManager()
     @Published var recordingManager: RecordingManager
@@ -280,13 +281,14 @@ class ContentViewModel: ObservableObject {
             if switchToProject {
                 switchProjects(newProject: self.allProjects.filter({ p in p.id == projectId})[0])
             }
+            stopWork()
             return
         }
         do {
             print("Downloading project \(projectId) from firebase")
+            self.shouldShowProjects = true
             // Verified project doesn't not already exist. Look to DB
             let dbRef = Database.database().reference()
-            let storageRef = Storage.storage().reference().child(id)
             
             let metadataSnapshot = try await dbRef.child(id).getData()
             let info = metadataSnapshot.value as! [String: Any]
@@ -342,9 +344,6 @@ class ContentViewModel: ObservableObject {
                 allClips: projectAllClips
             )
             
-            // Set all clips in the project as unseen
-//            remoteProject.unseenClips = remoteProject.allClips.map({ c in c.id })
-            
             // Add project to local projects
             self.allProjects.append(remoteProject)
             self.saveProjects()
@@ -356,9 +355,11 @@ class ContentViewModel: ObservableObject {
             if (switchToProject) {
                 self.switchProjects(newProject: remoteProject)
             }
+            self.shouldShowProjects = false
             stopWork()
         } catch {
             print(error)
+            stopWork()
         }
     }
 }
