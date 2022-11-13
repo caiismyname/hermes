@@ -36,7 +36,7 @@ struct SwitchProjectsModal: View {
                     .cornerRadius(sizes.buttonCornerRadius)
                     .alert("New Project Name", isPresented: $showingTitleAlert, actions: {
                         TextField("new project name", text: $newProjectName, prompt: Text(""))
-                            .foregroundColor(Color.black)
+//                            .foregroundColor(Color.black)
                         Button("Create", action: {
                             let newProject = model.createProject(name: newProjectName)
                             model.switchProjects(newProject: newProject)
@@ -46,20 +46,27 @@ struct SwitchProjectsModal: View {
                 }.padding()
                 
                 Spacer()
-                Text("Existing Projects")
+                Text("My Projects")
                     .font(.system(.title).bold())
-                    .padding()
+                    .padding([.leading, .trailing, .top])
                 
-                List(model.allProjects.indices, id: \.self) { index in
-                    HStack {
-                        Text(model.allProjects[index].name)
-                        Spacer()
+                List() {
+                    ForEach( model.allProjects.indices, id: \.self) { index in
+                        HStack {
+                            Text(model.allProjects[index].name)
+                                .font(model.project.id == model.allProjects[index].id ? .system(.body).bold() : .system(.body))
+                            Spacer()
+                        }
+                        .foregroundColor(model.project.id == model.allProjects[index].id ? .blue : .white)
+                        .contentShape(Rectangle())
+                        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
+                        .onTapGesture {
+                            model.switchProjects(newProject: model.allProjects[index])
+                            dismissCallback()
+                        }
                     }
-                    .contentShape(Rectangle())
-                    .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
-                    .onTapGesture {
-                        model.switchProjects(newProject: model.allProjects[index])
-                        dismissCallback()
+                    .onDelete { idx in
+                        model.deleteProject(toDelete: model.allProjects[idx.first!].id)
                     }
                 }
                 

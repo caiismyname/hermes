@@ -122,7 +122,7 @@ class ContentViewModel: ObservableObject {
         saveCurrentProject()
     }
     
-    func createProject(name: String = "") -> Project {
+    func createProject(name: String = "New Project") -> Project {
         let newProject = Project(name: name)
         switchProjects(newProject: newProject) // This needs to go immediately so we set the Me object
         self.allProjects.append(newProject)
@@ -216,6 +216,22 @@ class ContentViewModel: ObservableObject {
                 self.project.createRTDBEntry()
             }
         }
+    }
+    
+    func deleteProject(toDelete: UUID) {
+        guard self.allProjects.contains(where: { p in p.id == toDelete }) else { return }
+        
+        self.allProjects = self.allProjects.filter({ p in p.id != toDelete })
+        
+        if self.project.id == toDelete {
+            if self.allProjects.count > 0 {
+                self.project = allProjects[0]
+            } else {
+                createProject()
+            }
+        }
+        
+        saveProjects()
     }
     
     // Firebase Handling
