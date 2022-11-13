@@ -19,7 +19,7 @@ class PlaybackModel:ObservableObject {
         
         if self.model.project.allClips.count > 0 {
             player.removeAllItems()
-            player.insert(generatePlayerItem(idx: 0)!, after: nil)
+            player.insert(generatePlayerItem(idx: model.project.allClips.count - 1)!, after: nil)
         }
     }
     
