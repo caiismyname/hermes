@@ -8,8 +8,9 @@
 import Foundation
 import SwiftUI
 
-struct SwitchProjectsModal: View {
+struct SettingsModal: View {
     @ObservedObject var model: ContentViewModel
+    @ObservedObject var recordingManager: RecordingManager
     private let sizes = Sizes()
     var dismissCallback: () -> ()
     
@@ -17,9 +18,12 @@ struct SwitchProjectsModal: View {
     @State private var showingTitleAlert = false
     @State private var newProjectName = ""
     
+    // Other settings
+    @State var selectedRecordingButtonStyle: RecordingButtonStyle = .snapchat
+    
     var body: some View {
         ZStack {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 10) {
                 Spacer()
                 
                 Button(action: { showingTitleAlert = !showingTitleAlert }) {
@@ -45,10 +49,10 @@ struct SwitchProjectsModal: View {
                     })
                 }.padding()
                 
-                Spacer()
+//                Spacer()
                 Text("My Projects")
                     .font(.system(.title).bold())
-                    .padding([.leading, .trailing, .top])
+                    .padding()
                 
                 List() {
                     ForEach( model.allProjects.indices, id: \.self) { index in
@@ -70,16 +74,55 @@ struct SwitchProjectsModal: View {
                     }
                 }
                 
-                Spacer()
                 Text("Settings")
                     .font(.system(.title).bold())
                     .padding()
                 
                 List {
-                    Group {
-                        VStack {
-                            Text("Your name")
-                            TextField("your name", text: $model.me.name)
+                    VStack {
+                        Text("Your name")
+                        TextField("your name", text: $model.me.name)
+                    }
+                    
+                    VStack {
+                        Text("Recording Button Style")
+                        Spacer()
+                        HStack {
+                            VStack (alignment: .center) {
+                                Text("Snapchat")
+                                Circle()
+                                    .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 10)
+                                    .frame(width: sizes.recordButtonOuterSize, height: sizes.recordButtonOuterSize)
+                                Text("Tap and hold to record, release to stop")
+                            }
+                            .padding()
+                            .background(recordingManager.recordingButtonStyle == .snapchat ? .blue : .clear)
+                            .cornerRadius(sizes.buttonCornerRadius)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                model.recordingManager.setRecordingButtonStyle(style: .snapchat)
+                            }
+                            Spacer()
+                            VStack (alignment: .center) {
+                                Text("Camera")
+                                ZStack {
+                                    Circle()
+                                        .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 15)
+                                        .frame(width: sizes.recordButtonOuterSize, height: sizes.recordButtonOuterSize)
+                                    
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: sizes.recordButtonSize, height: sizes.recordButtonSize)
+                                }
+                                Text("Tap to record, tap to stop")
+                            }
+                            .padding()
+                            .background(recordingManager.recordingButtonStyle == .camera ? .blue : .clear)
+                            .cornerRadius(sizes.buttonCornerRadius)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                model.recordingManager.setRecordingButtonStyle(style: .camera)
+                            }
                         }
                     }
                 }
