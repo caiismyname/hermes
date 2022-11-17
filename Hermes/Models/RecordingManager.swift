@@ -16,7 +16,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     private let sessionQueue = DispatchQueue(label: "com.caiismyname.SessionQ")
     var session: AVCaptureSession?
     var project: Project
-    var recordingStyle: RecordingStyle
+    @Published var recordingButtonStyle: RecordingButtonStyle
     @Published var isRecording = false
     
     // For the duration UI
@@ -25,14 +25,9 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     var timer = Timer()
     let snapchatFullTime = TimeInterval(10.0)
     
-    enum RecordingStyle: Codable {
-        case snapchat
-        case camera
-    }
-    
     init(project: Project) {
         self.project = project
-        self.recordingStyle = .snapchat
+        self.recordingButtonStyle = UserDefaults.standard.integer(forKey: "recordingButtonStyle") == 1 ? .snapchat : .camera
     }
     
     func configureCaptureSession(session: AVCaptureSession) {
@@ -56,6 +51,11 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
         }
         
         self.session!.commitConfiguration()
+    }
+    
+    func setRecordingButtonStyle(style: RecordingButtonStyle) {
+        self.recordingButtonStyle = style
+        UserDefaults.standard.set(self.recordingButtonStyle == .camera ? 0 : 1, forKey: "recordingButtonStyle")
     }
     
     func toggleRecording() {
@@ -105,7 +105,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     @objc func updateDuration() {
         let now = Date()
         recordingDuration = now.timeIntervalSince(recordingStartTime)
-        if isRecording && recordingStyle == .snapchat && recordingDuration > snapchatFullTime {
+        if isRecording && recordingButtonStyle == .snapchat && recordingDuration > snapchatFullTime {
             toggleRecording() // stops the recording
         }
     }
@@ -131,4 +131,9 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
         self.timer.invalidate()
         self.recordingDuration = TimeInterval(0)
     }
+}
+
+enum RecordingButtonStyle: Codable {
+    case camera // 0
+    case snapchat // 1
 }

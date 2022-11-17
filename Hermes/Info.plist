@@ -4,10 +4,6 @@
 <dict>
 	<key></key>
 	<string></string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Save finished vlogs to your photo library</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Save finished vlogs to your photo library</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

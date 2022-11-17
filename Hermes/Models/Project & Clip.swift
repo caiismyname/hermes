@@ -67,7 +67,7 @@ class Project: ObservableObject, Codable {
             self.currentClip = nil
             
         } catch {
-            print ("Error moving clip from temp to user home directory")
+            print ("Error moving clip from temp to user home directory: \(error)")
         }
     }
     
@@ -119,7 +119,16 @@ class Project: ObservableObject, Codable {
                             "timestamp": c.timestamp.ISO8601Format(),
                             "creator": me!.id
                         ]
-                    ) { _,_  in
+                    ) { error, _ in
+                        guard error == nil else {
+                            print(error!)
+                            continuation.resume()
+                            return
+                        }
+                        
+                        // Then upload the clip's id to clipIdIndex
+                        dbRef.child(self.id.uuidString).child("clipIdIndex").child(c.id.uuidString).setValue(true)
+                        
                         continuation.resume()
                     }
                 }

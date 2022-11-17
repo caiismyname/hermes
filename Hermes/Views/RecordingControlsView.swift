@@ -81,8 +81,9 @@ struct RecordingControlsView: View {
                         y: computeControlPositions(geometry: geometry, relativePosition: 3.0/4.0)["y"]!
                     )
                     .popover(isPresented: $projectSwitcherModalShowing, content: {
-                        SwitchProjectsModal(
+                        SettingsModal(
                             model: model,
+                            recordingManager: recordingManager,
                             dismissCallback: {self.projectSwitcherModalShowing = !self.projectSwitcherModalShowing}
                         )
                     })
@@ -99,12 +100,19 @@ struct RecordingControlsView: View {
                 
                 
                 // Record button
-                //            RecordButtonCameraStyle(recordingManager: recordingManager)
-                RecordButtonSnapchatStyle(recordingManager: recordingManager)
-                    .position(
-                        x: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["x"]!,
-                        y: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["y"]!
-                    )
+                if recordingManager.recordingButtonStyle == .camera {
+                    RecordButtonCameraStyle(recordingManager: recordingManager)
+                        .position(
+                            x: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["x"]!,
+                            y: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["y"]!
+                        )
+                } else {
+                    RecordButtonSnapchatStyle(recordingManager: recordingManager)
+                        .position(
+                            x: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["x"]!,
+                            y: computeControlPositions(geometry: geometry, relativePosition: 2.0/4.0)["y"]!
+                        )
+                }
             }
         }
     }

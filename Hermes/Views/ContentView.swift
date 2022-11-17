@@ -16,9 +16,9 @@ struct ContentView: View {
     func updateOrientation(newOrientation: UIDeviceOrientation) {
         switch newOrientation {
             // Prevent jankiness when the phone moves through the Z axis
-        case .unknown,.faceUp, .faceDown, .portraitUpsideDown:
+        case .unknown,.faceUp, .faceDown, .portraitUpsideDown, .landscapeLeft, .landscapeRight:
             return
-        case .portrait, .landscapeLeft, .landscapeRight:
+        case .portrait:
             self.orientation = newOrientation
         @unknown default:
             return
@@ -51,8 +51,9 @@ struct ContentView: View {
                     updateOrientation(newOrientation: newOrientation)
                 }
                 .popover(isPresented: $model.shouldShowProjects, content: {
-                    SwitchProjectsModal(
+                    SettingsModal(
                         model: model,
+                        recordingManager: model.recordingManager,
                         dismissCallback: {model.shouldShowProjects = !model.shouldShowProjects}
                     )
                 })

@@ -21,9 +21,11 @@ class Exporter: ObservableObject {
     
     func export() async {
         self.isProcessing = true
+        guard photosPermissionsCheck() else { return }
         
         let movieInfo = await compileMovie()
-        let url = await exportMovieToURL(movie: movieInfo.asset, instructions: movieInfo.instructions)
+//        let url = await exportMovieToURL(movie: movieInfo.asset, instructions: movieInfo.instructions)
+        let url = await exportMovieToURL(movie: movieInfo)
         await saveToPhotoLibrary(movieURL: url)
         
         self.isProcessing = false
@@ -47,7 +49,7 @@ class Exporter: ObservableObject {
     }
     
     private func saveToPhotoLibrary(movieURL: URL) async {
-        guard photosPermissionsCheck() else { return }
+        guard photosPermissionsCheck() else { return } // Double checking but we should already have it from the beginning of the func
         print("Saving full movie to photo library for project \(self.project.id.uuidString))")
         
         PHPhotoLibrary.shared().performChanges({
@@ -63,7 +65,8 @@ class Exporter: ObservableObject {
         }
     }
     
-    private func compileMovie() async -> (asset: AVAsset, instructions: AVMutableVideoCompositionInstruction) {
+//    private func compileMovie() async -> (asset: AVAsset, instructions: AVMutableVideoCompositionInstruction) {
+    private func compileMovie() async -> AVAsset {
         print("Compiling full movie for project \(self.project.id.uuidString))")
         
         let fullMovie = AVMutableComposition()
@@ -75,7 +78,8 @@ class Exporter: ObservableObject {
         return await withThrowingTaskGroup(of: AVMutableVideoCompositionLayerInstruction?.self) { group in
             do {
                 for clip in project.allClips {
-                    guard clip.finalURL != nil else { return (AVMutableComposition(), AVMutableVideoCompositionInstruction()) }
+//                    guard clip.finalURL != nil else { return (AVMutableComposition(), AVMutableVideoCompositionInstruction()) }
+                    guard clip.finalURL != nil else { return (AVMutableComposition()) }
                     
                     let clipContent = AVURLAsset(url: clip.finalURL!)
                     let clipDuration = try await clipContent.load(.duration) // Run this synchronously so we can use it in the following operations
@@ -121,22 +125,24 @@ class Exporter: ObservableObject {
                 }
 
                 // Wait for the TaskGroup to compete, then compile all the instructions together
-                let fullInstruction = AVMutableVideoCompositionInstruction()
-                fullInstruction.timeRange = CMTimeRange(start: .zero, duration: startCumulative) // By the end, `startCumulative` will be equal to the end time of the full movie
-                
-                var allInstructions = [AVMutableVideoCompositionLayerInstruction]()
-                for try await instruction in group {
-                    if instruction != nil {
-                        allInstructions.append(instruction!)
-                    }
-                }
+//                let fullInstruction = AVMutableVideoCompositionInstruction()
+//                fullInstruction.timeRange = CMTimeRange(start: .zero, duration: startCumulative) // By the end, `startCumulative` will be equal to the end time of the full movie
+//
+//                var allInstructions = [AVMutableVideoCompositionLayerInstruction]()
+//                for try await instruction in group {
+//                    if instruction != nil {
+//                        allInstructions.append(instruction!)
+//                    }
+//                }
                 
                 // Apply the compiled instructions to the full movie. Note that each instruction has its own start time so the list order doesn't matter
-                fullInstruction.layerInstructions = allInstructions
+//                fullInstruction.layerInstructions = allInstructions
                 
-                return (fullMovie, fullInstruction)
+//                return (fullMovie, fullInstruction)
+                return (fullMovie)
             } catch {
-                return (AVMutableComposition(), AVMutableVideoCompositionInstruction())
+//                return (AVMutableComposition(), AVMutableVideoCompositionInstruction())
+                return (AVMutableComposition())
             }
         }
     }
@@ -171,7 +177,8 @@ class Exporter: ObservableObject {
         }
     }
   
-    private func exportMovieToURL(movie: AVAsset, instructions: AVMutableVideoCompositionInstruction) async -> URL {
+//    private func exportMovieToURL(movie: AVAsset, instructions: AVMutableVideoCompositionInstruction) async -> URL {
+    private func exportMovieToURL(movie: AVAsset) async -> URL {
         let exporter = AVAssetExportSession(asset: movie, presetName: AVAssetExportPresetHighestQuality)
         let url = URL(
             fileURLWithPath:
@@ -183,13 +190,13 @@ class Exporter: ObservableObject {
         print("Exporting full movie to \(url) for project \(self.project.id.uuidString))")
         
         let composition = AVMutableVideoComposition()
-        composition.instructions = [instructions]
+//        composition.instructions = [instructions]
         composition.frameDuration = CMTimeMake(value: 1, timescale: 30)
         composition.renderSize = CGSize(width: 1080, height: 1920)
         
         exporter?.outputURL = url
         exporter?.outputFileType = .mov
-        exporter?.videoComposition = composition
+//        exporter?.videoComposition = composition
         await exporter?.export()
         
         print("Exported")
