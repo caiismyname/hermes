@@ -22,6 +22,7 @@ struct HermesApp: App {
         // Leaving this here in case it's useful later
         let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore") as Bool
         if !hasLaunchedBefore {
+            contentViewModel.isOnboarding = true
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
         }
         

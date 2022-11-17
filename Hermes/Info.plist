@@ -21,5 +21,10 @@
 			<string>None</string>
 		</dict>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>com.hermes.newcliprefresh</string>
+		<string>processing</string>
+	</array>
 </dict>
 </plist>

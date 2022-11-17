@@ -10,6 +10,7 @@
 		2706765428E7306F00CB0C96 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2706765328E7306F00CB0C96 /* GoogleService-Info.plist */; };
 		2706765728E735AB00CB0C96 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 2706765628E735AB00CB0C96 /* FirebaseAuth */; };
 		2706765B28E735AB00CB0C96 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2706765A28E735AB00CB0C96 /* FirebaseStorage */; };
+		2733DAC42925D3C800D3574C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2733DAC32925D3C800D3574C /* OnboardingView.swift */; };
 		2764EF392918A644000675A7 /* NotificationsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2764EF382918A644000675A7 /* NotificationsManager.swift */; };
 		2778E08928D6023B003E901E /* HermesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E08828D6023B003E901E /* HermesApp.swift */; };
 		2778E08B28D6023B003E901E /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2778E08A28D6023B003E901E /* Persistence.swift */; };
@@ -36,6 +37,7 @@
 
 /* Begin PBXFileReference section */
 		2706765328E7306F00CB0C96 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		2733DAC32925D3C800D3574C /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		2764EF382918A644000675A7 /* NotificationsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsManager.swift; sourceTree = "<group>"; };
 		2778E08528D6023B003E901E /* Hermes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hermes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2778E08828D6023B003E901E /* HermesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesApp.swift; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 				2778E0AF28D674BA003E901E /* RecordingControlsView.swift */,
 				2778E0B328D9D291003E901E /* PlaybackView.swift */,
 				27ECF55928F463D400E7DF48 /* SettingsView.swift */,
+				2733DAC32925D3C800D3574C /* OnboardingView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -259,6 +262,7 @@
 				2778E0AE28D66D27003E901E /* RecordingManager.swift in Sources */,
 				2778E09028D6023B003E901E /* ContentView.swift in Sources */,
 				2778E08B28D6023B003E901E /* Persistence.swift in Sources */,
+				2733DAC42925D3C800D3574C /* OnboardingView.swift in Sources */,
 				2778E0A528D60877003E901E /* CameraError.swift in Sources */,
 				2778E0B228D7A171003E901E /* Project & Clip.swift in Sources */,
 			);

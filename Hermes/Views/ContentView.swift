@@ -27,38 +27,41 @@ struct ContentView: View {
    
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                Rectangle()
-                    .fill(Color.black)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .edgesIgnoringSafeArea(.all)
-                
-                if model.ready {
-                    CameraPreviewWrapper(session: model.cameraManager.session, orientation: $orientation)
-                        .mask {
-                            Rectangle()
-                                .cornerRadius(sizes.cameraPreviewCornerRadius)
-                                .frame(width: geometry.size.width, height: geometry.size.width * (16/9))
-                        }
-                }
+            if model.isOnboarding {
+                OnboardingView(model: model)
+            } else {
+                ZStack {
+                    Rectangle()
+                        .fill(Color.black)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .edgesIgnoringSafeArea(.all)
                     
-                RecordingControlsView(
-                    model: model,
-                    recordingManager: model.recordingManager,
-                    orientation: $orientation
-                )
-                .onRotate { newOrientation in // Note this .onRotate handles the orientation for all aspects of the recording UI
-                    updateOrientation(newOrientation: newOrientation)
-                }
-                .popover(isPresented: $model.shouldShowProjects, content: {
-                    SettingsModal(
+                    if model.ready {
+                        CameraPreviewWrapper(session: model.cameraManager.session, orientation: $orientation)
+                            .mask {
+                                Rectangle()
+                                    .cornerRadius(sizes.cameraPreviewCornerRadius)
+                                    .frame(width: geometry.size.width, height: geometry.size.width * (16/9))
+                            }
+                    }
+                    
+                    RecordingControlsView(
                         model: model,
                         recordingManager: model.recordingManager,
-                        dismissCallback: {model.shouldShowProjects = !model.shouldShowProjects}
+                        orientation: $orientation
                     )
-                })
+                    .onRotate { newOrientation in // Note this .onRotate handles the orientation for all aspects of the recording UI
+                        updateOrientation(newOrientation: newOrientation)
+                    }
+                    .popover(isPresented: $model.shouldShowProjects, content: {
+                        SettingsModal(
+                            model: model,
+                            recordingManager: model.recordingManager,
+                            dismissCallback: {model.shouldShowProjects = !model.shouldShowProjects}
+                        )
+                    })
+                }
             }
-                
         }.preferredColorScheme(.dark)
     }
 }

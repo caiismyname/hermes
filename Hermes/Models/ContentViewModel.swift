@@ -18,6 +18,7 @@ class ContentViewModel: ObservableObject {
     
     @Published var ready = false
     @Published var shouldShowProjects = false
+    @Published var isOnboarding = false // Default to false, will be set to true on first run
     
     let cameraManager = CameraManager()
     @Published var recordingManager: RecordingManager
@@ -134,7 +135,7 @@ class ContentViewModel: ObservableObject {
     
     func updateName(newName: String) {
         me.name = newName
-        UserDefaults.setValue(newName, forKey: "myName")
+        UserDefaults.standard.setValue(newName, forKey: "myName")
     }
     
     // Saving projects locally
