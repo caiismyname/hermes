@@ -196,6 +196,7 @@ class Project: ObservableObject, Codable {
             
             let allClipsFromDB = snapshot.value as! [String:[String:String]]
             let allLocalClipIds = self.allClips.map { c in c.id }
+            var seenNewClipIds = [UUID]()
             let dateFormatter = ISO8601DateFormatter()
             
             for (_, d) in allClipsFromDB {
@@ -205,7 +206,6 @@ class Project: ObservableObject, Codable {
                 }
                 
                 print("Found new clip \(clipId.uuidString)")
-                print(d)
                 
                 // Clip has not been seen locally, create stub
                 let newClip = Clip(
@@ -227,8 +227,10 @@ class Project: ObservableObject, Codable {
 //                    }
 //                }
                 
-                self.allClips.append(newClip)
-
+                if !seenNewClipIds.contains(clipId) { // Doublecheck against dupes
+                    self.allClips.append(newClip)
+                    seenNewClipIds.append(clipId)
+                }
             }
             
             self.sortClips()
