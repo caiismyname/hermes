@@ -12,7 +12,7 @@ import Photos
 
 struct PlaybackView: View {
     @ObservedObject var model: ContentViewModel
-    var playbackModel: PlaybackModel
+    @ObservedObject var playbackModel: PlaybackModel
     private let sizes = Sizes()
     @State var showingRenameAlert = false
     @ObservedObject var exporter: Exporter
@@ -97,6 +97,8 @@ struct PlaybackView: View {
                     .disabled(model.isWorking)
                 }
                     .padding([.leading, .trailing])
+                
+                Text("\(playbackModel.currentVideoCreatorName)")
                 VideoPlayer(player: playbackModel.player)
                 ThumbnailReel(project: model.project, playbackModel: playbackModel)
             }

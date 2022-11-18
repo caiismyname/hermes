@@ -16,7 +16,7 @@ class Project: ObservableObject, Codable {
     var id: UUID
     @Published var name: String
     var me: Me?
-    private var creators: [String: String] = [String: String]()
+    var creators: [String: String] = [String: String]()
     @Published var allClips: [Clip]
     private var currentlyRecording = false
     private var currentClip: Clip? = nil
@@ -205,11 +205,13 @@ class Project: ObservableObject, Codable {
                 }
                 
                 print("Found new clip \(clipId.uuidString)")
+                print(d)
                 
                 // Clip has not been seen locally, create stub
                 let newClip = Clip(
                     id: clipId,
                     timestamp: dateFormatter.date(from: d["timestamp"]!)!,
+                    creator: d["creator"] ?? "",
                     projectId: self.id,
                     location: .remoteUndownloaded
                 )
@@ -234,13 +236,20 @@ class Project: ObservableObject, Codable {
             // Pull project metadata
             let dbRefCreators = Database.database().reference().child(id.uuidString).child("creators")
             let creatorsSnapshot = try await dbRefCreators.getData()
-            guard !(creatorsSnapshot.value! is NSNull) else { return } // No clips in RTDB, nothing to sync
-            self.creators = creatorsSnapshot.value! as! [String: String]
+            if !(creatorsSnapshot.value! is NSNull) {
+                self.creators = creatorsSnapshot.value! as! [String: String]
+                print(self.creators)
+            } else {
+                print("No project creators found")
+            }
             
             let dbRefName = Database.database().reference().child(id.uuidString).child("name")
             let projectNameSnapshot = try await dbRefName.getData()
-            guard !(projectNameSnapshot.value! is NSNull) else { return } // No clips in RTDB, nothing to sync
-            self.name = projectNameSnapshot.value! as! String
+            if !(projectNameSnapshot.value! is NSNull) {
+                self.name = projectNameSnapshot.value! as! String
+            } else {
+                print("No project name found")
+            }
         } catch {
             print(error)
         }
@@ -282,6 +291,7 @@ class Project: ObservableObject, Codable {
         case id
         case allClips
         case name
+        case creators
     }
     
     func encode(to encoder: Encoder) throws {
@@ -289,6 +299,7 @@ class Project: ObservableObject, Codable {
         try container.encode(id, forKey: .id)
         try container.encode(allClips, forKey: .allClips)
         try container.encode(name, forKey: .name)
+        try container.encode(creators, forKey: .creators)
     }
     
     required init(from decoder: Decoder) throws {
@@ -296,6 +307,7 @@ class Project: ObservableObject, Codable {
         id = try values.decode(UUID.self, forKey: .id)
         allClips = try values.decode([Clip].self, forKey: .allClips)
         name = try values.decode(String.self, forKey: .name)
+        creators = try values.decode([String: String].self, forKey: .creators)
     }
 }
 

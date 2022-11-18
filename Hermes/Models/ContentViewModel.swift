@@ -320,10 +320,12 @@ class ContentViewModel: ObservableObject {
                 let data = d as! [String: String]
                 let clipIdString = data["id"]!
                 let clipTimestampString = data["timestamp"]!
+                let clipCreator = data["creator"] ?? ""
                 
                 let newClip = Clip(
                     id: UUID.init(uuidString: clipIdString)!,
                     timestamp: dateFormatter.date(from: clipTimestampString)!,
+                    creator: clipCreator,
                     projectId: projectId,
                     location: .remoteUndownloaded
                 )

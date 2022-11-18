@@ -11,19 +11,23 @@ import AVKit
 class PlaybackModel:ObservableObject {
     var model: ContentViewModel
     @Published var currentVideoIdx: Int
+    @Published var currentVideoCreatorName = ""
     var player = AVQueuePlayer()
     
     init(model: ContentViewModel, currentVideoIdx: Int = 0) {
         self.model = model
         self.currentVideoIdx = currentVideoIdx
         
+        // default to last clip
         if self.model.project.allClips.count > 0 {
+            self.currentVideoIdx = model.project.allClips.count - 1
+            self.currentVideoCreatorName = model.project.creators[model.project.allClips[currentVideoIdx].creator] ?? ""
             player.removeAllItems()
-            player.insert(generatePlayerItem(idx: model.project.allClips.count - 1)!, after: nil)
+            player.insert(switchToClip(idx: self.currentVideoIdx)!, after: nil)
         }
     }
     
-    private func generatePlayerItem(idx: Int) -> AVPlayerItem? {
+    private func switchToClip(idx: Int) -> AVPlayerItem? {
         let clip = self.model.project.allClips[idx]
         if clip.location == .remoteUndownloaded {
             Task {
@@ -36,6 +40,10 @@ class PlaybackModel:ObservableObject {
         if let url = clip.finalURL {
             let playerItem = AVPlayerItem(url: url)
             player.actionAtItemEnd = .none // override this behavior with the Notification
+            
+            // Update current video info
+            self.currentVideoIdx = idx
+            self.currentVideoCreatorName = model.project.creators[model.project.allClips[currentVideoIdx].creator] ?? ""
             
             NotificationCenter.default.addObserver(
                 self,
@@ -50,7 +58,7 @@ class PlaybackModel:ObservableObject {
     }
     
     func playCurrentVideo() {
-        if let item = generatePlayerItem(idx: self.currentVideoIdx) {
+        if let item = switchToClip(idx: self.currentVideoIdx) {
             self.player.removeAllItems()
             self.player.insert(item, after: nil)
             self.player.play()
@@ -65,9 +73,10 @@ class PlaybackModel:ObservableObject {
             return
         } else {
             currentVideoIdx += 1
+            self.currentVideoCreatorName = model.project.creators[model.project.allClips[currentVideoIdx].creator] ?? ""
         }
         
-        if let item = generatePlayerItem(idx: currentVideoIdx) {
+        if let item = switchToClip(idx: currentVideoIdx) {
             self.player.removeAllItems()
             self.player.insert(item, after: nil)
             player.play()
