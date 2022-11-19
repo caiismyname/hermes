@@ -95,7 +95,7 @@ class Project: ObservableObject, Codable {
     }
     
     func deleteClip(id: UUID) async {
-        print("Deleting clip \(id.uuidString)")
+        print("    Deleting clip locally \(id.uuidString)")
         await deleteClipFromFB(id: id)
         let clip = self.allClips.first(where: { c in c.id == id })
         if !(clip?.seen ?? true) {
@@ -206,26 +206,56 @@ class Project: ObservableObject, Codable {
         }
     }
     
+    private func reconcileDeletionsWithLocalClips(allFBClips: [UUID]) async {
+//        let allLocalClips = self.allClips.map { c in c.id }
+        var toDelete = [UUID]()
+        for c in self.allClips {
+            if !allFBClips.contains(c.id) && c.location != .local {
+                toDelete.append(c.id)
+            }
+        }
+        
+        if toDelete.isEmpty {
+            print("    Found no deletions needing reconciliation with FB")
+        } else {
+            print("    The following clips were deleted in FB and will be deleted from the device: \(toDelete.map {c in c.uuidString })")
+        }
+        
+        await withThrowingTaskGroup(of: Void.self) { group in
+            for c in toDelete {
+                group.addTask {
+                    await self.deleteClip(id: c)
+                }
+            }
+        }
+    }
+    
     func pullNewClipMetadata() async {
         do {
             print("Pulling new clip metadata for project \(id.uuidString)")
             let dbRef = Database.database().reference().child(id.uuidString).child("clips")
             
             let snapshot = try await dbRef.getData()
-            guard !(snapshot.value! is NSNull) else { return } // No clips in RTDB, nothing to sync
+            guard !(snapshot.value! is NSNull) else {
+                print("    No clips found in RTDB")
+                return
+            } // No clips in RTDB, nothing to sync
             
-            let allClipsFromDB = snapshot.value as! [String:[String:String]]
+            let allClipsFromFB = snapshot.value as! [String:[String:String]]
+            var allClipsFromFBIds = [UUID]()
             let allLocalClipIds = self.allClips.map { c in c.id }
             var seenNewClipIds = [UUID]()
             let dateFormatter = ISO8601DateFormatter()
             
-            for (_, d) in allClipsFromDB {
+            for (_, d) in allClipsFromFB {
                 let clipId = UUID(uuidString: d["id"]!)!
+                allClipsFromFBIds.append(clipId)
+                
                 if allLocalClipIds.contains(clipId) {
                     continue
                 }
                 
-                print("Found new clip \(clipId.uuidString)")
+                print("    Found new clip \(clipId.uuidString)")
                 
                 // Clip has not been seen locally, create stub
                 let newClip = Clip(
@@ -257,14 +287,15 @@ class Project: ObservableObject, Codable {
                 self.sortClips()
             }
             
+            await reconcileDeletionsWithLocalClips(allFBClips: allClipsFromFBIds)
+            
             // Pull project metadata
             let dbRefCreators = Database.database().reference().child(id.uuidString).child("creators")
             let creatorsSnapshot = try await dbRefCreators.getData()
             if !(creatorsSnapshot.value! is NSNull) {
                 self.creators = creatorsSnapshot.value! as! [String: String]
-                print(self.creators)
             } else {
-                print("No project creators found")
+                print("    No project creators found")
             }
             
             let dbRefName = Database.database().reference().child(id.uuidString).child("name")
@@ -274,7 +305,7 @@ class Project: ObservableObject, Codable {
                     self.name = projectNameSnapshot.value! as! String
                 }
             } else {
-                print("No project name found")
+                print("    No project name found")
             }
         } catch {
             print(error)
@@ -332,6 +363,7 @@ class Project: ObservableObject, Codable {
                 let clipRef = Database.database().reference().child(self.id.uuidString).child("clips").child(clipKey!)
                 try await clipRef.removeValue()
                 try await storageRef.delete()
+                // NOTE: We are intentionally NOT removing the clip ID from the clipIDIndex to serve as a backup against the clip being re-added by another client after deletion
             }
         } catch {
             print("    Could not delete clip from DB \(error)")
