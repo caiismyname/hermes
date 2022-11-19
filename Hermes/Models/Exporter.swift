@@ -50,7 +50,7 @@ class Exporter: ObservableObject {
     
     private func saveToPhotoLibrary(movieURL: URL) async {
         guard photosPermissionsCheck() else { return } // Double checking but we should already have it from the beginning of the func
-        print("Saving full movie to photo library for project \(self.project.id.uuidString))")
+        print("Saving full movie to photo library for project \(await self.project.id.uuidString))")
         
         PHPhotoLibrary.shared().performChanges({
             let assetCollection = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: "Hermes Vlogs")
@@ -67,7 +67,7 @@ class Exporter: ObservableObject {
     
 //    private func compileMovie() async -> (asset: AVAsset, instructions: AVMutableVideoCompositionInstruction) {
     private func compileMovie() async -> AVAsset {
-        print("Compiling full movie for project \(self.project.id.uuidString))")
+        print("Compiling full movie for project \(await self.project.id.uuidString))")
         
         let fullMovie = AVMutableComposition()
         let fullMovieVideoTrack = fullMovie.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
@@ -77,7 +77,7 @@ class Exporter: ObservableObject {
         
         return await withThrowingTaskGroup(of: AVMutableVideoCompositionLayerInstruction?.self) { group in
             do {
-                for clip in project.allClips {
+                for clip in await project.allClips {
 //                    guard clip.finalURL != nil else { return (AVMutableComposition(), AVMutableVideoCompositionInstruction()) }
                     guard clip.finalURL != nil else { return (AVMutableComposition()) }
                     
@@ -187,7 +187,7 @@ class Exporter: ObservableObject {
                 )
         )
         
-        print("Exporting full movie to \(url) for project \(self.project.id.uuidString))")
+        print("Exporting full movie to \(url) for project \(await self.project.id.uuidString))")
         
         let composition = AVMutableVideoComposition()
 //        composition.instructions = [instructions]

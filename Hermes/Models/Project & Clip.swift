@@ -21,12 +21,14 @@ class Project: ObservableObject, Codable {
     private var currentlyRecording = false
     private var currentClip: Clip? = nil
     @Published var unseenCount = 0
+    @Published var lastClip: Clip?
     
     init(uuid: UUID = UUID(), name: String = "Project \(Int.random(in: 0..<100))", allClips: [Clip] = []) {
         self.id = uuid
         self.name = name
         self.allClips = allClips
         self.sortClips()
+        self.lastClip = allClips.last
         
         computeUnseenCount()
     }
@@ -65,6 +67,7 @@ class Project: ObservableObject, Codable {
             
             print("Saved clip \(currentClip!.id.uuidString) to \(currentClip!.finalURL!)")
             self.currentClip = nil
+            self.sortClips()
             
         } catch {
             print ("Error moving clip from temp to user home directory: \(error)")
@@ -72,17 +75,34 @@ class Project: ObservableObject, Codable {
     }
     
     private func sortClips() {
-        self.allClips.sort { a, b in
-            return (a.timestamp < b.timestamp)
+        DispatchQueue.main.async {
+            self.allClips.sort { a, b in
+                return (a.timestamp < b.timestamp)
+            }
+            
+            self.lastClip = self.allClips.last
         }
     }
     
     func computeUnseenCount() {
-        self.unseenCount = self.allClips.filter { c in (!c.seen && c.status == .final) }.count
+        DispatchQueue.main.async {
+            self.unseenCount = self.allClips.filter { c in (!c.seen && c.status == .final) }.count
+        }
     }
     
     func generateURL() -> URL {
         return URL(string: "\(URLSchema.baseURL)\(self.id.uuidString)")!
+    }
+    
+    func deleteClip(id: UUID) async {
+        print("Deleting clip \(id.uuidString)")
+        await deleteClipFromFB(id: id)
+        let clip = self.allClips.first(where: { c in c.id == id })
+        if !(clip?.seen ?? true) {
+            self.unseenCount -= 1
+        }
+        self.allClips.removeAll { c in c.id == id }
+        self.sortClips()
     }
     
     // MARK: Firebase
@@ -233,7 +253,9 @@ class Project: ObservableObject, Codable {
                 }
             }
             
-            self.sortClips()
+            if !seenNewClipIds.isEmpty { // Prevent unncessary re-sorting as every sort causes a flash on the playback button thumbnail
+                self.sortClips()
+            }
             
             // Pull project metadata
             let dbRefCreators = Database.database().reference().child(id.uuidString).child("creators")
@@ -248,7 +270,9 @@ class Project: ObservableObject, Codable {
             let dbRefName = Database.database().reference().child(id.uuidString).child("name")
             let projectNameSnapshot = try await dbRefName.getData()
             if !(projectNameSnapshot.value! is NSNull) {
-                self.name = projectNameSnapshot.value! as! String
+                DispatchQueue.main.async {
+                    self.name = projectNameSnapshot.value! as! String
+                }
             } else {
                 print("No project name found")
             }
@@ -259,8 +283,6 @@ class Project: ObservableObject, Codable {
     
     
     func pullVideosForNewClips() async {
-        let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos")
-        
         await withThrowingTaskGroup(of: Void.self) { group in
             for clip in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
                 group.addTask {
@@ -268,9 +290,10 @@ class Project: ObservableObject, Codable {
                 }
             }
         }
-        
-        self.allClips = self.allClips.filter({ c in c.status != .invalid })
-        self.sortClips()
+        DispatchQueue.main.async {
+            self.allClips = self.allClips.filter({ c in c.status != .invalid })
+            self.sortClips()
+        }
     }
     
     func networkAwareProjectDownload(shouldDownloadVideo: Bool = false) async {
@@ -286,6 +309,33 @@ class Project: ObservableObject, Codable {
     func appStartSync() async {
         await networkAwareProjectDownload() // Download remote changes before pushing up yours.
         await networkAwareProjectUpload()
+    }
+    
+    private func getFirebaseIdForClip(id: UUID) async -> String? {
+        let dbRef = Database.database().reference().child(self.id.uuidString).child("clips")
+        let (snapshot, _) = await dbRef.queryOrdered(byChild: "id").queryEqual(toValue: id.uuidString).observeSingleEventAndPreviousSiblingKey(of: .value)
+        if let value = snapshot.value! as? [String:[String: String]] {
+            let fbId = value.keys.first
+            return fbId
+        } else {
+            return nil
+        }
+    }
+    
+    private func deleteClipFromFB(id: UUID) async {
+        do {
+            print("    Deleting clip from DB \(id.uuidString)")
+            let clipKey = await getFirebaseIdForClip(id: id)
+            if clipKey != nil {
+                print("    Firebase ID: \(clipKey)")
+                let storageRef = Storage.storage().reference().child(self.id.uuidString).child("videos").child(id.uuidString)
+                let clipRef = Database.database().reference().child(self.id.uuidString).child("clips").child(clipKey!)
+                try await clipRef.removeValue()
+                try await storageRef.delete()
+            }
+        } catch {
+            print("    Could not delete clip from DB \(error)")
+        }
     }
     
     // MARK: — Codable

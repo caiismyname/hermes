@@ -68,11 +68,13 @@ class ContentViewModel: ObservableObject {
     }
     
     func updateMeId(meFirebaseID: String) {
-        me.id = meFirebaseID
-        UserDefaults.standard.setValue(me.id, forKey: "meId")
-        self.project.me = me // Unsure if we need this, but just to be safe.
-        
-        print("Updated meId to \(me.id)")
+        DispatchQueue.main.async {
+            self.me.id = meFirebaseID
+            UserDefaults.standard.setValue(self.me.id, forKey: "meId")
+            self.project.me = self.me // Unsure if we need this, but just to be safe.
+            
+            print("Updated meId to \(self.me.id)")
+        }
     }
     
     private func setupSubscriptions() {

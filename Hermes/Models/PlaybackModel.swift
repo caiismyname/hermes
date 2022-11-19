@@ -84,4 +84,18 @@ class PlaybackModel:ObservableObject {
             self.model.project.computeUnseenCount()
         }
     }
+    
+    func deleteClip(id: UUID) {
+        let deletedClipIdx = model.project.allClips.firstIndex { c in
+            c.id == id
+        } ?? -1
+        
+        if deletedClipIdx != -1 && deletedClipIdx <= self.currentVideoIdx {
+            self.currentVideoIdx -= 1
+        }
+        
+        Task {
+            await model.project.deleteClip(id: id)
+        }
+    }
 }

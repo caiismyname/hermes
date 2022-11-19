@@ -58,7 +58,11 @@ struct RecordingControlsView: View {
                 }
                 
                 if !(recordingManager.isRecording) {
-                    PlaybackButton(project: model.project, lastClip: model.project.allClips.last ?? Clip(projectId: model.project.id), tapCallback: {playbackModalShowing = !playbackModalShowing})
+                    PlaybackButton(
+                        project: model.project,
+                        lastClip: model.project.allClips.last ?? Clip(projectId: model.project.id),
+                        tapCallback: {playbackModalShowing = !playbackModalShowing}
+                    )
                         .position(
                             x: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["x"]!,
                             y: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["y"]!
@@ -215,24 +219,27 @@ struct PlaybackButton: View {
                     .fill(.black)
                     .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
                 
-                if project.allClips.count == 0 {
-                    Circle()
-                        .fill(.black)
-                        .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
-                    Image(systemName: "film.stack")
-                        .font(.system(size: sizes.secondaryButtonSize))
-                        .foregroundColor(Color.white)
-                } else if project.allClips.count > 0 && lastClip.thumbnail != nil {
-                    Image(uiImage: UIImage(data:(lastClip.thumbnail)!)!)
-                        .resizable()
-                        .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
-                        .mask {
-                            Circle()
-                                .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
-                        }
-                    Circle()
-                        .strokeBorder(.black, lineWidth: sizes.secondaryButtonSize / 15)
-                        .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
+                // Fallback image if no thumbnail to display
+                Circle()
+                    .fill(.black)
+                    .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
+                Image(systemName: "film.stack")
+                    .font(.system(size: sizes.secondaryButtonSize))
+                    .foregroundColor(Color.white)
+                
+                if let clip = project.allClips.last {
+                    if clip.thumbnail != nil {
+                        Image(uiImage: UIImage(data:(clip.thumbnail)!)!)
+                            .resizable()
+                            .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
+                            .mask {
+                                Circle()
+                                    .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
+                            }
+                        Circle()
+                            .strokeBorder(.black, lineWidth: sizes.secondaryButtonSize / 15)
+                            .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
+                    }
                 }
                 
                 if project.unseenCount > 0 {

@@ -147,12 +147,15 @@ struct ThumbnailReel: View {
                     ForEach(project.allClips.indices, id: \.self) { idx in
                         let clip = project.allClips[idx]
                         Thumbnail(clip: clip)
-                            .onTapGesture {
-                                print(clip.id, clip.finalURL, clip.location)
+                            .simultaneousGesture(TapGesture().onEnded({ _ in
+                                print("Playing \(clip.id)")
                                 playbackModel.currentVideoIdx = idx
                                 playbackModel.playCurrentVideo()
                                 clip.seen = true
-                            }
+                            }))
+                            .simultaneousGesture(LongPressGesture(minimumDuration: 0.7).onEnded({ _ in
+                                Task { playbackModel.deleteClip(id: clip.id) }
+                            }))
                             .id(clip.id)
                     }
                     .onAppear {
