@@ -24,6 +24,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     @Published var recordingDuration = TimeInterval(0)
     var timer = Timer()
     let snapchatFullTime = TimeInterval(10.0)
+    let snapchatMaxConsecutiveClips = 1.0
     
     init(project: Project) {
         self.project = project
@@ -64,7 +65,9 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
             return
         }
         
-        self.isRecording = true
+        // Perform status update not in the sessionqueue
+        self.isRecording = !movieFileOutput.isRecording
+        
         sessionQueue.async {
             if !movieFileOutput.isRecording {
                 if let movieFileOutputConnection = movieFileOutput.connection(with: .video) {
@@ -90,7 +93,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     }
     
     func startTimer() {
-        self.recordingDuration = TimeInterval(0)
+        self.recordingDuration = self.recordingButtonStyle == .snapchat ? snapchatFullTime : TimeInterval(0)
         self.recordingStartTime = Date()
         self.timer = Timer.scheduledTimer(
             timeInterval: TimeInterval(0.02),
@@ -104,9 +107,20 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     
     @objc func updateDuration() {
         let now = Date()
-        recordingDuration = now.timeIntervalSince(recordingStartTime)
-        if isRecording && recordingButtonStyle == .snapchat && recordingDuration > snapchatFullTime {
+        if self.recordingButtonStyle == .snapchat {
+            recordingDuration = snapchatFullTime - now.timeIntervalSince(recordingStartTime)
+        } else {
+            recordingDuration = now.timeIntervalSince(recordingStartTime)
+        }
+        if isRecording && recordingButtonStyle == .snapchat && recordingDuration <= 0.0 {
+            self.timer.invalidate()
             toggleRecording() // stops the recording
+//            guard !isRecording else {
+//                print("IT DIDN'T STOP")
+//                return
+//            } // Ensure recording did stop
+//            print("STARTING A NEW ONE")
+//            toggleRecording() // restart the recording
         }
     }
     

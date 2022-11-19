@@ -181,9 +181,14 @@ struct RecordButtonSnapchatStyle: View {
             }
         }
         .contentShape(Circle())
-        .onLongPressGesture(minimumDuration: recordingManager.snapchatFullTime, maximumDistance: 200) {
-        } onPressingChanged: { _ in
-            recordingManager.toggleRecording()
+        .onLongPressGesture(minimumDuration: (recordingManager.snapchatFullTime * recordingManager.snapchatMaxConsecutiveClips), maximumDistance: 200) {
+            // An event is triggered when it starts, and when it hits the minimum duration again, so this duration effective caps how long the button will hold for
+        } onPressingChanged: { startedPressing in
+            // Only trigger the toggle if we're not recording and we're starting, or we are recording and we're stopping
+            // Without this, it'll send one last toggle event if the user hits the time limit and then lifts off the button
+            if (startedPressing && !recordingManager.isRecording) || (!startedPressing && recordingManager.isRecording) {
+                recordingManager.toggleRecording()
+            }
         }
     }
 }
@@ -199,7 +204,11 @@ struct RecordingTimeCounter: View {
                 .frame(width: 125, height: 30)
                 .cornerRadius(sizes.buttonCornerRadius)
             
-            Text("\(recordingManager.recordingDuration.formattedTimeNoMilliLeadingZero)")
+            Text(
+                recordingManager.recordingButtonStyle == .snapchat
+                    ? recordingManager.recordingDuration.formattedTimeNoMilliNoLeadingZeroRoundUpOneSecond
+                    : recordingManager.recordingDuration.formattedTimeNoMilliLeadingZero
+            )
                 .font(.system(size: sizes.fontSize, weight: .regular , design: .monospaced))
                 .foregroundColor(Color.white)
         }

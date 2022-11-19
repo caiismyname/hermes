@@ -139,6 +139,7 @@ struct WaitingSpinner: View {
 struct ThumbnailReel: View {
     @ObservedObject var project: Project
     @ObservedObject var playbackModel: PlaybackModel
+    @State var showDeleteALert = false
     
     var body: some View {
         ScrollViewReader { reader in
@@ -147,16 +148,27 @@ struct ThumbnailReel: View {
                     ForEach(project.allClips.indices, id: \.self) { idx in
                         let clip = project.allClips[idx]
                         Thumbnail(clip: clip)
-                            .simultaneousGesture(TapGesture().onEnded({ _ in
+                            .onTapGesture(count: 3, perform: {
+                                showDeleteALert = true
+                            })
+                            .onTapGesture(count: 1, perform: {
                                 print("Playing \(clip.id)")
                                 playbackModel.currentVideoIdx = idx
                                 playbackModel.playCurrentVideo()
                                 clip.seen = true
-                            }))
-                            .simultaneousGesture(LongPressGesture(minimumDuration: 0.7).onEnded({ _ in
-                                Task { playbackModel.deleteClip(id: clip.id) }
-                            }))
+                            })
                             .id(clip.id)
+                            .alert(isPresented: $showDeleteALert) {
+                                Alert(
+                                    title: Text("Delete clip?"),
+                                    primaryButton: .destructive(Text("Delete")) {
+                                        Task { playbackModel.deleteClip(id: clip.id) }
+                                    },
+                                    secondaryButton: .cancel(Text("Cancel")) {
+                                        showDeleteALert = false
+                                    }
+                                )
+                            }
                     }
                     .onAppear {
                         reader.scrollTo(project.allClips.last?.id)

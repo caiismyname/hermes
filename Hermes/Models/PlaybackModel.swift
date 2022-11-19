@@ -69,7 +69,7 @@ class PlaybackModel:ObservableObject {
     
     @objc func nextVideo(notification: Notification) {
         // Already played last video
-        if currentVideoIdx == model.project.allClips.count - 1 {
+        if currentVideoIdx >= model.project.allClips.count - 1 {
             return
         } else {
             currentVideoIdx += 1
