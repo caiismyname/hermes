@@ -92,6 +92,10 @@ class PlaybackModel:ObservableObject {
         
         if deletedClipIdx != -1 && deletedClipIdx <= self.currentVideoIdx {
             self.currentVideoIdx -= 1
+            if let item = switchToClip(idx: self.currentVideoIdx) {
+                self.player.removeAllItems()
+                self.player.insert(item, after: nil)
+            }
         }
         
         Task {

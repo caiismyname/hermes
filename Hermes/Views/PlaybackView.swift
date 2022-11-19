@@ -139,7 +139,8 @@ struct WaitingSpinner: View {
 struct ThumbnailReel: View {
     @ObservedObject var project: Project
     @ObservedObject var playbackModel: PlaybackModel
-    @State var showDeleteALert = false
+    @State private var showDeleteALert = false
+    @State private var clipToDelete = UUID()
     
     var body: some View {
         ScrollViewReader { reader in
@@ -148,8 +149,11 @@ struct ThumbnailReel: View {
                     ForEach(project.allClips.indices, id: \.self) { idx in
                         let clip = project.allClips[idx]
                         Thumbnail(clip: clip)
+                            .id(clip.id)
                             .onTapGesture(count: 3, perform: {
+                                print("Tapped on \(clip.id.uuidString)")
                                 showDeleteALert = true
+                                clipToDelete = clip.id
                             })
                             .onTapGesture(count: 1, perform: {
                                 print("Playing \(clip.id)")
@@ -157,12 +161,11 @@ struct ThumbnailReel: View {
                                 playbackModel.playCurrentVideo()
                                 clip.seen = true
                             })
-                            .id(clip.id)
                             .alert(isPresented: $showDeleteALert) {
                                 Alert(
                                     title: Text("Delete clip?"),
                                     primaryButton: .destructive(Text("Delete")) {
-                                        Task { playbackModel.deleteClip(id: clip.id) }
+                                        Task { playbackModel.deleteClip(id: clipToDelete) }
                                     },
                                     secondaryButton: .cancel(Text("Cancel")) {
                                         showDeleteALert = false
