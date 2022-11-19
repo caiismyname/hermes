@@ -43,6 +43,9 @@ struct ContentView: View {
                                     .cornerRadius(sizes.cameraPreviewCornerRadius)
                                     .frame(width: geometry.size.width, height: geometry.size.width * (16/9))
                             }
+                            .onTapGesture(count: 2) {
+                                model.cameraManager.changeCamera()
+                            }
                     }
                     
                     RecordingControlsView(
