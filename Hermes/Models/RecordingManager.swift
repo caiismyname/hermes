@@ -28,7 +28,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     
     init(project: Project) {
         self.project = project
-        self.recordingButtonStyle = UserDefaults.standard.integer(forKey: "recordingButtonStyle") == 1 ? .snapchat : .camera
+        self.recordingButtonStyle = UserDefaults.standard.integer(forKey: "recordingButtonStyle") == 1 ? .camera : .snapchat
     }
     
     func configureCaptureSession(session: AVCaptureSession) {
@@ -56,7 +56,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     
     func setRecordingButtonStyle(style: RecordingButtonStyle) {
         self.recordingButtonStyle = style
-        UserDefaults.standard.set(self.recordingButtonStyle == .camera ? 0 : 1, forKey: "recordingButtonStyle")
+        UserDefaults.standard.set(self.recordingButtonStyle == .camera ? 1 : 0, forKey: "recordingButtonStyle")
     }
     
     func toggleRecording() {
@@ -148,6 +148,6 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
 }
 
 enum RecordingButtonStyle: Codable {
-    case camera // 0
-    case snapchat // 1
+    case snapchat // 0
+    case camera // 1
 }
