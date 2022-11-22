@@ -15,6 +15,7 @@ class CameraManager: ObservableObject {
     private var videoInput: AVCaptureDeviceInput?
     private let videoOutput = AVCaptureVideoDataOutput()
     private var status = Status.unconfigured
+    private var backCameraType = BackCameraType.main
     
     enum Status {
         case unconfigured
@@ -152,7 +153,75 @@ class CameraManager: ObservableObject {
         }
     }
     
-    func changeCamera() {
+    func zoomCamera(cameraType: BackCameraType) {
+        if cameraType == .ultrawide {
+            guard self.backCameraType != .ultrawide else { return }
+            
+            let backCameraDiscoverySession =  AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInUltraWideCamera], mediaType: .video, position: .back)
+            if let camera = backCameraDiscoverySession.devices.first {
+                addCameraToSession(camera: camera)
+                self.backCameraType = BackCameraType.ultrawide
+                print("zoomed to ultra")
+            }
+        } else if cameraType == .main {
+            guard self.backCameraType != .main else { return }
+            
+            let backCameraDiscoverySession =  AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .back)
+            if let camera = backCameraDiscoverySession.devices.first {
+                addCameraToSession(camera: camera)
+                self.backCameraType = BackCameraType.main
+                print("zoomed to main")
+            }
+        } else if cameraType == .tele {
+            guard self.backCameraType != .tele else { return }
+            
+            let backCameraDiscoverySession =  AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInTelephotoCamera], mediaType: .video, position: .back)
+            if let camera = backCameraDiscoverySession.devices.first {
+                addCameraToSession(camera: camera)
+                self.backCameraType = BackCameraType.tele
+                print("zoomed to tele")
+            }
+        }
+    }
+    
+    func zoomCamera(zoomDirection: ZoomDirection) {
+        // First check that we're on the back camera
+        guard self.videoInput!.device.position == .back else { return }
+        
+        if zoomDirection != .none {
+            if backCameraType == .ultrawide && zoomDirection == .zoomIn {
+                let backCameraDiscoverySession =  AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .back)
+                if let camera = backCameraDiscoverySession.devices.first {
+                    addCameraToSession(camera: camera)
+                    self.backCameraType = BackCameraType.main
+                    print("zoomed to main")
+                }
+            } else if backCameraType == .main && zoomDirection == .zoomIn {
+                let backCameraDiscoverySession =  AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInTelephotoCamera], mediaType: .video, position: .back)
+                if let camera = backCameraDiscoverySession.devices.first {
+                    addCameraToSession(camera: camera)
+                    self.backCameraType = BackCameraType.tele
+                    print("zoomed to tele")
+                }
+            } else if backCameraType == .main && zoomDirection == .zoomOut {
+                let backCameraDiscoverySession =  AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInUltraWideCamera], mediaType: .video, position: .back)
+                if let camera = backCameraDiscoverySession.devices.first {
+                    addCameraToSession(camera: camera)
+                    self.backCameraType = BackCameraType.ultrawide
+                    print("zoomed to ultrawide")
+                }
+            } else if backCameraType == .tele && zoomDirection == .zoomOut {
+                let backCameraDiscoverySession =  AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .back)
+                if let camera = backCameraDiscoverySession.devices.first {
+                    addCameraToSession(camera: camera)
+                    self.backCameraType = BackCameraType.main
+                    print("zoomed to main")
+                }
+            }
+        }
+    }
+    
+    func flipCamera() {
         guard self.videoInput != nil else { return }
         
         if self.videoInput!.device.position == .back {
@@ -181,4 +250,17 @@ class CameraManager: ObservableObject {
         }
     }
     
+}
+
+
+enum ZoomDirection {
+    case zoomIn
+    case zoomOut
+    case none
+}
+
+enum BackCameraType {
+    case tele
+    case ultrawide
+    case main
 }

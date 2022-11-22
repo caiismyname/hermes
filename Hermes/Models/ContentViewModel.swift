@@ -138,6 +138,7 @@ class ContentViewModel: ObservableObject {
     func updateName(newName: String) {
         me.name = newName
         UserDefaults.standard.setValue(newName, forKey: "myName")
+        print("Set name to \(me.name)")
     }
     
     // Saving projects locally

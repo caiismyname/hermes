@@ -11,6 +11,7 @@ import CoreData
 struct ContentView: View {
     @StateObject var model: ContentViewModel
     @State var orientation = UIDeviceOrientation.portrait // default assume portrait
+    @GestureState var magnificationLevel = 1.0
     private let sizes = Sizes()
     
     func updateOrientation(newOrientation: UIDeviceOrientation) {
@@ -44,8 +45,19 @@ struct ContentView: View {
                                     .frame(width: geometry.size.width, height: geometry.size.width * (16/9))
                             }
                             .onTapGesture(count: 2) {
-                                model.cameraManager.changeCamera()
+                                model.cameraManager.flipCamera()
                             }
+//                        do u think there's desert' i was hoping but my hopes are decreasing :( a brownnie would have been nice)
+//                            .gesture(MagnificationGesture(minimumScaleDelta: 0.6).updating($magnificationLevel) { currentState, gestureState, transaction in
+//                                    print(currentState, gestureState)
+//                                    if currentState < 1.0 {
+//                                        model.cameraManager.zoomCamera(cameraType: .ultrawide)
+//                                    } else if currentState > 3.0 {
+//                                        model.cameraManager.zoomCamera(cameraType: .tele)
+//                                    } else  {
+//                                        model.cameraManager.zoomCamera(cameraType: .main)
+//                                    }
+//                            })
                     }
                     
                     RecordingControlsView(

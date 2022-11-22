@@ -148,7 +148,10 @@ struct ThumbnailReel: View {
                 HStack {
                     ForEach(project.allClips.indices, id: \.self) { idx in
                         let clip = project.allClips[idx]
-                        Thumbnail(clip: clip)
+                        Thumbnail(
+                            clip: clip,
+                            isCurrentClip: idx == playbackModel.currentVideoIdx
+                        )
                             .id(clip.id)
                             .onTapGesture(count: 3, perform: {
                                 print("Tapped on \(clip.id.uuidString)")
@@ -176,6 +179,14 @@ struct ThumbnailReel: View {
                     .onAppear {
                         reader.scrollTo(project.allClips.last?.id)
                     }
+                    .onReceive(playbackModel.$currentVideoIdx) { idx in
+                        if project.allClips.count - idx > 2 {
+                            // Roughly center the currently playing clip
+                            reader.scrollTo(project.allClips[idx + 2].id)
+                        } else {
+                            reader.scrollTo(project.allClips[idx].id)
+                        }
+                    }
                 }
             }
         }
@@ -184,6 +195,7 @@ struct ThumbnailReel: View {
 
 struct Thumbnail: View {
     @ObservedObject var clip: Clip
+    var isCurrentClip: Bool
     
     var body: some View {
         ZStack {
@@ -198,6 +210,10 @@ struct Thumbnail: View {
         .overlay() {
             if !clip.seen {
                  Rectangle().stroke(.blue, lineWidth: 2.0)
+            }
+            
+            if isCurrentClip {
+                Rectangle().stroke(.white, lineWidth: 2.0)
             }
         }
     }
