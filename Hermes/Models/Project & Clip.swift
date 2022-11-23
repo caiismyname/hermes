@@ -22,6 +22,8 @@ class Project: ObservableObject, Codable {
     private var currentClip: Clip? = nil
     @Published var unseenCount = 0
     @Published var lastClip: Clip?
+    @Published var downloadingProgress = 0
+    @Published var downloadingTotal = 1
     
     init(uuid: UUID = UUID(), name: String = "Project \(Int.random(in: 0..<100))", allClips: [Clip] = []) {
         self.id = uuid
@@ -314,13 +316,27 @@ class Project: ObservableObject, Codable {
     
     
     func pullVideosForNewClips() async {
+        
         await withThrowingTaskGroup(of: Void.self) { group in
+            self.downloadingTotal = 0
+            self.downloadingProgress = 0
+            
             for clip in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
                 group.addTask {
                     await clip.downloadVideo()
                 }
+                downloadingTotal += 1
+            }
+            
+            do {
+                for try await result in group {
+                    downloadingProgress += 1
+                }
+            } catch {
+                print(error)
             }
         }
+        
         DispatchQueue.main.async {
             self.allClips = self.allClips.filter({ c in c.status != .invalid })
             self.sortClips()

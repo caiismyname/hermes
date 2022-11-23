@@ -224,6 +224,7 @@ class ContentViewModel: ObservableObject {
     
     func deleteProject(toDelete: UUID) {
         guard self.allProjects.contains(where: { p in p.id == toDelete }) else { return }
+        self.isWorking = true
         
         self.allProjects = self.allProjects.filter({ p in p.id != toDelete })
         
@@ -236,6 +237,7 @@ class ContentViewModel: ObservableObject {
         }
         
         saveProjects()
+        self.isWorking = false
     }
     
     // Firebase Handling
@@ -329,47 +331,6 @@ class ContentViewModel: ObservableObject {
             await remoteProject.pullNewClipMetadata()
             await remoteProject.pullVideosForNewClips()
             projectAllClips = projectAllClips.filter { c in c.status != .invalid }
-            
-            
-//
-//            for(_, d) in projectClips {
-//                let data = d as! [String: String]
-//                let clipIdString = data["id"]!
-//                let clipTimestampString = data["timestamp"]!
-//                let clipCreator = data["creator"] ?? ""
-//
-//                let newClip = Clip(
-//                    id: UUID.init(uuidString: clipIdString)!,
-//                    timestamp: dateFormatter.date(from: clipTimestampString)!,
-//                    creator: clipCreator,
-//                    projectId: projectId,
-//                    location: .remoteUndownloaded
-//                )
-//
-//                // Pull thumbnail for clip TODO make this a bulk call that matches thumbnails to clips
-//                //                storageRef.child("thumbnails").child(newClip.id.uuidString).getData(maxSize: self.maxThumbnailDownloadSize) { data, error in
-//                //                    if let error = error {
-//                //                        print("ERROR could not download thumbnail for clip \(newClip.id.uuidString)")
-//                //                        print(error)
-//                //                    } else {
-//                //                        if let image = UIImage(data: data!) {
-//                //                            newClip.thumbnail = image.pngData()
-//                //                        }
-//                //                    }
-//                //                }
-//                projectAllClips.append(newClip)
-//            }
-//
-//
-//            // Download videos
-//            await withThrowingTaskGroup(of: Void.self) { group in
-//                for (clip) in projectAllClips {
-//                    group.addTask {
-//                        await clip.downloadVideo()
-//                    }
-//                }
-//            }
-
             
             // Add project to local projects
             self.allProjects.append(remoteProject)

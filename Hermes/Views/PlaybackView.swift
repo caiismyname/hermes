@@ -129,6 +129,11 @@ struct WaitingSpinner: View {
                         .controlSize(ControlSize.large)
                         .colorInvert()
                     Spacer()
+                    if model.project.downloadingTotal != 0 {
+                        ProgressView(value: Float(model.project.downloadingProgress / model.project.downloadingTotal))
+                            .padding()
+                        Spacer()
+                    }
                 }
             }
             .frame(width: 175, height: 175)
