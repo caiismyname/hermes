@@ -13,6 +13,7 @@ struct ContentView: View {
     @State var orientation = UIDeviceOrientation.portrait // default assume portrait
     @GestureState var magnificationLevel = 1.0
     private let sizes = Sizes()
+    @State var shouldShowSwitcherModal = false
     
     func updateOrientation(newOrientation: UIDeviceOrientation) {
         switch newOrientation {
@@ -47,6 +48,22 @@ struct ContentView: View {
                             .onTapGesture(count: 2) {
                                 model.cameraManager.flipCamera()
                             }
+                            .gesture(DragGesture(minimumDistance: 1.0)
+                                .onEnded({ drag in
+                                    var didSwitch = false
+                                    if drag.translation.width < -250 && abs(drag.translation.height) < 150  {
+                                        didSwitch = model.switchToNextProject()
+                                    } else if drag.translation.width > 250 && abs(drag.translation.height) < 150 {
+                                        didSwitch = model.switchToPreviousProject()
+                                    }
+                                    
+                                    if didSwitch {
+                                        shouldShowSwitcherModal = true
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                            self.shouldShowSwitcherModal = false
+                                        }
+                                    }
+                                }))
 //                        do u think there's desert' i was hoping but my hopes are decreasing :( a brownnie would have been nice)
 //                            .gesture(MagnificationGesture(minimumScaleDelta: 0.6).updating($magnificationLevel) { currentState, gestureState, transaction in
 //                                    print(currentState, gestureState)
@@ -75,6 +92,21 @@ struct ContentView: View {
                             dismissCallback: {model.shouldShowProjects = !model.shouldShowProjects}
                         )
                     })
+                    
+                    if shouldShowSwitcherModal {
+                        RoundedRectangle(cornerRadius: sizes.cameraPreviewCornerRadius)
+                            .foregroundColor(Color.gray)
+                            .frame(width: 250, height: 250)
+                            .overlay(
+                                VStack {
+                                    Text("\(model.project.name)")
+                                        .font(.system(.title2).bold())
+                                        .foregroundColor(Color.black)
+                                        .minimumScaleFactor(0.01)
+                                        .lineLimit(2)
+                                }
+                            )
+                    }
                 }
             }
         }.preferredColorScheme(.dark)

@@ -171,7 +171,9 @@ class Project: ObservableObject, Codable {
             
             // Upload project metadata
             try await dbRef.child(self.id.uuidString).child("name").setValue(self.name)
-            try await dbRef.child(self.id.uuidString).child("creators").child(self.me!.id).setValue(self.me!.name) // only update your own name, not the whole list
+            if let meId = self.me?.id { // Idk I keep getting a crash here
+                try await dbRef.child(self.id.uuidString).child("creators").child(meId).setValue(self.me!.name) // only update your own name, not the whole list
+            }
         } catch {
             print(error)
         }
@@ -316,7 +318,6 @@ class Project: ObservableObject, Codable {
     
     
     func pullVideosForNewClips() async {
-        
         await withThrowingTaskGroup(of: Void.self) { group in
             self.downloadingTotal = 0
             self.downloadingProgress = 0

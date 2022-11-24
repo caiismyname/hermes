@@ -125,6 +125,30 @@ class ContentViewModel: ObservableObject {
         saveCurrentProject()
     }
     
+    func switchToNextProject() -> Bool {
+        guard let currentProjectIdx = self.allProjects.firstIndex(where: { p in p.id == self.project.id }) else { return false }
+            
+        if currentProjectIdx < self.allProjects.count - 1 {
+            let nextProject = self.allProjects[currentProjectIdx + 1]
+            switchProjects(newProject: nextProject)
+            return true
+        }
+        
+        return false
+    }
+    
+    func switchToPreviousProject() -> Bool {
+        guard let currentProjectIdx = self.allProjects.firstIndex(where: { p in p.id == self.project.id }) else { return false }
+            
+        if currentProjectIdx > 0 && self.allProjects.count > 1 {
+            let nextProject = self.allProjects[currentProjectIdx - 1]
+            switchProjects(newProject: nextProject)
+            return true
+        }
+        
+        return false
+    }
+    
     func createProject(name: String = "New Project") -> Project {
         let newProject = Project(name: name)
         switchProjects(newProject: newProject) // This needs to go immediately so we set the Me object
