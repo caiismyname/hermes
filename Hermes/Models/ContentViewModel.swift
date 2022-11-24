@@ -25,7 +25,7 @@ class ContentViewModel: ObservableObject {
     @Published var project: Project
     @Published var allProjects: [Project]
     @Published var me = Me(id: "", name: "Chameleon")
-    @Published var isWorking = false
+    @Published var isWorking = 0 // Multiple tasks might need the working spinner, so we ref count how many are using it and hide when it hits 0. Only interface with this variable using start/stopWork() funcs.
 
     // Global variables to manage whether or not to up/download files
     private var hasNetwork = false
@@ -105,11 +105,11 @@ class ContentViewModel: ObservableObject {
     }
     
     func startWork() {
-        self.isWorking = true
+        self.isWorking += 1
     }
     
     func stopWork() {
-        self.isWorking = false
+        self.isWorking -= 1
     }
     
     func switchProjects(newProject: Project) {
@@ -248,7 +248,7 @@ class ContentViewModel: ObservableObject {
     
     func deleteProject(toDelete: UUID) {
         guard self.allProjects.contains(where: { p in p.id == toDelete }) else { return }
-        self.isWorking = true
+        self.startWork()
         
         self.allProjects = self.allProjects.filter({ p in p.id != toDelete })
         
@@ -261,7 +261,7 @@ class ContentViewModel: ObservableObject {
         }
         
         saveProjects()
-        self.isWorking = false
+        self.stopWork()
     }
     
     // Firebase Handling
@@ -315,34 +315,32 @@ class ContentViewModel: ObservableObject {
         self.stopWork()
     }
     
+    @MainActor
     func downloadRemoteProject(id: String, switchToProject: Bool = false) async {
-        startWork()
-        await firebaseAuth()
-        guard hasFirebaseAuth else { return }
-        
-        // First check the project doesn't exist locally
-        let projectId = UUID(uuidString: id)!
-        guard !self.allProjects.map({ p in p.id }).contains(projectId) else {
-            print("Project \(id) already exists on this device")
-            if switchToProject {
-                switchProjects(newProject: self.allProjects.filter({ p in p.id == projectId})[0])
+            await firebaseAuth()
+            guard hasFirebaseAuth else { return }
+            
+            // First check the project doesn't exist locally
+            let projectId = UUID(uuidString: id)!
+            guard !self.allProjects.map({ p in p.id }).contains(projectId) else {
+                print("Project \(id) already exists on this device")
+                if switchToProject {
+                    switchProjects(newProject: self.allProjects.filter({ p in p.id == projectId})[0])
+                }
+                return
             }
-            stopWork()
-            return
-        }
         do {
             print("Downloading project \(projectId) from firebase")
+            self.startWork()
             self.shouldShowProjects = true
+            
             // Verified project doesn't not already exist. Look to DB
             let dbRef = Database.database().reference()
             
             let metadataSnapshot = try await dbRef.child(id).getData()
             let info = metadataSnapshot.value as! [String: Any]
-            
             // Inflate a project
             let projectName = info["name"] as! String
-            let dateFormatter = ISO8601DateFormatter()
-//            let projectClips = info["clips"] as! [String: Any]
             var projectAllClips: [Clip] = []
             
             // Save project
@@ -355,7 +353,6 @@ class ContentViewModel: ObservableObject {
             await remoteProject.pullNewClipMetadata()
             await remoteProject.pullVideosForNewClips()
             projectAllClips = projectAllClips.filter { c in c.status != .invalid }
-            
             // Add project to local projects
             self.allProjects.append(remoteProject)
             self.saveProjects()
@@ -367,11 +364,12 @@ class ContentViewModel: ObservableObject {
             if (switchToProject) {
                 self.switchProjects(newProject: remoteProject)
             }
+            
             self.shouldShowProjects = false
-            stopWork()
+            self.stopWork()
         } catch {
             print(error)
-            stopWork()
+            self.stopWork()
         }
     }
 }

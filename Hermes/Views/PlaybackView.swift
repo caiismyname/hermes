@@ -59,7 +59,7 @@ struct PlaybackView: View {
                     .foregroundColor(Color.white)
                     .background(Color.green)
                     .cornerRadius(sizes.buttonCornerRadius)
-                    .disabled(model.isWorking)
+                    .disabled(model.isWorking > 0)
                     
                     if #available(iOS 16.0, *) {
                         Button(action: {}) {
@@ -69,7 +69,7 @@ struct PlaybackView: View {
                         .foregroundColor(Color.white)
                         .background(Color.blue)
                         .cornerRadius(sizes.buttonCornerRadius)
-                        .disabled(model.isWorking)
+                        .disabled(model.isWorking > 0)
                     } else {
                         // Fallback on earlier versions
                     }
@@ -94,7 +94,7 @@ struct PlaybackView: View {
                     .foregroundColor(Color.white)
                     .background(Color.purple)
                     .cornerRadius(sizes.buttonCornerRadius)
-                    .disabled(model.isWorking)
+                    .disabled(model.isWorking > 0)
                 }
                     .padding([.leading, .trailing])
                 
@@ -114,7 +114,7 @@ struct WaitingSpinner: View {
     private let sizes = Sizes()
     
     var body: some View {
-        if model.isWorking {
+        if model.isWorking > 0 {
             ZStack {
                 RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
                     .fill(Color.white)
