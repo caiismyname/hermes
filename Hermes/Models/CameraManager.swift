@@ -146,6 +146,11 @@ class CameraManager: ObservableObject {
                 status = .failed
                 return
             }
+            
+            // Set the audio session category, mode, and options.
+             try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .videoRecording, options: [.mixWithOthers])
+             try AVAudioSession.sharedInstance().setActive(true)
+            
         } catch {
             status = .failed
             print("Error configuring audio input")

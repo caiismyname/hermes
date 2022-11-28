@@ -38,14 +38,6 @@ struct HermesApp: App {
                 print("Error authing with Firebase")
             }
         }
-        
-       do {
-//           // Set the audio session category, mode, and options.
-//           try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
-//           try AVAudioSession.sharedInstance().setActive(true)
-       } catch {
-           print("Failed to set audio session category.")
-       }
     }
     
     var body: some Scene {

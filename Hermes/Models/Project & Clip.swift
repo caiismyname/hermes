@@ -25,7 +25,7 @@ class Project: ObservableObject, Codable {
     @Published var downloadingProgress = 0
     @Published var downloadingTotal = 1
     
-    init(uuid: UUID = UUID(), name: String = "Project \(Int.random(in: 0..<100))", allClips: [Clip] = []) {
+    init(uuid: UUID = UUID(), name: String = "New Project", allClips: [Clip] = []) {
         self.id = uuid
         self.name = name
         self.allClips = allClips
@@ -325,17 +325,18 @@ class Project: ObservableObject, Codable {
             for clip in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
                 group.addTask {
                     await clip.downloadVideo()
+                    self.downloadingProgress += 1 // maybe this will update in real time ?? 
                 }
-                downloadingTotal += 1
+                self.downloadingTotal += 1
             }
             
-            do {
-                for try await result in group {
-                    downloadingProgress += 1
-                }
-            } catch {
-                print(error)
-            }
+//            do {
+//                for try await result in group {
+//                    downloadingProgress += 1
+//                }
+//            } catch {
+//                print(error)
+//            }
         }
         
         DispatchQueue.main.async {

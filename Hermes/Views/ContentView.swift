@@ -113,8 +113,18 @@ struct ContentView: View {
     }
 }
 
-//struct ContentView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        ContentView(model: ContentViewModel())
-//    }
-//}
+struct ContentView_Previews: PreviewProvider {
+    let model = ContentViewModel()
+    
+    init() {
+        self.model.ready = true
+    }
+    
+    static var previews: some View {
+        ContentView(model: {
+            let model = ContentViewModel()
+            model.ready = true
+            return model
+        }())
+    }
+}

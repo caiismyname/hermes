@@ -13,17 +13,22 @@ struct OnboardingView: View {
     @State var inputName = ""
     
     var body: some View {
-        VStack {
+        VStack(alignment: .leading) {
             Spacer()
             Text("Welcome to Hermes, a collaborative vlogging app.")
                 .font(.largeTitle.bold())
-            Text("Share your vlogs with friends to make memories together.")
+            Rectangle()
+                .foregroundColor(.clear)
+                .frame(height:10)
+            Text("Record videos with friends to make shared memories together.")
                 .font(.title2)
-            Spacer()
             
-            Text("One detail before we start: what's your name?")
+            Rectangle()
+                .foregroundColor(.clear)
+                .frame(height:40)
+            
+            Text("Before we start, what's your name?")
                 .font(.title2)
-            
             TextField("Name", text: $inputName)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit {
@@ -31,9 +36,20 @@ struct OnboardingView: View {
                     model.isOnboarding = false
                 }
                 .font(.title2)
-                .padding()
             
             Spacer()
+            Spacer()
         }
+        .padding([.leading, .trailing], 40)
+    }
+}
+
+struct OnboardingView_Previews: PreviewProvider {
+    static var previews: some View {
+//        let model = ContentViewModel()
+        
+        OnboardingView(model: ContentViewModel())
+        .previewDevice("iPhone 13 Pro")
+        .preferredColorScheme(.dark)
     }
 }

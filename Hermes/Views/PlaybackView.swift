@@ -44,7 +44,7 @@ struct PlaybackView: View {
 //                        })
                     Text("\(model.project.name)")
                         .font(.system(.title2).bold())
-                }.padding()
+                }
                 HStack {
                     Button(action: {
 //                        spinnerLabel = "Syncing clips to cloud"
@@ -98,9 +98,16 @@ struct PlaybackView: View {
                 }
                     .padding([.leading, .trailing])
                 
-                Text("\(playbackModel.currentVideoCreatorName)")
-                VideoPlayer(player: playbackModel.player)
-                ThumbnailReel(project: model.project, playbackModel: playbackModel)
+                if (model.project.allClips.count != 0) {
+                    Text("\(playbackModel.currentVideoCreatorName)")
+                    VideoPlayer(player: playbackModel.player)
+                        .border(.green)
+                    ThumbnailReel(project: model.project, playbackModel: playbackModel)
+                } else {
+                    Spacer()
+                    Text("No clips yet.")
+                    Spacer()
+                }
             }
             
             WaitingSpinner(spinnerLabel: "", model: model)
@@ -189,6 +196,7 @@ struct ThumbnailReel: View {
                             // Roughly center the currently playing clip
                             reader.scrollTo(project.allClips[idx + 2].id)
                         } else {
+                            guard idx < project.allClips.count else {return}
                             reader.scrollTo(project.allClips[idx].id)
                         }
                     }
@@ -225,8 +233,20 @@ struct Thumbnail: View {
 }
 
 
-//struct PlaybackView_Preview: PreviewProvider {
-//    static var previews: some View {
-//        PlaybackView()
-//    }
-//}
+struct PlaybackView_Previews: PreviewProvider {
+    
+    static var previews: some View {
+        
+        PlaybackView(model: {
+            let model = ContentViewModel()
+            
+            for _ in 1...10 {
+                model.project.allClips.append(Clip(projectId: model.project.id))
+            }
+            
+            return model
+        }())
+            .previewDevice("iPhone 13 Pro")
+            .preferredColorScheme(.dark)
+    }
+}

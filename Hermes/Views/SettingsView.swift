@@ -154,3 +154,17 @@ struct SettingsModal: View {
         }
     }
 }
+
+struct SettingsModal_Previews: PreviewProvider {
+    static var previews: some View {
+        let model = ContentViewModel()
+        
+        SettingsModal(
+            model: model,
+            recordingManager: model.recordingManager,
+            dismissCallback: {}
+        )
+        .previewDevice("iPhone 13 Pro")
+        .preferredColorScheme(.dark)
+    }
+}
