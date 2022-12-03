@@ -238,7 +238,7 @@ struct PlaybackButton: View {
                 
                 if let clip = project.allClips.last {
                     if clip.thumbnail != nil {
-                        Image(uiImage: UIImage(data:(clip.thumbnail)!)!)
+                        Image(uiImage: UIImage(cgImage: UIImage(data: clip.thumbnail!)!.cgImage!.cropToCenter()))
                             .resizable()
                             .frame(width: sizes.secondaryButtonSize + 35, height: sizes.secondaryButtonSize + 35)
                             .mask {

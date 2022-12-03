@@ -215,7 +215,7 @@ struct Thumbnail: View {
             Rectangle()
                 .background(Color.red)
             if clip.thumbnail != nil {
-                Image(uiImage: UIImage(data: clip.thumbnail!)!)
+                Image(uiImage: UIImage(cgImage: UIImage(data: clip.thumbnail!)!.cgImage!.cropToCenter()))
                     .resizable(resizingMode: .stretch)
             }
         }

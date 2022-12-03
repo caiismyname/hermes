@@ -102,3 +102,27 @@ extension View {
         self.modifier(DeviceRotationViewModifier(action: action))
     }
 }
+
+
+extension CGImage {
+    func cropToCenter() -> CGImage {
+        var xPos: CGFloat = 0.0
+        var yPos: CGFloat = 0.0
+        let size = UIImage(cgImage: self).size
+        var width = size.width
+        var height = size.height
+        
+        if size.width > size.height {
+            xPos = (width - height) / 2
+            width = size.height
+        } else {
+            yPos = (height - width) / 2
+            height = size.width
+        }
+        
+        let cropRect = CGRect(x: xPos, y: yPos, width: width, height: height)
+        let croppedImage = self.cropping(to: cropRect)
+        
+        return croppedImage!
+    }
+}

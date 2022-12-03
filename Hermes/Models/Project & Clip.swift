@@ -125,6 +125,7 @@ class Project: ObservableObject, Codable {
         print("Uploading metadata for project \(self.id.uuidString) to RTDB")
         do {
             let dbRef = Database.database().reference()
+            let thumbnailRef = Storage.storage().reference().child(self.id.uuidString).child("thumbnails")
             let localClips = allClips.filter({ $0.location == .local })
             
             for c in localClips {
@@ -155,17 +156,25 @@ class Project: ObservableObject, Codable {
                     }
                 }
                 
-//                // Upload thumbnails
-//                if c.thumbnail != nil {
-//                    let thumbnailRef = storageRef.child("thumbnails").child(c.id.uuidString)
-//                    _ = thumbnailRef.putData(c.thumbnail!) { (metadata, error) in
-//                        guard let metadata = metadata else {
-//                            return
-//                        }
-//
-//                        print("Uploaded thumbnail for \(c.id.uuidString). [\(metadata.size)]")
-//                    }
-//                }
+                // Upload thumbnails
+                if c.thumbnail != nil {
+                    await withCheckedContinuation { continuation in
+                        let thumbnailMetadata = StorageMetadata()
+                        thumbnailMetadata.contentType = "image/jpeg"
+                        
+                        thumbnailRef.child(c.id.uuidString).putData(c.thumbnail ?? Data(), metadata: thumbnailMetadata) { metadata, error in
+                            guard let metadata = metadata else {
+                                print(error?.localizedDescription ?? "Error uploading thumbnail for \(c.id.uuidString)")
+                                continuation.resume()
+                                return
+                            }
+                            
+                            print("    Uploaded thumbnail for \(c.id.uuidString). [\(metadata.size)]")
+                            continuation.resume()
+                        }
+                    }
+                }
+
                 c.location = .remoteUnuploaded
             }
             
@@ -319,8 +328,8 @@ class Project: ObservableObject, Codable {
     
     func pullVideosForNewClips() async {
         await withThrowingTaskGroup(of: Void.self) { group in
-            self.downloadingTotal = 0
-            self.downloadingProgress = 0
+//            self.downloadingTotal = 0
+//            self.downloadingProgress = 0
             
             for clip in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
                 group.addTask {
@@ -475,36 +484,16 @@ class Clip: Identifiable, Codable, ObservableObject {
                     return
                 }
                 let asset = AVURLAsset(url: self.finalURL!)
+                let timescale = try await asset.load(.duration).timescale
                 let imgGenerator = AVAssetImageGenerator(asset: asset)
                 imgGenerator.appliesPreferredTrackTransform = true
                 if #available(iOS 16, *) {
-                    let cgImage = try await imgGenerator.image(at: CMTime(value: 0, timescale: 1)).image
-                    
-                    // Crop to center
-                    var xPos: CGFloat = 0.0
-                    var yPos: CGFloat = 0.0
-                    let size = UIImage(cgImage: cgImage).size
-                    var width = size.width
-                    var height = size.height
-                    
-                    if size.width > size.height {
-                        xPos = (width - height) / 2
-                        width = size.height
-                    } else {
-                        yPos = (height - width) / 2
-                        height = size.width
-                    }
-                    
-                    let cropRect = CGRect(x: xPos, y: yPos, width: width, height: height)
-                    let croppedImage = cgImage.cropping(to: cropRect)
-                    
-                    let png = UIImage(cgImage: croppedImage!).pngData()
-                    self.thumbnail = png
+                    let cgImage = try await imgGenerator.image(at: CMTime(value: 0, timescale: timescale)).image
+                    self.thumbnail = UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.6)
                 } else {
-                    // Fallback on earlier versions
-                    let cgImage = try imgGenerator.copyCGImage(at: CMTimeMake(value: 0, timescale: 1), actualTime: nil)
-                    let png = UIImage(cgImage: cgImage).pngData()
-                    self.thumbnail = png
+                    // Fallback on earlier versions?
+                    let cgImage = try imgGenerator.copyCGImage(at: CMTimeMake(value: 0, timescale: timescale), actualTime: nil)
+                    self.thumbnail = UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.6)
                 }
             } catch {
                 print("Error generating thumbnail for \(self.id)")

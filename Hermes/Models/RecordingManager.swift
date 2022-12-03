@@ -60,8 +60,8 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     }
     
     func toggleRecording() {
-        // Not sure what this is guarding against
         guard let movieFileOutput = self.movieFileOutput else {
+            print("Recording Manager not set up properly, recording cannot start")
             return
         }
         

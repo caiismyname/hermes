@@ -50,6 +50,9 @@ class ContentViewModel: ObservableObject {
         self.isOnboarding = isOnboarding
         
         setupNetworkMonitor()
+        if !isOnboarding { // Delay camera setup if onboarding so we delay asking for permissions. Otherwise, set it up as normal.
+            setupCamera()
+        }
         
         // Load name
         if let meId = UserDefaults.standard.string(forKey: "meId") {
