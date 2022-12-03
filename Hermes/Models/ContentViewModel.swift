@@ -18,9 +18,9 @@ class ContentViewModel: ObservableObject {
     
     @Published var ready = false
     @Published var shouldShowProjects = false
-    @Published var isOnboarding = false // Default to false, will be set to true on first run
+    @Published var isOnboarding: Bool
     
-    let cameraManager = CameraManager()
+    let cameraManager: CameraManager
     @Published var recordingManager: RecordingManager
     @Published var project: Project
     @Published var allProjects: [Project]
@@ -35,19 +35,20 @@ class ContentViewModel: ObservableObject {
     
     private let saveFileName = "projects"
 //    private let maxThumbnailDownloadSize = Int64(2000 * 2000 * 10)
-    private let maxVideoDownloadSize = Int64(1920 * 1080 * 30 * 30)
+    private let maxVideoDownloadSize = Int64(1920 * 1080 * 30 * 300)
     
     let notificationManager = NotificationsManager()
     
-    init() {
+    init(isOnboarding: Bool = false) {
         // Temporary placeholders
         let tempProject = Project()
         print("TEMP PROJECT ID: \(tempProject.id.uuidString)")
         self.recordingManager = RecordingManager(project: tempProject)
+        self.cameraManager = CameraManager(noop: isOnboarding)
         self.project = tempProject
         self.allProjects = [tempProject]
+        self.isOnboarding = isOnboarding
         
-        setupSubscriptions()
         setupNetworkMonitor()
         
         // Load name
@@ -77,7 +78,8 @@ class ContentViewModel: ObservableObject {
         }
     }
     
-    private func setupSubscriptions() {
+    func setupCamera() {
+        cameraManager.configure()
         cameraManager.$error
             .receive(on: RunLoop.main)
             .map { $0 }

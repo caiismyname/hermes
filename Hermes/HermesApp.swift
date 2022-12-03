@@ -13,7 +13,7 @@ import AVFoundation
 @main
 struct HermesApp: App {
 //    let persistenceController = PersistenceController.shared
-    let contentViewModel = ContentViewModel()
+    let contentViewModel: ContentViewModel
     @Environment(\.scenePhase) private var scenePhase // Used for detecting when this scene is backgrounded and isn't currently visible.
     
     // AppDelegate equivalent
@@ -23,8 +23,10 @@ struct HermesApp: App {
         // Leaving this here in case it's useful later
         let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore") as Bool
         if !hasLaunchedBefore {
-            contentViewModel.isOnboarding = true
+            self.contentViewModel = ContentViewModel(isOnboarding: true)
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+        } else {
+            self.contentViewModel = ContentViewModel(isOnboarding: false)
         }
         
         // Auth with Firebase to set the proper UUID for the Me object. This won't happen in time for the contentViewModel init, but we'll callback into it

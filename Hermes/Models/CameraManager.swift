@@ -24,11 +24,15 @@ class CameraManager: ObservableObject {
         case failed
     }
     
-    init() {
+    init(noop: Bool = false) {
+        if noop {
+            return
+        }
+        
         configure()
     }
     
-    private func configure() {
+    func configure() {
         checkPermissions()
         sessionQueue.async {
             self.configureCaptureSession()
