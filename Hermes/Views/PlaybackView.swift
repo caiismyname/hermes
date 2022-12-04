@@ -13,13 +13,14 @@ import Photos
 struct PlaybackView: View {
     @ObservedObject var model: ContentViewModel
     @ObservedObject var playbackModel: PlaybackModel
-    private let sizes = Sizes()
-    @State var showingRenameAlert = false
     @ObservedObject var exporter: Exporter
     
-    init(model: ContentViewModel) {
+    private let sizes = Sizes()
+    @State var showingRenameAlert = false
+    
+    init(model: ContentViewModel, playbackModel: PlaybackModel) {
         self.model = model
-        self.playbackModel = PlaybackModel(model: model)
+        self.playbackModel = playbackModel
         self.exporter = Exporter(project: model.project)
     }
     
@@ -99,9 +100,7 @@ struct PlaybackView: View {
                     .padding([.leading, .trailing])
                 
                 if (model.project.allClips.count != 0) {
-                    Text("\(playbackModel.currentVideoCreatorName)")
-                    VideoPlayer(player: playbackModel.player)
-                        .border(.green)
+                    VideoPlayback(playbackModel: playbackModel, project: model.project)
                     ThumbnailReel(project: model.project, playbackModel: playbackModel)
                 } else {
                     Spacer()
@@ -115,13 +114,46 @@ struct PlaybackView: View {
     }
 }
 
+struct VideoPlayback: View {
+    @ObservedObject var playbackModel: PlaybackModel
+    @ObservedObject var project: Project
+    @State var showPlayer = false
+    
+    var body: some View {
+        VStack {
+            Text("\(playbackModel.currentVideoCreatorName)")
+            ZStack {
+                VideoPlayer(player: playbackModel.player)
+                GeometryReader { geo in
+                    if !showPlayer {
+                        Rectangle()
+                            .fill(Color.black)
+                            .frame(width: geo.size.width, height: geo.size.height)
+                        
+                        if project.allClips[playbackModel.currentVideoIdx].thumbnail != nil {
+                            // No video, but has a thumbnail
+                            Image(uiImage: UIImage(data: project.allClips[playbackModel.currentVideoIdx].thumbnail!)!)
+                                .resizable()
+                                .frame(width: geo.size.height * (1080.0 / 1920.0), height: geo.size.height)
+                                .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                        }
+                    }
+                }
+            }
+            .onReceive(playbackModel.$currentVideoCanPlay) { canPlay in showPlayer = canPlay }
+        }
+    }
+}
+
 struct WaitingSpinner: View {
-    @State var spinnerLabel = ""
     @ObservedObject var model: ContentViewModel
+    
+    @State var spinnerLabel = ""
+    @State var shouldShow = false
     private let sizes = Sizes()
     
     var body: some View {
-        if model.isWorking > 0 {
+        if shouldShow {
             ZStack {
                 RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
                     .fill(Color.white)
@@ -144,6 +176,9 @@ struct WaitingSpinner: View {
                 }
             }
             .frame(width: 175, height: 175)
+            .onReceive(model.$isWorking) { workingCount in
+                shouldShow = workingCount > 0
+            }
         }
     }
 }
@@ -172,9 +207,7 @@ struct ThumbnailReel: View {
                             })
                             .onTapGesture(count: 1, perform: {
                                 print("Playing \(clip.id)")
-                                playbackModel.currentVideoIdx = idx
-                                playbackModel.playCurrentVideo()
-                                clip.seen = true
+                                playbackModel.playNVideo(n: idx)
                             })
                             .alert(isPresented: $showDeleteALert) {
                                 Alert(
@@ -219,34 +252,35 @@ struct Thumbnail: View {
                     .resizable(resizingMode: .stretch)
             }
         }
-        .frame(width: 100, height: 100)
+        .frame(width: 75, height: 75)
         .overlay() {
             if !clip.seen {
                  Rectangle().stroke(.blue, lineWidth: 2.0)
             }
             
             if isCurrentClip {
-                Rectangle().stroke(.white, lineWidth: 2.0)
+                Rectangle().stroke(.white, lineWidth: 4.0)
             }
         }
     }
 }
 
 
-struct PlaybackView_Previews: PreviewProvider {
-    
-    static var previews: some View {
-        
-        PlaybackView(model: {
-            let model = ContentViewModel()
-            
-            for _ in 1...10 {
-                model.project.allClips.append(Clip(projectId: model.project.id))
-            }
-            
-            return model
-        }())
-            .previewDevice("iPhone 13 Pro")
-            .preferredColorScheme(.dark)
-    }
-}
+//struct PlaybackView_Previews: PreviewProvider {
+//
+//    static var previews: some View {
+//
+//        PlaybackView(model: {
+//            let model = ContentViewModel()
+//
+//            for _ in 1...10 {
+//                model.project.allClips.append(Clip(projectId: model.project.id))
+//            }
+//
+//            return model
+//        }(),
+//                     playbackModel: )
+//            .previewDevice("iPhone 13 Pro")
+//            .preferredColorScheme(.dark)
+//    }
+//}

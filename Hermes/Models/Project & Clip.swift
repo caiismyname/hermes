@@ -203,7 +203,7 @@ class Project: ObservableObject, Codable {
                         return
                     }
                     
-                    print("Uploaded video for \(c.id.uuidString). [\(metadata.size) bytes]")
+                    print("    Uploaded video for \(c.id.uuidString). [\(metadata.size) bytes]")
                     c.location = .uploaded
                     continuation.resume()
                 }
@@ -279,20 +279,12 @@ class Project: ObservableObject, Codable {
                     location: .remoteUndownloaded
                 )
                 
-                // Pull clip thumbnail
-//                storageRef.child(newClip.id.uuidString).getData(maxSize: 30 * 30 * 1920 * 1080) { data, error in
-//                    if let error = error {
-//                        print(error)
-//                    } else {
-//                        if let image = UIImage(data: data!) {
-//                            newClip.thumbnail = image.pngData()
-//                        }
-//                    }
-//                }
-                
                 if !seenNewClipIds.contains(clipId) { // Doublecheck against dupes
                     self.allClips.append(newClip)
                     seenNewClipIds.append(clipId)
+                    
+                    // If we pass the dupe check, download the thumbnail
+                    newClip.downloadThumbnail()
                 }
             }
             
@@ -463,16 +455,36 @@ class Clip: Identifiable, Codable, ObservableObject {
     func downloadVideo() async {
         do {
             let storageRef = Storage.storage().reference().child(projectId.uuidString).child("videos")
-            print("Downloading video for \(id.uuidString) from \(storageRef.child(id.uuidString))")
+            print("    Downloading video for \(id.uuidString) from \(storageRef.child(id.uuidString))")
             
             try await storageRef.child(id.uuidString).writeAsync(toFile: finalURL!)
-            generateThumbnail()
-            location = .downloaded
-            status = .final
+            if self.thumbnail == nil {
+                generateThumbnail()
+            }
+            
+            DispatchQueue.main.async {
+                self.location = .downloaded
+                self.status = .final
+            }
             
         } catch {
-            print("Error downloading clip \(id.uuidString): \(error)")
+            print("    Error downloading video for clip \(id.uuidString): \(error)")
             status = .invalid
+        }
+    }
+    
+    func downloadThumbnail() {
+        do {
+            let storageRef = Storage.storage().reference().child(projectId.uuidString).child("thumbnails")
+            print("    Downloading thumbnail for \(id.uuidString) from \(storageRef.child(id.uuidString))")
+            
+            storageRef.child(id.uuidString).getData(maxSize: (1024 * 1024) / 2 /*500kb*/, completion: { data, error in
+                if error != nil {
+                    print("    Error downloading thumbnail for clip \(self.id.uuidString): \(error)")
+                } else {
+                    self.thumbnail = data
+                }
+            })
         }
     }
     
@@ -480,7 +492,7 @@ class Clip: Identifiable, Codable, ObservableObject {
         Task {
             do {
                 guard self.finalURL != nil else {
-                    print("Error generating thumbnail for \(self.id) — missing finalURL")
+                    print("    Error generating thumbnail for \(self.id) — missing finalURL")
                     return
                 }
                 let asset = AVURLAsset(url: self.finalURL!)
@@ -496,7 +508,7 @@ class Clip: Identifiable, Codable, ObservableObject {
                     self.thumbnail = UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.6)
                 }
             } catch {
-                print("Error generating thumbnail for \(self.id)")
+                print("    Error generating thumbnail for \(self.id)")
             }
         }
     }

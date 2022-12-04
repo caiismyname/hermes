@@ -8,42 +8,38 @@
 import Foundation
 import AVKit
 
+@MainActor
 class PlaybackModel:ObservableObject {
-    var model: ContentViewModel
+    let project: Project
     @Published var currentVideoIdx: Int
     @Published var currentVideoCreatorName = ""
+    @Published var currentVideoCanPlay = false
     var player = AVQueuePlayer()
     
-    init(model: ContentViewModel, currentVideoIdx: Int = 0) {
-        self.model = model
+    init(project: Project, currentVideoIdx: Int = 0) {
+        self.project = project
         self.currentVideoIdx = currentVideoIdx
         
         // default to last clip
-        if self.model.project.allClips.count > 0 {
-            self.currentVideoIdx = model.project.allClips.count - 1
-            self.currentVideoCreatorName = model.project.creators[model.project.allClips[currentVideoIdx].creator] ?? ""
-            player.removeAllItems()
-            player.insert(switchToClip(idx: self.currentVideoIdx)!, after: nil)
+        if self.project.allClips.count > 0 {
+            self.currentVideoIdx = project.allClips.count - 1
+            self.currentVideoCreatorName = project.creators[project.allClips[currentVideoIdx].creator] ?? ""
+            playCurrentVideo(shouldPlay: false)
         }
     }
     
     private func switchToClip(idx: Int) -> AVPlayerItem? {
-        let clip = self.model.project.allClips[idx]
-        if clip.location == .remoteUndownloaded {
-            Task {
-                model.startWork()
-                await clip.downloadVideo()
-                model.stopWork()
-            }
-        }
+        let clip = self.project.allClips[idx]
+        var videoCanPlay = false
+        var playerItem: AVPlayerItem? = nil
         
-        if let url = clip.finalURL {
-            let playerItem = AVPlayerItem(url: url)
+        // Update current video info
+        self.currentVideoIdx = idx
+        self.currentVideoCreatorName = self.project.creators[self.project.allClips[self.currentVideoIdx].creator] ?? ""
+
+        if clip.location != .remoteUndownloaded, let url = clip.finalURL {
+            playerItem = AVPlayerItem(url: url)
             player.actionAtItemEnd = .none // override this behavior with the Notification
-            
-            // Update current video info
-            self.currentVideoIdx = idx
-            self.currentVideoCreatorName = model.project.creators[model.project.allClips[currentVideoIdx].creator] ?? ""
             
             NotificationCenter.default.addObserver(
                 self,
@@ -51,42 +47,67 @@ class PlaybackModel:ObservableObject {
                 name: .AVPlayerItemDidPlayToEndTime,
                 object: playerItem)
             
-            return playerItem
+            // Note that this only returns a player if we have a video for it
+            videoCanPlay = true
         } else {
-            return nil
+            // It's fine if we return nil here. UI will pick it up and display the placeholder thumbnail instead
+            videoCanPlay = false
         }
+        
+        self.currentVideoCanPlay = videoCanPlay
+        return playerItem
     }
     
-    func playCurrentVideo() {
+    func playCurrentVideo(shouldPlay: Bool = true) {
         if let item = switchToClip(idx: self.currentVideoIdx) {
             self.player.removeAllItems()
             self.player.insert(item, after: nil)
-            self.player.play()
-            self.model.project.allClips[currentVideoIdx].seen = true
-            self.model.project.computeUnseenCount()
+            if shouldPlay {
+                self.player.play()
+                self.project.allClips[currentVideoIdx].seen = true
+                self.project.computeUnseenCount()
+            }
+        } else {
+            // No video downloaded yet
+            let clip = self.project.allClips[currentVideoIdx]
+            print("    Video not downloaded. Location: \(clip.location)")
+            if clip.location == .remoteUndownloaded {
+                Task {
+                    await clip.downloadVideo()
+                    DispatchQueue.main.async {
+                        self.currentVideoCanPlay = true
+                    }
+                    
+                    // Once downloaded, try playing it again
+                    guard(clip.location != .remoteUndownloaded) else {
+                        print("Video still hasn't downloaded. Aborting attempt to play.")
+                        return
+                    }
+                    playCurrentVideo(shouldPlay: shouldPlay)
+                }
+            }
         }
+    }
+    
+    func playNVideo(n: Int) {
+        self.currentVideoIdx = n
+        playCurrentVideo()
     }
     
     @objc func nextVideo(notification: Notification) {
         // Already played last video
-        if currentVideoIdx >= model.project.allClips.count - 1 {
+        if currentVideoIdx >= project.allClips.count - 1 {
             return
         } else {
             currentVideoIdx += 1
-            self.currentVideoCreatorName = model.project.creators[model.project.allClips[currentVideoIdx].creator] ?? ""
+            self.currentVideoCreatorName = project.creators[project.allClips[currentVideoIdx].creator] ?? ""
         }
         
-        if let item = switchToClip(idx: currentVideoIdx) {
-            self.player.removeAllItems()
-            self.player.insert(item, after: nil)
-            player.play()
-            self.model.project.allClips[currentVideoIdx].seen = true
-            self.model.project.computeUnseenCount()
-        }
+        playCurrentVideo()
     }
     
     func deleteClip(id: UUID) {
-        let deletedClipIdx = model.project.allClips.firstIndex { c in
+        let deletedClipIdx = project.allClips.firstIndex { c in
             c.id == id
         } ?? -1
         
@@ -99,7 +120,7 @@ class PlaybackModel:ObservableObject {
         }
         
         Task {
-            await model.project.deleteClip(id: id)
+            await project.deleteClip(id: id)
         }
     }
 }

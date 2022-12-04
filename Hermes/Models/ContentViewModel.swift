@@ -109,12 +109,14 @@ class ContentViewModel: ObservableObject {
         monitor.start(queue: queue)
     }
     
+    @MainActor
     func startWork() {
-        self.isWorking += 1
+        isWorking += 1
     }
     
+    @MainActor
     func stopWork() {
-        self.isWorking -= 1
+        isWorking -= 1
     }
     
     func switchProjects(newProject: Project) {
@@ -253,20 +255,22 @@ class ContentViewModel: ObservableObject {
     
     func deleteProject(toDelete: UUID) {
         guard self.allProjects.contains(where: { p in p.id == toDelete }) else { return }
-        self.startWork()
-        
-        self.allProjects = self.allProjects.filter({ p in p.id != toDelete })
-        
-        if self.project.id == toDelete {
-            if self.allProjects.count > 0 {
-                self.project = allProjects[0]
-            } else {
-                createProject()
+        Task {
+            await self.startWork()
+            
+            self.allProjects = self.allProjects.filter({ p in p.id != toDelete })
+            
+            if self.project.id == toDelete {
+                if self.allProjects.count > 0 {
+                    self.project = allProjects[0]
+                } else {
+                    createProject()
+                }
             }
+            
+            saveProjects()
+            await self.stopWork()
         }
-        
-        saveProjects()
-        self.stopWork()
     }
     
     // Firebase Handling
@@ -356,7 +360,8 @@ class ContentViewModel: ObservableObject {
             )
             
             await remoteProject.pullNewClipMetadata()
-            await remoteProject.pullVideosForNewClips()
+            // Intentionally do not download clips for videos when loading, to speed up loading time
+//            await remoteProject.pullVideosForNewClips()
             projectAllClips = projectAllClips.filter { c in c.status != .invalid }
             // Add project to local projects
             self.allProjects.append(remoteProject)

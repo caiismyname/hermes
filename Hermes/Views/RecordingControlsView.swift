@@ -58,6 +58,7 @@ struct RecordingControlsView: View {
                 }
                 
                 if !(recordingManager.isRecording) {
+                    // Playback Button
                     PlaybackButton(
                         project: model.project,
                         lastClip: model.project.allClips.last ?? Clip(projectId: model.project.id),
@@ -67,7 +68,7 @@ struct RecordingControlsView: View {
                             x: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["x"]!,
                             y: computeControlPositions(geometry: geometry, relativePosition: 1.0/4.0)["y"]!
                         )
-                        .popover(isPresented: $playbackModalShowing, content: { PlaybackView(model: model) })
+                        .popover(isPresented: $playbackModalShowing, content: { PlaybackView(model: model, playbackModel: PlaybackModel(project: model.project)) })
                     
                     // Projects button
                     Button(action: {projectSwitcherModalShowing = !projectSwitcherModalShowing}) {
