@@ -49,7 +49,7 @@ struct HermesApp: App {
                     if newPhase == .background {
                         contentViewModel.saveProjects() // saveCurrentProject is called in saveProjects()
                         contentViewModel.notificationManager.resetReminders()
-                        Task { await contentViewModel.networkSync(shouldDownload: false) }
+                        Task { await contentViewModel.networkSync(performDownloadSync: false) }
                     }
                 }
                 .onAppear {

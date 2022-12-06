@@ -46,12 +46,12 @@ struct PlaybackView: View {
                     Text("\(model.project.name)")
                         .font(.system(.title2).bold())
                 }
+                
                 HStack {
                     Button(action: {
-//                        spinnerLabel = "Syncing clips to cloud"
                         // Go through the model so it does the firebase auth
                         Task {
-                            await model.networkSync()
+                            await model.networkSync(performDownloadSync: true, shouldDownloadVideos: true)
                         }
                     }) {
                         Text("Sync")
@@ -109,7 +109,9 @@ struct PlaybackView: View {
                 }
             }
             
-            WaitingSpinner(spinnerLabel: "", model: model)
+            if model.isWorking > 0 {
+                WaitingSpinner(project: model.project)
+            }
         }
     }
 }
@@ -146,40 +148,38 @@ struct VideoPlayback: View {
 }
 
 struct WaitingSpinner: View {
-    @ObservedObject var model: ContentViewModel
+    @ObservedObject var project: Project
     
-    @State var spinnerLabel = ""
-    @State var shouldShow = false
     private let sizes = Sizes()
     
     var body: some View {
-        if shouldShow {
-            ZStack {
-                RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
-                    .fill(Color.white)
-                VStack (alignment: .center) {
-                    if spinnerLabel != "" {
-                        Text("\(spinnerLabel)")
-                            .foregroundColor(Color.black)
-                            .padding()
-                    }
-                    Spacer()
+        ZStack {
+            RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
+                .fill(Color.white)
+            VStack (alignment: .center) {
+                Spacer()
+                
+                Text("\(project.spinnerLabel != "" ? project.spinnerLabel: "Syncing")")
+                    .font(.system(.title3).bold())
+                    .foregroundColor(Color.black)
+                    .padding()
+                
+                if project.workTotal != 0.0 && project.workProgress > 0.0 {
+                    ProgressView(value: project.workProgress, total: project.workTotal)
+                        .controlSize(ControlSize.large)
+                        .padding()
+                        
+                } else {
                     ProgressView()
                         .controlSize(ControlSize.large)
+                        .padding()
                         .colorInvert()
-                    Spacer()
-                    if model.project.downloadingTotal != 0 {
-                        ProgressView(value: Float(model.project.downloadingProgress / model.project.downloadingTotal))
-                            .padding()
-                        Spacer()
-                    }
                 }
-            }
-            .frame(width: 175, height: 175)
-            .onReceive(model.$isWorking) { workingCount in
-                shouldShow = workingCount > 0
+                
+                Spacer()
             }
         }
+        .frame(width: 200, height: 200)
     }
 }
 

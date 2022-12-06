@@ -22,8 +22,11 @@ class Project: ObservableObject, Codable {
     private var currentClip: Clip? = nil
     @Published var unseenCount = 0
     @Published var lastClip: Clip?
-    @Published var downloadingProgress = 0
-    @Published var downloadingTotal = 1
+    
+    // For WaitingSpinner
+    @Published var workProgress = 0.0
+    @Published var workTotal = 0.0
+    @Published var spinnerLabel = ""
     
     init(uuid: UUID = UUID(), name: String = "New Project", allClips: [Clip] = []) {
         self.id = uuid
@@ -128,6 +131,8 @@ class Project: ObservableObject, Codable {
             let thumbnailRef = Storage.storage().reference().child(self.id.uuidString).child("thumbnails")
             let localClips = allClips.filter({ $0.location == .local })
             
+            prepareWorkProgress(label: "Uploading \"\(self.name)\"", total: Double(localClips.count) * 2.0 /*Double because thumbnails and meta are uploaded separately*/)
+            
             for c in localClips {
                 guard c.finalURL != nil else {
                     print("Error uploading clip \(c.id.uuidString) — missing finalURL")
@@ -151,7 +156,9 @@ class Project: ObservableObject, Codable {
                         
                         // Then upload the clip's id to clipIdIndex
                         dbRef.child(self.id.uuidString).child("clipIdIndex").child(c.id.uuidString).setValue(true)
-                        
+                        DispatchQueue.main.async {
+                            self.workProgress += 1.0
+                        }
                         continuation.resume()
                     }
                 }
@@ -170,6 +177,9 @@ class Project: ObservableObject, Codable {
                             }
                             
                             print("    Uploaded thumbnail for \(c.id.uuidString). [\(metadata.size)]")
+                            DispatchQueue.main.async {
+                                self.workProgress += 1.0
+                            }
                             continuation.resume()
                         }
                     }
@@ -186,13 +196,18 @@ class Project: ObservableObject, Codable {
         } catch {
             print(error)
         }
+        
+        resetWorkProgress()
     }
     
     func saveVideosToRTDB() async {
         print("Uploading videos for project \(self.id.uuidString) to DB")
+        
         let storageRef = Storage.storage().reference().child(self.id.uuidString)
         let remoteUnuploadedClips = allClips.filter({ $0.location == .remoteUnuploaded }) // Metadata has to be uploaded first, hence .remoteUnuploaded
-
+        
+        prepareWorkProgress(label: "Uploading videos", total: Double(remoteUnuploadedClips.count))
+        
         for c in remoteUnuploadedClips {
             let videoRef = storageRef.child("videos").child(c.id.uuidString)
             await withCheckedContinuation { continuation in
@@ -205,10 +220,15 @@ class Project: ObservableObject, Codable {
                     
                     print("    Uploaded video for \(c.id.uuidString). [\(metadata.size) bytes]")
                     c.location = .uploaded
+                    DispatchQueue.main.async {
+                        self.workProgress += 1.0
+                    }
                     continuation.resume()
                 }
             }
         }
+        
+        resetWorkProgress()
     }
     
     func networkAwareProjectUpload(shouldUploadVideo: Bool = false) async {
@@ -243,9 +263,29 @@ class Project: ObservableObject, Codable {
         }
     }
     
+    func prepareWorkProgress(label: String = "", total: Double = 0.0) {
+        DispatchQueue.main.async {
+            self.workProgress = 0.0
+            self.workTotal = total * 1.10 // Temp, so we show an empty bar
+            self.spinnerLabel = label
+        }
+    }
+    
+    func resetWorkProgress() {
+        DispatchQueue.main.async {
+            // Reset spinner for next use
+            self.workTotal = 0.0
+            self.workProgress = 0.0
+            self.spinnerLabel = ""
+        }
+    }
+    
     func pullNewClipMetadata() async {
         do {
             print("Pulling new clip metadata for project \(id.uuidString)")
+            
+            prepareWorkProgress(label: "Syncing \"\(self.name)\"")
+            
             let dbRef = Database.database().reference().child(id.uuidString).child("clips")
             
             let snapshot = try await dbRef.getData()
@@ -260,31 +300,46 @@ class Project: ObservableObject, Codable {
             var seenNewClipIds = [UUID]()
             let dateFormatter = ISO8601DateFormatter()
             
-            for (_, d) in allClipsFromFB {
-                let clipId = UUID(uuidString: d["id"]!)!
-                allClipsFromFBIds.append(clipId)
-                
-                if allLocalClipIds.contains(clipId) {
-                    continue
+            DispatchQueue.main.async {
+                self.workTotal = Double(allClipsFromFB.count) * 1.10 // Set real total once we know it, with a buffer for misc. tasks after network activity
+            }
+            
+            
+            await withTaskGroup(of: Void.self) { group in
+                for (_, d) in allClipsFromFB {
+                    let clipId = UUID(uuidString: d["id"]!)!
+                    allClipsFromFBIds.append(clipId)
+                    
+                    if allLocalClipIds.contains(clipId) {
+                        continue
+                    }
+                    
+                    print("    Found new clip \(clipId.uuidString)")
+                    
+                    // Clip has not been seen locally, create stub
+                    let newClip = Clip(
+                        id: clipId,
+                        timestamp: dateFormatter.date(from: d["timestamp"]!)!,
+                        creator: d["creator"] ?? "",
+                        projectId: self.id,
+                        location: .remoteUndownloaded
+                    )
+                    
+                    if !seenNewClipIds.contains(clipId) { // Doublecheck against dupes
+                        self.allClips.append(newClip)
+                        seenNewClipIds.append(clipId)
+                        
+                        // If we pass the dupe check, download the thumbnail in parallel
+                        group.addTask {
+                            await newClip.downloadThumbnail()
+                        }
+                    }
                 }
                 
-                print("    Found new clip \(clipId.uuidString)")
-                
-                // Clip has not been seen locally, create stub
-                let newClip = Clip(
-                    id: clipId,
-                    timestamp: dateFormatter.date(from: d["timestamp"]!)!,
-                    creator: d["creator"] ?? "",
-                    projectId: self.id,
-                    location: .remoteUndownloaded
-                )
-                
-                if !seenNewClipIds.contains(clipId) { // Doublecheck against dupes
-                    self.allClips.append(newClip)
-                    seenNewClipIds.append(clipId)
-                    
-                    // If we pass the dupe check, download the thumbnail
-                    newClip.downloadThumbnail()
+                for await _ in group {
+                    DispatchQueue.main.async {
+                        self.workProgress += 1.0
+                    }
                 }
             }
             
@@ -315,35 +370,41 @@ class Project: ObservableObject, Codable {
         } catch {
             print(error)
         }
+        
+        resetWorkProgress()
     }
     
     
     func pullVideosForNewClips() async {
-        await withThrowingTaskGroup(of: Void.self) { group in
-//            self.downloadingTotal = 0
-//            self.downloadingProgress = 0
+        await withTaskGroup(of: Void.self) { group in
+            prepareWorkProgress(label: "Downloading videos")
             
-            for clip in self.allClips.filter({ c in c.location == .remoteUndownloaded }) {
-                group.addTask {
-                    await clip.downloadVideo()
-                    self.downloadingProgress += 1 // maybe this will update in real time ?? 
-                }
-                self.downloadingTotal += 1
+            let clipsToDownload = self.allClips.filter({ c in c.location == .remoteUndownloaded })
+            
+            DispatchQueue.main.async {
+                self.workTotal = Double(clipsToDownload.count) * 1.10
             }
             
-//            do {
-//                for try await result in group {
-//                    downloadingProgress += 1
-//                }
-//            } catch {
-//                print(error)
-//            }
+            
+            for clip in clipsToDownload {
+                group.addTask {
+                    await clip.downloadVideo()
+                }
+            }
+            
+            for await _ in group {
+                DispatchQueue.main.async {
+                    self.workProgress += 1.0
+                }
+            }
         }
         
         DispatchQueue.main.async {
             self.allClips = self.allClips.filter({ c in c.status != .invalid })
             self.sortClips()
         }
+        
+        resetWorkProgress()
     }
     
     func networkAwareProjectDownload(shouldDownloadVideo: Bool = false) async {
@@ -473,18 +534,21 @@ class Clip: Identifiable, Codable, ObservableObject {
         }
     }
     
-    func downloadThumbnail() {
+    func downloadThumbnail() async {
         do {
             let storageRef = Storage.storage().reference().child(projectId.uuidString).child("thumbnails")
             print("    Downloading thumbnail for \(id.uuidString) from \(storageRef.child(id.uuidString))")
             
-            storageRef.child(id.uuidString).getData(maxSize: (1024 * 1024) / 2 /*500kb*/, completion: { data, error in
-                if error != nil {
-                    print("    Error downloading thumbnail for clip \(self.id.uuidString): \(error)")
-                } else {
-                    self.thumbnail = data
-                }
-            })
+            await withCheckedContinuation { continuation in
+                storageRef.child(id.uuidString).getData(maxSize: (1024 * 1024) / 2 /*500kb*/, completion: { data, error in
+                    if error != nil {
+                        print("    Error downloading thumbnail for clip \(self.id.uuidString): \(error)")
+                    } else {
+                        self.thumbnail = data
+                    }
+                    continuation.resume()
+                })
+            }
         }
     }
     

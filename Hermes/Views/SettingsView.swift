@@ -68,30 +68,23 @@ struct SettingsModal: View {
                     
                     List {
                         ForEach( model.allProjects.indices, id: \.self) { index in
-                            HStack {
-                                Text(model.allProjects[index].name)
-                                    .font(model.project.id == model.allProjects[index].id ? .system(.body).bold() : .system(.body))
-                                Spacer()
-                            }
-                            .foregroundColor(model.project.id == model.allProjects[index].id ? .blue : .white)
-                            .contentShape(Rectangle())
-                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
-                            .onTapGesture {
-                                model.switchProjects(newProject: model.allProjects[index])
-                                dismissCallback()
-                            }
+                            ProjectListEntry(model: model, index: index) // This separate view exists so deletions don't cause IndexOOB errors
+                                .contentShape(Rectangle())
+                                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
+                                .onTapGesture {
+                                    model.switchProjects(newProject: model.allProjects[index])
+                                    dismissCallback()
+                                }
                         }
                         .onDelete { idx in
                             model.deleteProject(toDelete: model.allProjects[idx.first!].id)
                         }
                     }
                     .frame(maxHeight: 250)
-//                    .border(.green)
 
                     Text("Settings")
                         .font(.system(.title).bold())
                         .padding([.leading])
-//                        .border(.green)
 
                     List {
                         VStack {
@@ -150,7 +143,25 @@ struct SettingsModal: View {
                 .frame(minHeight: (CGFloat(model.allProjects.count) * 60) + 700)
             }
             
-            WaitingSpinner(model: model)
+            if model.isWorking > 0 {
+                WaitingSpinner(project: model.project)
+            }
+        }
+    }
+}
+
+struct ProjectListEntry: View {
+    @ObservedObject var model: ContentViewModel
+    let index: Int
+    
+    var body: some View {
+        if index < model.allProjects.count { // Otherwise we get an indexOutOfBounds on deletions
+            HStack {
+                Text(model.allProjects[index].name)
+                    .font(model.project.id == model.allProjects[index].id ? .system(.body).bold() : .system(.body))
+                Spacer()
+            }
+            .foregroundColor(model.project.id == model.allProjects[index].id ? .blue : .white)
         }
     }
 }
