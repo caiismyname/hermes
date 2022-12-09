@@ -76,21 +76,15 @@ struct PlaybackView: View {
                     }
                     
                     Button(action: {
-//                        spinnerLabel = "Exporting vlog to your photos library"
                         Task {
                             model.startWork()
-                            let exporter = Exporter(project: model.project)
+                            exporter.project = model.project
                             await exporter.export()
                             model.stopWork()
                         }
                     }) {
-                        if exporter.isProcessing {
-                            Text("Exporting...")
-                                .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
-                        } else {
-                            Text("Export")
-                                .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
-                        }
+                        Text("Export")
+                            .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
                     }
                     .foregroundColor(Color.white)
                     .background(Color.purple)
