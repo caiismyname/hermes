@@ -43,8 +43,8 @@ struct PlaybackView: View {
 //                            TextField("New name value", text: $model.project.name)
 //                                .foregroundColor(Color.black)
 //                        })
-                    Text("\(model.project.name)")
-                        .font(.system(.title2).bold())
+//                    Text("\(model.project.name)")
+//                        .font(.system(.title2).bold())
                 }
                 
                 HStack {
@@ -64,7 +64,7 @@ struct PlaybackView: View {
                     
                     if #available(iOS 16.0, *) {
                         Button(action: {}) {
-                            ShareLink("Share", item: model.project.generateURL())
+                            ShareLink("Invite", item: model.project.generateURL())
                                 .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
                         }
                         .foregroundColor(Color.white)
@@ -114,30 +114,52 @@ struct VideoPlayback: View {
     @ObservedObject var playbackModel: PlaybackModel
     @ObservedObject var project: Project
     @State var showPlayer = false
+    private let sizes = Sizes()
     
     var body: some View {
-        VStack {
-            Text("\(playbackModel.currentVideoCreatorName)")
-            ZStack {
-                VideoPlayer(player: playbackModel.player)
-                GeometryReader { geo in
-                    if !showPlayer {
-                        Rectangle()
-                            .fill(Color.black)
-                            .frame(width: geo.size.width, height: geo.size.height)
-                        
-                        if project.allClips[playbackModel.currentVideoIdx].thumbnail != nil {
-                            // No video, but has a thumbnail
-                            Image(uiImage: UIImage(data: project.allClips[playbackModel.currentVideoIdx].thumbnail!)!)
-                                .resizable()
-                                .frame(width: geo.size.height * (1080.0 / 1920.0), height: geo.size.height)
-                                .position(x: geo.size.width / 2, y: geo.size.height / 2)
-                        }
+        ZStack {
+            VideoPlayer(player: playbackModel.player)
+            GeometryReader { geo in
+                if !showPlayer {
+                    Rectangle()
+                        .fill(Color.black)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                    
+                    if project.allClips[playbackModel.currentVideoIdx].thumbnail != nil {
+                        // No video, but has a thumbnail
+                        Image(uiImage: UIImage(data: project.allClips[playbackModel.currentVideoIdx].thumbnail!)!)
+                            .resizable()
+                            .frame(width: geo.size.height * (1080.0 / 1920.0), height: geo.size.height)
+                            .position(x: geo.size.width / 2, y: geo.size.height / 2)
                     }
                 }
+                
+                // Show regardless
+                ClipMetadataView(playbackModel: playbackModel)
+                    .position(x: (geo.size.width / 4) , y: geo.size.height / 15)
+                    .frame(width: geo.size.width / 3, height: sizes.projectButtonHeight * 1.3)
             }
-            .onReceive(playbackModel.$currentVideoCanPlay) { canPlay in showPlayer = canPlay }
         }
+        .onReceive(playbackModel.$currentVideoCanPlay) { canPlay in showPlayer = canPlay }
+    }
+}
+
+struct ClipMetadataView: View {
+    @ObservedObject var playbackModel: PlaybackModel
+    private let sizes = Sizes()
+    
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
+                .fill(Color.black)
+                .opacity(0.2)
+            VStack(alignment: .leading) {
+                Text("\(playbackModel.currentVideoTimestamp.displayDate) \(playbackModel.currentVideoTimestamp.displayTime)")
+                Text("\(playbackModel.currentVideoCreatorName)")
+            }
+        }
+        .foregroundColor(Color.white)
+        
     }
 }
 

@@ -13,6 +13,7 @@ class PlaybackModel:ObservableObject {
     let project: Project
     @Published var currentVideoIdx: Int
     @Published var currentVideoCreatorName = ""
+    @Published var currentVideoTimestamp = Date()
     @Published var currentVideoCanPlay = false
     var player = AVQueuePlayer()
     
@@ -23,9 +24,14 @@ class PlaybackModel:ObservableObject {
         // default to last clip
         if self.project.allClips.count > 0 {
             self.currentVideoIdx = project.allClips.count - 1
-            self.currentVideoCreatorName = project.creators[project.allClips[currentVideoIdx].creator] ?? ""
+            setCurrentClipMetadata()
             playCurrentVideo(shouldPlay: false)
         }
+    }
+    
+    private func setCurrentClipMetadata() {
+        self.currentVideoCreatorName = project.creators[project.allClips[currentVideoIdx].creator] ?? ""
+        self.currentVideoTimestamp = project.allClips[currentVideoIdx].timestamp
     }
     
     private func switchToClip(idx: Int) -> AVPlayerItem? {
@@ -35,7 +41,7 @@ class PlaybackModel:ObservableObject {
         
         // Update current video info
         self.currentVideoIdx = idx
-        self.currentVideoCreatorName = self.project.creators[self.project.allClips[self.currentVideoIdx].creator] ?? ""
+        setCurrentClipMetadata()
 
         if clip.location != .remoteUndownloaded, let url = clip.finalURL {
             playerItem = AVPlayerItem(url: url)
@@ -100,7 +106,7 @@ class PlaybackModel:ObservableObject {
             return
         } else {
             currentVideoIdx += 1
-            self.currentVideoCreatorName = project.creators[project.allClips[currentVideoIdx].creator] ?? ""
+            setCurrentClipMetadata()
         }
         
         playCurrentVideo()

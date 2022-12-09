@@ -17,9 +17,11 @@ struct Sizes {
     let recordButtonOuterSize = (60.0 * 1.07) + 10
     let stopButtonSize = 45.0
     let secondaryButtonSize = 30.0
-    let bottomOffset = 100.0
-    let topOffset = 15.0
+    let bottomOffset = 80.0
     let cameraPreviewCornerRadius = 15.0
+    let infoPillWidthPercentage = 0.55
+    let infoPillTopOffset = 0.025
+    
     
     let fontSize = 20.0
 }

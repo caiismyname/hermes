@@ -54,7 +54,8 @@ struct RecordingControlsView: View {
                 // Recording indicator at top of screen, with duration counter
                 if recordingManager.isRecording {
                     RecordingTimeCounter(recordingManager: recordingManager)
-                        .position(x: geometry.size.width / 2, y: sizes.topOffset)
+                        .frame(width: geometry.size.width * sizes.infoPillWidthPercentage, height: sizes.projectButtonHeight)
+                        .position(x: geometry.size.width / 2, y: geometry.size.height * sizes.infoPillTopOffset)
                 }
                 
                 if !(recordingManager.isRecording) {
@@ -94,13 +95,9 @@ struct RecordingControlsView: View {
                     })
                     
                     // Project Name
-                    
-                    Text("\(model.project.name)")
-                        .font(.system(.title2).bold())
-                        .foregroundColor(Color.white)
-                        .minimumScaleFactor(0.01)
-                        .lineLimit(1)
-                        .position(x: geometry.size.width / 2, y: sizes.topOffset - 10)
+                    ProjectNameDisplay(project: model.project)
+                        .frame(width: geometry.size.width * sizes.infoPillWidthPercentage, height: sizes.projectButtonHeight)
+                        .position(x: geometry.size.width / 2, y: geometry.size.height * sizes.infoPillTopOffset)
                 }
                 
                 
@@ -194,6 +191,24 @@ struct RecordButtonSnapchatStyle: View {
     }
 }
 
+struct ProjectNameDisplay: View {
+    @ObservedObject var project: Project
+    private let sizes = Sizes()
+    
+    var body: some View {
+        ZStack {
+//            Rectangle()
+//                .fill(Color.black)
+//                .cornerRadius(sizes.buttonCornerRadius)
+            Text("\(project.name)")
+                .font(.system(.title2).bold())
+                .foregroundColor(Color.white)
+                .minimumScaleFactor(0.01)
+                .lineLimit(1)
+        }
+    }
+}
+
 struct RecordingTimeCounter: View {
     @ObservedObject var recordingManager: RecordingManager
     private let sizes = Sizes()
@@ -202,7 +217,6 @@ struct RecordingTimeCounter: View {
         ZStack {
             Rectangle()
                 .fill(Color.red)
-                .frame(width: 125, height: 30)
                 .cornerRadius(sizes.buttonCornerRadius)
             
             Text(
