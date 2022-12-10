@@ -12,7 +12,9 @@ import Foundation
 class DeeplinkHandler {
     static func getProjectIdFromDeeplink(url: URL) -> UUID? {
         print("Parsing deeplink: \(url)")
+        print(url.scheme, url.host)
         guard url.scheme == URLSchema.schema, url.host == URLSchema.identifier else {
+//        guard url.host == URLSchema.identifier else {
             return nil
         }
         
@@ -27,9 +29,11 @@ class DeeplinkHandler {
 
 class URLSchema {
     // EXAMPLE URL: hermesProject://com.caiismyname.hermes/?projectId=123
-    static let schema = "hermesProject"
-    static let identifier = "com.caiismyname.hermes"
+    // EXAMPLE URL: https://rompvlog.com/invite?projectId=123
+    static let schema = "https"
+    static let identifier = "rompvlog.com/invite"
     static let projectIdParam = "projectId"
     
-    static var baseURL =  schema + "://" + identifier + "/?" + projectIdParam + "="
+    static var baseURL =  schema + "://" + identifier + "?" + projectIdParam + "="
+//    static var baseURL = identifier + "/?" + projectIdParam + "="
 }
