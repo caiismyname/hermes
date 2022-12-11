@@ -20,7 +20,7 @@ struct RecordingControlsView: View {
         var results = [String: Double]()
         
         switch orientation {
-        case .portrait, .unknown, .faceUp, .faceDown: // Last three should be filtered out before it reaches here. This is just for completeness of the switch.
+        case .portrait, .unknown, .faceUp, .faceDown: // Last four should be filtered out before it reaches here. This is just for completeness of the switch.
             results["x"] = geometry.size.width * relativePosition
             results["y"] = geometry.size.height - sizes.bottomOffset
         case .portraitUpsideDown: // Not currently supported

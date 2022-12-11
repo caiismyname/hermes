@@ -18,10 +18,12 @@ struct ContentView: View {
     func updateOrientation(newOrientation: UIDeviceOrientation) {
         switch newOrientation {
             // Prevent jankiness when the phone moves through the Z axis
-        case .unknown,.faceUp, .faceDown, .portraitUpsideDown, .landscapeLeft, .landscapeRight:
+        case .faceUp, .faceDown, .portraitUpsideDown:
             return
-        case .portrait:
+        case .portrait, .landscapeLeft, .landscapeRight:
             self.orientation = newOrientation
+        case .unknown:
+            self.orientation = UIDeviceOrientation(rawValue: 1)! // Default unknown to portrait
         @unknown default:
             return
         }
@@ -82,7 +84,7 @@ struct ContentView: View {
                         recordingManager: model.recordingManager,
                         orientation: $orientation
                     )
-                    .onRotate { newOrientation in // Note this .onRotate handles the orientation for all aspects of the recording UI
+                    .onRotate { newOrientation in // Note this .onRotate handles the orientation for all aspects of the recording UI, but only UI. The actual recording has a separate manager
                         updateOrientation(newOrientation: newOrientation)
                     }
                     .popover(isPresented: $model.shouldShowProjects, content: {

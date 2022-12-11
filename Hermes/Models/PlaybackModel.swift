@@ -35,6 +35,7 @@ class PlaybackModel:ObservableObject {
     }
     
     private func switchToClip(idx: Int) -> AVPlayerItem? {
+        guard idx > 0 && project.allClips.count > 0 else { return nil }
         let clip = self.project.allClips[idx]
         var videoCanPlay = false
         var playerItem: AVPlayerItem? = nil
@@ -112,21 +113,20 @@ class PlaybackModel:ObservableObject {
         playCurrentVideo()
     }
     
-    func deleteClip(id: UUID) {
+    func deleteClip(id: UUID) async {
         let deletedClipIdx = project.allClips.firstIndex { c in
             c.id == id
         } ?? -1
         
+        await project.deleteClip(id: id)
+        
+        // Ordering is important, make sure the clip is deleted before changing the currentVideoIdx, otherwise the scroll might try to access into an empty list because the list is slow to update
         if deletedClipIdx != -1 && deletedClipIdx <= self.currentVideoIdx {
             self.currentVideoIdx -= 1
             if let item = switchToClip(idx: self.currentVideoIdx) {
                 self.player.removeAllItems()
                 self.player.insert(item, after: nil)
             }
-        }
-        
-        Task {
-            await project.deleteClip(id: id)
         }
     }
 }

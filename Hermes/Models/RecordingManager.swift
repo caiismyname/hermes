@@ -8,6 +8,7 @@
 import AVFoundation
 import SwiftUI
 import Foundation
+import CoreMotion
 
 class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, ObservableObject {
     
@@ -18,6 +19,8 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     var project: Project
     @Published var recordingButtonStyle: RecordingButtonStyle
     @Published var isRecording = false
+    @Published var orientation = UIDeviceOrientation(rawValue: 1)
+    private var motionManager = CMMotionManager() // For detecting orientation of the movie. Separate from DeviceOrientation so it works even when portrait lock is enabled
     
     // For the duration UI
     var recordingStartTime = Date() // temp value to start
@@ -52,11 +55,56 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
         }
         
         self.session!.commitConfiguration()
+        
+        self.initCoreMotion() // For some reason I can't put this in init
     }
     
     func setRecordingButtonStyle(style: RecordingButtonStyle) {
         self.recordingButtonStyle = style
         UserDefaults.standard.set(self.recordingButtonStyle == .camera ? 1 : 0, forKey: "recordingButtonStyle")
+    }
+    
+    private func initCoreMotion() {
+        let splitAngle:Double = 0.75
+        let updateTimer:TimeInterval = 0.5
+
+        motionManager.gyroUpdateInterval = updateTimer
+        motionManager.accelerometerUpdateInterval = updateTimer
+
+        var orientationLast = UIDeviceOrientation(rawValue: 0)!
+
+        motionManager.startAccelerometerUpdates(to: (OperationQueue.current)!, withHandler: { (acceleroMeterData, error) -> Void in
+            if error == nil {
+
+                let acceleration = (acceleroMeterData?.acceleration)!
+                var orientationNew = UIDeviceOrientation(rawValue: 0)!
+
+                if acceleration.x >= splitAngle {
+                    orientationNew = .landscapeRight
+                }
+                else if acceleration.x <= -(splitAngle) {
+                    orientationNew = .landscapeLeft
+                }
+                else if acceleration.y <= -(splitAngle) {
+                    orientationNew = .portrait
+                }
+                else if acceleration.y >= splitAngle {
+                    orientationNew = .portraitUpsideDown
+                }
+
+                if orientationNew != orientationLast && orientationNew != .unknown{
+                    orientationLast = orientationNew
+                    self.deviceOrientationChanged(orientation: orientationNew)
+                }
+            }
+            else {
+                print("CoreMotion init error: \(error!)")
+            }
+        })
+    }
+    
+    func deviceOrientationChanged(orientation: UIDeviceOrientation) {
+        self.orientation = orientation
     }
     
     func toggleRecording() {
@@ -71,8 +119,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
         sessionQueue.async {
             if !movieFileOutput.isRecording {
                 if let movieFileOutputConnection = movieFileOutput.connection(with: .video) {
-                    let orientation = AVCaptureVideoOrientation(rawValue:  UIDevice.current.orientation.rawValue)!
-                    movieFileOutputConnection.videoOrientation = orientation
+                    movieFileOutputConnection.videoOrientation = AVCaptureVideoOrientation(rawValue: self.orientation?.rawValue ?? 1)!
                     
                     if movieFileOutput.availableVideoCodecTypes.contains(.hevc) {
                         movieFileOutput.setOutputSettings(
@@ -81,7 +128,6 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
                     
                     if let clip = self.project.startClip() {
                         movieFileOutput.startRecording(to: clip.temporaryURL!, recordingDelegate: self)
-                        clip.orientation = orientation
                         print("Start recording")
                     }
                 }

@@ -485,7 +485,6 @@ class Clip: Identifiable, Codable, ObservableObject {
     @Published var status: ClipStatus
     @Published var thumbnail: Data?
     var location: ClipLocation
-    var orientation: AVCaptureVideoOrientation
     @Published var seen: Bool
     
     enum ClipStatus: Codable {
@@ -502,14 +501,13 @@ class Clip: Identifiable, Codable, ObservableObject {
         case downloaded // Metadta and video both downloaded from the DB (no upload responsibility)
     }
     
-    init(id: UUID = UUID(), timestamp: Date = Date(), creator: String = "Unknown", projectId: UUID, location: ClipLocation = .local, orientation: AVCaptureVideoOrientation = .portrait, seen: Bool = false) {
+    init(id: UUID = UUID(), timestamp: Date = Date(), creator: String = "Unknown", projectId: UUID, location: ClipLocation = .local, seen: Bool = false) {
         self.id = id
         self.timestamp = timestamp
         self.creator = creator
         self.projectId = projectId
         self.status = .temporary
         self.location = location
-        self.orientation = orientation
         self.seen = seen
     }
     
@@ -607,7 +605,6 @@ class Clip: Identifiable, Codable, ObservableObject {
         case status
         case thumbnail
         case location
-        case orientation
         case seen
     }
     
@@ -620,7 +617,6 @@ class Clip: Identifiable, Codable, ObservableObject {
         try container.encode(status, forKey: .status)
         try container.encode(thumbnail, forKey: .thumbnail)
         try container.encode(location, forKey: .location)
-        try container.encode(orientation.rawValue, forKey: .orientation)
         try container.encode(seen, forKey: .seen)
     }
     
@@ -633,7 +629,6 @@ class Clip: Identifiable, Codable, ObservableObject {
         status = try values.decode(ClipStatus.self, forKey: .status)
         thumbnail = try values.decode(Data.self, forKey: .thumbnail)
         location = try values.decode(ClipLocation.self, forKey: .location)
-        orientation = try AVCaptureVideoOrientation(rawValue: values.decode(AVCaptureVideoOrientation.RawValue.self, forKey: .orientation))!
         seen = try values.decode(Bool.self, forKey: .seen)
     }
 }

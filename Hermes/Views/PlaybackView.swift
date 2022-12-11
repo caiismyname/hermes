@@ -216,7 +216,7 @@ struct ThumbnailReel: View {
                             isCurrentClip: idx == playbackModel.currentVideoIdx
                         )
                             .id(clip.id)
-                            .onTapGesture(count: 3, perform: {
+                            .onTapGesture(count: 2, perform: {
                                 print("Tapped on \(clip.id.uuidString)")
                                 showDeleteALert = true
                                 clipToDelete = clip.id
@@ -229,7 +229,7 @@ struct ThumbnailReel: View {
                                 Alert(
                                     title: Text("Delete clip?"),
                                     primaryButton: .destructive(Text("Delete")) {
-                                        Task { playbackModel.deleteClip(id: clipToDelete) }
+                                        Task { await playbackModel.deleteClip(id: clipToDelete) }
                                     },
                                     secondaryButton: .cancel(Text("Cancel")) {
                                         showDeleteALert = false
@@ -241,6 +241,7 @@ struct ThumbnailReel: View {
                         reader.scrollTo(project.allClips.last?.id)
                     }
                     .onReceive(playbackModel.$currentVideoIdx) { idx in
+                        guard project.allClips.count > 0 else { return }
                         if project.allClips.count - idx > 2 {
                             // Roughly center the currently playing clip
                             reader.scrollTo(project.allClips[idx + 2].id)

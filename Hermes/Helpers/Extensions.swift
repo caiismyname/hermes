@@ -115,6 +115,14 @@ extension Int {
     var withLeadingZero: String {
         return ((self < 10 ? "0" : "") + String(self))
     }
+    
+    var defaultTo1If0: Int {
+        if self == 0 {
+            return 1
+        } else {
+            return self
+        }
+    }
 }
 
 struct DeviceRotationViewModifier: ViewModifier {

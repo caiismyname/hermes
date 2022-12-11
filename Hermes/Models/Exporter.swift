@@ -74,8 +74,17 @@ class Exporter: ObservableObject {
                 let clipDuration = try await clipContent.load(.duration)
                 let clipVideo = try await clipContent.loadTracks(withMediaType: .video)[0]
                 let clipAudio = try await clipContent.loadTracks(withMediaType: .audio)[0]
-                let clipTransform = try await clipVideo.load(.preferredTransform)
+                var clipTransform = try await clipVideo.load(.preferredTransform)
                 let clipTimerange = CMTimeRange(start: CMTime.zero, duration: clipDuration)
+                print("original \(clipTransform)")
+                
+                if clipTransform.a == 1.0 {
+                    clipTransform = clipTransform.translatedBy(x: 0, y: (1920.0 / 2.0)  - ((1080.0 * (1080.0/1920.0)) / 2.0))
+                    clipTransform = clipTransform.scaledBy(x: 1080.0 / 1920.0, y: 1080.0 / 1920.0)
+                } else if clipTransform.a == -1.0 {
+                    clipTransform = clipTransform.scaledBy(x: 1080.0 / 1920.0, y: 1080.0 / 1920.0)
+                    clipTransform = clipTransform.translatedBy(x: (1920.0 - 1080.0) / 0.5625, y: -183.75 / 0.5625)
+                }
                 
                 let videoTrack = fullMovie.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
                 let audioTrack = fullMovie.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
@@ -87,10 +96,12 @@ class Exporter: ObservableObject {
                 instruction.setTransform(clipTransform, at: startCumulative)
                 instruction.setOpacity(0.0, at: CMTimeAdd(startCumulative, clipDuration)) // This hides the clip after its done, otherwise the video is stuck on the first clip the whole time
                 fullInstructions.layerInstructions.append(instruction)
+
                 
                 startCumulative = CMTimeAdd(startCumulative, clipDuration)
                 
                 print("    Processed clip \(clip.id.uuidString)")
+                print("transform \(clipTransform)")
             }
         } catch {
             print(error)
