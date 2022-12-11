@@ -43,7 +43,7 @@ class Project: ObservableObject, Codable {
             return nil
         }
         
-        self.currentClip = Clip(projectId: id, seen: true) // Mark as seen because we created it
+        self.currentClip = Clip(creator: me?.id ?? "", projectId: id, seen: true) // Mark as seen because we created it
         self.currentlyRecording = true
         
         print("Allocated a new clip \(self.currentClip!.id.uuidString) with temp URL \(String(describing: self.currentClip!.temporaryURL))")

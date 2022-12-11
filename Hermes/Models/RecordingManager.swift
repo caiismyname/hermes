@@ -28,6 +28,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     var timer = Timer()
     let snapchatFullTime = TimeInterval(10.0)
     let snapchatMaxConsecutiveClips = 1.0
+    let cameraMaximumTime = TimeInterval(30.0)
     
     init(project: Project) {
         self.project = project
@@ -158,6 +159,8 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
         } else {
             recordingDuration = now.timeIntervalSince(recordingStartTime)
         }
+        
+        // Snapchat style auto cutoff
         if isRecording && recordingButtonStyle == .snapchat && recordingDuration <= 0.0 {
             self.timer.invalidate()
             toggleRecording() // stops the recording
@@ -167,6 +170,12 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
 //            } // Ensure recording did stop
 //            print("STARTING A NEW ONE")
 //            toggleRecording() // restart the recording
+        }
+        
+        // Record button style maximum length
+        if isRecording && recordingButtonStyle == .camera && recordingDuration >= cameraMaximumTime {
+            self.timer.invalidate()
+            toggleRecording()
         }
     }
     

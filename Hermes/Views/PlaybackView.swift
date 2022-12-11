@@ -17,6 +17,7 @@ struct PlaybackView: View {
     
     private let sizes = Sizes()
     @State var showingRenameAlert = false
+    @State var showingShareAlert = false
     
     init(model: ContentViewModel, playbackModel: PlaybackModel) {
         self.model = model
@@ -63,14 +64,25 @@ struct PlaybackView: View {
                     .disabled(model.isWorking > 0)
                     
                     if #available(iOS 16.0, *) {
-                        Button(action: {}) {
+                        Button(action: {
+                            self.showingShareAlert = true
+                        }) {
                             ShareLink("Invite", item: model.project.generateURL())
-                                .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
+                                    .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
                         }
                         .foregroundColor(Color.white)
                         .background(Color.blue)
                         .cornerRadius(sizes.buttonCornerRadius)
                         .disabled(model.isWorking > 0)
+//                        .alert("Share Link", isPresented: $showingShareAlert, actions: {
+//                            Button("Cancel", action: {
+//                                self.showingShareAlert = false
+//                            })
+//                            Button("Okay", action: {
+//                                ShareLink("Invite", item: model.project.generateURL())
+////                                    .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
+//                            })
+//                        }, message: {Text("Anyone with this link will be able to join your vlog. Only share it with people you trust.")})
                     } else {
                         // Fallback on earlier versions
                     }
@@ -91,7 +103,7 @@ struct PlaybackView: View {
                     .cornerRadius(sizes.buttonCornerRadius)
                     .disabled(model.isWorking > 0)
                 }
-                    .padding([.leading, .trailing])
+                .padding([.leading, .trailing, .top])
                 
                 if (model.project.allClips.count != 0) {
                     VideoPlayback(playbackModel: playbackModel, project: model.project)

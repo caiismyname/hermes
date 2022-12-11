@@ -45,7 +45,7 @@ struct SettingsModal: View {
                                 text: $newProjectName,
                                 prompt: Text(""))
                             .multilineTextAlignment(.leading)
-                            
+                            .foregroundColor(Color.blue)
                             
                             Button("Cancel", action: {
                                 self.showingTitleAlert = false
