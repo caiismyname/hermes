@@ -9,17 +9,22 @@ import Foundation
 import UserNotifications
 
 class NotificationsManager {
-    var reminders: [String]
+    var reminders = [String]()
     private let reminderInterval = TimeInterval(exactly: 60.0 * 120.0) // 2hrs
     private let reminderLimit = 5.0
     private let UDKey = "reminders"
+    var hasPermission = false
     // TODO: Ideas — time boundary, location triggered
     
     init() {
+       
+    }
+    
+    func setup() {
         if let savedReminders = UserDefaults.standard.stringArray(forKey: UDKey) {
             reminders = savedReminders
         } else {
-            reminders = [String]()
+            reminders = [String]() // Didn't find reminders
         }
         
         let center = UNUserNotificationCenter.current()
@@ -29,11 +34,13 @@ class NotificationsManager {
                 print(error)
             }
             
-            // Enable or disable features based on the authorization.
+            print("Notifications permissions is \(granted)")
+            self.hasPermission = granted
         }
     }
     
     private func setReminders() {
+        guard hasPermission else { return }
         for i in stride(from: 1.0, to: reminderLimit, by: 1.0) {
             createReminder(reminderIndex: i)
         }
@@ -47,6 +54,7 @@ class NotificationsManager {
     }
     
     private func createReminder(reminderIndex: Double) {
+        guard hasPermission else { return }
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: reminderInterval! * reminderIndex, repeats: false)
         let content = UNMutableNotificationContent()
         content.title = "Vlog Update!"
@@ -69,6 +77,7 @@ class NotificationsManager {
     }
     
     private func clearReminders() {
+        guard hasPermission else { return }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: self.reminders)
         self.reminders = [String]()
     }

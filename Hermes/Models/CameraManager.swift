@@ -32,12 +32,14 @@ class CameraManager: ObservableObject {
         configure()
     }
     
-    func configure() {
+    func configure(callback: () -> () = {}) {
         checkPermissions()
         sessionQueue.async {
             self.configureCaptureSession()
             self.session.startRunning()
         }
+        
+        callback()
     }
     
     private func set(error:CameraError?) {

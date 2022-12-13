@@ -52,20 +52,20 @@ struct ContentView: View {
                             }
                             .gesture(DragGesture(minimumDistance: 1.0)
                                 .onEnded({ drag in
-                                    var didSwitch = false
                                     if drag.translation.width < -250 && abs(drag.translation.height) < 150  {
-                                        didSwitch = model.switchToNextProject()
+                                        _ = model.switchToNextProject()
                                     } else if drag.translation.width > 250 && abs(drag.translation.height) < 150 {
-                                        didSwitch = model.switchToPreviousProject()
-                                    }
-                                    
-                                    if didSwitch {
-                                        shouldShowSwitcherModal = true
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                            self.shouldShowSwitcherModal = false
-                                        }
+                                        _ = model.switchToPreviousProject()
                                     }
                                 }))
+                            .onReceive(model.$project) { _ in
+                                // This listens for when the project changes and displays a message
+                                guard model.ready else { return }
+                                shouldShowSwitcherModal = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                    self.shouldShowSwitcherModal = false
+                                }
+                            }
 //                        do u think there's desert' i was hoping but my hopes are decreasing :( a brownnie would have been nice)
 //                            .gesture(MagnificationGesture(minimumScaleDelta: 0.6).updating($magnificationLevel) { currentState, gestureState, transaction in
 //                                    print(currentState, gestureState)
@@ -95,9 +95,11 @@ struct ContentView: View {
                         )
                     })
                     
+                    
                     if shouldShowSwitcherModal {
                         RoundedRectangle(cornerRadius: sizes.cameraPreviewCornerRadius)
                             .foregroundColor(Color.gray)
+                            .opacity(0.9)
                             .frame(width: 250, height: 250)
                             .overlay(
                                 VStack {

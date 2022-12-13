@@ -50,8 +50,9 @@ class ContentViewModel: ObservableObject {
         self.isOnboarding = isOnboarding
         
         setupNetworkMonitor()
-        if !isOnboarding { // Delay camera setup if onboarding so we delay asking for permissions. Otherwise, set it up as normal.
+        if !isOnboarding { // Delay camera and notifications setup if onboarding so we delay asking for permissions. Otherwise, set it up as normal.
             setupCamera()
+            notificationManager.setup()
         }
         
         // Load name
@@ -81,7 +82,7 @@ class ContentViewModel: ObservableObject {
         }
     }
     
-    func setupCamera() {
+    func setupCamera(callback: () -> () = {}) {
         cameraManager.configure()
         cameraManager.$error
             .receive(on: RunLoop.main)
@@ -89,6 +90,11 @@ class ContentViewModel: ObservableObject {
             .assign(to: &$error)
         
         recordingManager.configureCaptureSession(session: cameraManager.session)
+        callback()
+    }
+    
+    func setupNotifications() {
+        notificationManager.setup()
     }
     
     private func setupNetworkMonitor() {

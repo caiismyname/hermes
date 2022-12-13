@@ -47,8 +47,7 @@ struct OnboardingView: View {
                         .foregroundColor(.clear)
                         .frame(height:100)
                     Button(action: {
-                        model.setupCamera()
-                        model.isOnboarding = false
+                        model.setupCamera(callback: { self.step = 3 })
                     }) {
                         HStack {
                             Text("Yup, sounds good")
@@ -59,6 +58,37 @@ struct OnboardingView: View {
                         .foregroundColor(Color.white)
                         .cornerRadius(sizes.buttonCornerRadius)
                     }
+                } else if step == 3 {
+                    Text("And finally, notifications to send update reminders")
+                        .font(.largeTitle.bold())
+                    Rectangle()
+                        .foregroundColor(.clear)
+                        .frame(height:10)
+                    Text("Feel free to opt out if you'll remember to update your vlog yourself")
+                        .font(.title2)
+                    Rectangle()
+                        .foregroundColor(.clear)
+                        .frame(height:100)
+                    Button(action: {
+                        model.setupNotifications()
+                        model.isOnboarding = false
+                    }) {
+                        Text("Yes, remind me").font(.system(.title3).bold())
+                    }
+                        .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight * 1.5)
+                        .background(Color.blue)
+                        .foregroundColor(Color.white)
+                        .cornerRadius(sizes.buttonCornerRadius)
+                    Button(action: {
+                        model.isOnboarding = false
+                    }) {
+                        Text("No thanks")
+                            .font(.system(.subheadline))
+                    }
+                        .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
+                        .background(Color.red)
+                        .foregroundColor(Color.white)
+                        .cornerRadius(sizes.buttonCornerRadius)
                 }
                 Spacer()
                 Spacer()

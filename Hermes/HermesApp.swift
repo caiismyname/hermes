@@ -60,6 +60,7 @@ struct HermesApp: App {
                                     if loaded.count != 0 {
                                         self.contentViewModel.allProjects = loaded
                                         self.contentViewModel.loadCurrentProject()
+                                        self.contentViewModel.ready = true
 
                                         DispatchQueue.main.async {
 //                                            self.contentViewModel.uploadCurrentProject() // This call is network aware
@@ -70,17 +71,20 @@ struct HermesApp: App {
                                     } else {
                                         // If loaded set is empty, noop and carry through the temp projects
                                         print("Empty loaded projects set")
+                                        contentViewModel.ready = true
                                     }
                                 } else {
                                     print("nil check failed")
+                                    contentViewModel.ready = true
                                 }
                             case .failure (_):
                                 // No need to set anything since initializer already created everything
                                 print("Error loading projects, will carry through inital temp project.")
+                                contentViewModel.ready = true
                                 break
                         }
                         
-                        contentViewModel.ready = true
+//                        contentViewModel.ready = true
                     }
                 }
                 .onOpenURL() {url in
