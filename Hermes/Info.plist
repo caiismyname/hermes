@@ -11,7 +11,7 @@
 			<string>rompvlog.com</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>https://</string>
+				<string>https</string>
 			</array>
 		</dict>
 		<dict>

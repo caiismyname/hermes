@@ -35,7 +35,7 @@ class PlaybackModel:ObservableObject {
     }
     
     private func switchToClip(idx: Int) -> AVPlayerItem? {
-        guard idx > 0 && project.allClips.count > 0 else { return nil }
+        guard idx >= 0 && project.allClips.count > 0 else { return nil }
         let clip = self.project.allClips[idx]
         var videoCanPlay = false
         var playerItem: AVPlayerItem? = nil
@@ -44,7 +44,8 @@ class PlaybackModel:ObservableObject {
         self.currentVideoIdx = idx
         setCurrentClipMetadata()
 
-        if clip.location != .remoteUndownloaded, let url = clip.finalURL {
+//        if clip.location != .remoteUndownloaded, let url = clip.finalURL {
+        if clip.videoLocation != .remoteOnly, let url = clip.finalURL {
             playerItem = AVPlayerItem(url: url)
             player.actionAtItemEnd = .none // override this behavior with the Notification
             
@@ -78,12 +79,17 @@ class PlaybackModel:ObservableObject {
             // No video downloaded yet
             let clip = self.project.allClips[currentVideoIdx]
             print("    Video not downloaded. Location: \(clip.location)")
-            if clip.location == .remoteUndownloaded {
+//            if clip.location == .remoteUndownloaded {
+            if clip.videoLocation == .remoteOnly {
                 Task {
+                    project.prepareWorkProgress(label: "Downloading video", total: 0.0)
+                    project.startWork()
+                    
                     await clip.downloadVideo()
                     DispatchQueue.main.async {
                         self.currentVideoCanPlay = true
                     }
+                    project.stopWork()
                     
                     // Once downloaded, try playing it again
                     guard(clip.location != .remoteUndownloaded) else {

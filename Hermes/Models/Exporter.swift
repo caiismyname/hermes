@@ -59,6 +59,7 @@ class Exporter: ObservableObject {
         
         print("Starting movie export")
         project.prepareWorkProgress(label:"Exporting", total: 1.0)
+        project.startWork()
         
         let fullMovie = AVMutableComposition()
         let fullInstructions = AVMutableVideoCompositionInstruction()
@@ -145,7 +146,8 @@ class Exporter: ObservableObject {
         await exporter?.export()
         print("    Exported to \(url)")
         await self.saveToPhotoLibrary(movieURL: url)
-        self.project.resetWorkProgress()
+//        self.project.resetWorkProgress()
+        project.stopWork()
     }
     
     @objc func updateProgress() {

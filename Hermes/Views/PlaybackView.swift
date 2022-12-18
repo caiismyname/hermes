@@ -115,7 +115,7 @@ struct PlaybackView: View {
                 }
             }
             
-            if model.isWorking > 0 {
+            if model.isWorking > 0 || model.project.isWorking > 0 {
                 WaitingSpinner(project: model.project)
             }
         }
@@ -172,42 +172,6 @@ struct ClipMetadataView: View {
         }
         .foregroundColor(Color.white)
         
-    }
-}
-
-struct WaitingSpinner: View {
-    @ObservedObject var project: Project
-    
-    private let sizes = Sizes()
-    
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
-                .fill(Color.white)
-            VStack (alignment: .center) {
-                Spacer()
-                
-                Text("\(project.spinnerLabel != "" ? project.spinnerLabel: "Syncing")")
-                    .font(.system(.title3).bold())
-                    .foregroundColor(Color.black)
-                    .padding()
-                
-                if project.workTotal != 0.0 && project.workProgress > 0.0 {
-                    ProgressView(value: project.workProgress, total: project.workTotal)
-                        .controlSize(ControlSize.large)
-                        .padding()
-                        
-                } else {
-                    ProgressView()
-                        .controlSize(ControlSize.large)
-                        .padding()
-                        .colorInvert()
-                }
-                
-                Spacer()
-            }
-        }
-        .frame(width: 200, height: 200)
     }
 }
 
@@ -271,6 +235,8 @@ struct ThumbnailReel: View {
 struct Thumbnail: View {
     @ObservedObject var clip: Clip
     var isCurrentClip: Bool
+    private let thumbnailSize = 75.0
+    private let statusIconInset = 15.0
     
     var body: some View {
         ZStack {
@@ -281,14 +247,25 @@ struct Thumbnail: View {
                     .resizable(resizingMode: .stretch)
             }
         }
-        .frame(width: 75, height: 75)
+        .frame(width: thumbnailSize, height: thumbnailSize)
         .overlay() {
             if !clip.seen {
-                 Rectangle().stroke(.blue, lineWidth: 2.0)
+                Rectangle().stroke(.blue, lineWidth: 2.0)
             }
             
             if isCurrentClip {
-                Rectangle().stroke(.white, lineWidth: 4.0)
+                Rectangle().stroke(.white, lineWidth: 2.0)
+            }
+            
+            if clip.videoLocation == .deviceAndRemote {
+                Image(systemName: "checkmark.circle.fill")
+                    .position(x: thumbnailSize - statusIconInset, y: statusIconInset)
+            } else if clip.videoLocation == .remoteOnly {
+                Image(systemName: "icloud.and.arrow.down")
+                    .position(x: thumbnailSize - statusIconInset, y: statusIconInset)
+            } else if clip.videoLocation == .deviceOnly {
+                Image(systemName: "icloud.and.arrow.up")
+                    .position(x: thumbnailSize - statusIconInset, y: statusIconInset)
             }
         }
     }

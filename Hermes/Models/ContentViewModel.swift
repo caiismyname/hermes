@@ -167,7 +167,7 @@ class ContentViewModel: ObservableObject {
         switchProjects(newProject: newProject) // This needs to go immediately so we set the Me object
         self.allProjects.append(newProject)
         saveProjects()
-        newProject.createRTDBEntry()
+        newProject.createRTDBProject()
         
         return newProject
     }
@@ -254,7 +254,7 @@ class ContentViewModel: ObservableObject {
                 self.recordingManager.project = self.project
                 
                 // Since the temp project is promoted to the "real" project, it needs to be pushed to the RTDB
-                self.project.createRTDBEntry()
+                self.project.createRTDBProject()
             }
         }
     }
@@ -279,7 +279,7 @@ class ContentViewModel: ObservableObject {
         }
     }
     
-    // Firebase Handling
+    // MARK: - Firebase Handling
     
     private func firebaseAuth() async {
         if !hasFirebaseAuth {
@@ -327,7 +327,7 @@ class ContentViewModel: ObservableObject {
             await downloadCurrentProject(shouldDownloadVideo: shouldDownloadVideos)
         }
         await uploadCurrentProject()
-        print("Network sync complete (performedDownload: \(performDownloadSync), downloadedVideos: \(shouldDownloadVideos)")
+        print("Network sync complete (performedDownload: \(performDownloadSync), downloadedVideos: \(shouldDownloadVideos))")
         self.stopWork()
     }
     

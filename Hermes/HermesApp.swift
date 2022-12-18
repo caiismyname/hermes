@@ -66,7 +66,9 @@ struct HermesApp: App {
 //                                            self.contentViewModel.uploadCurrentProject() // This call is network aware
 //                                            self.contentViewModel.downloadCurrentProject() // This call is network aware
                                             
-                                            Task { await self.contentViewModel.networkSync() }
+                                            Task {
+                                                await self.contentViewModel.networkSync(shouldDownloadVideos: true)
+                                            }
                                         }
                                     } else {
                                         // If loaded set is empty, noop and carry through the temp projects
