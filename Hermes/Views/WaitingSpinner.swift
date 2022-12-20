@@ -11,11 +11,9 @@ import SwiftUI
 struct WaitingSpinner: View {
     @ObservedObject var project: Project
     
-    private let sizes = Sizes()
-    
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
+            RoundedRectangle(cornerRadius: Sizes.buttonCornerRadius)
                 .fill(Color.white)
             VStack (alignment: .center) {
                 Spacer()

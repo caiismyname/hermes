@@ -15,9 +15,9 @@ struct PlaybackView: View {
     @ObservedObject var playbackModel: PlaybackModel
     @ObservedObject var exporter: Exporter
     
-    private let sizes = Sizes()
     @State var showingRenameAlert = false
     @State var showingShareAlert = false
+    @State var showingProjectSettings = false
     
     init(model: ContentViewModel, playbackModel: PlaybackModel) {
         self.model = model
@@ -56,36 +56,21 @@ struct PlaybackView: View {
                         }
                     }) {
                         Text("Sync")
-                            .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
+                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
                     }
                     .foregroundColor(Color.white)
                     .background(Color.green)
-                    .cornerRadius(sizes.buttonCornerRadius)
+                    .cornerRadius(Sizes.buttonCornerRadius)
                     .disabled(model.isWorking > 0)
                     
-                    if #available(iOS 16.0, *) {
-                        Button(action: {
-                            self.showingShareAlert = true
-                        }) {
-                            ShareLink("Invite", item: model.project.generateURL())
-                                    .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
-                        }
-                        .foregroundColor(Color.white)
-                        .background(Color.blue)
-                        .cornerRadius(sizes.buttonCornerRadius)
-                        .disabled(model.isWorking > 0)
-//                        .alert("Share Link", isPresented: $showingShareAlert, actions: {
-//                            Button("Cancel", action: {
-//                                self.showingShareAlert = false
-//                            })
-//                            Button("Okay", action: {
-//                                ShareLink("Invite", item: model.project.generateURL())
-////                                    .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
-//                            })
-//                        }, message: {Text("Anyone with this link will be able to join your vlog. Only share it with people you trust.")})
-                    } else {
-                        // Fallback on earlier versions
+                    Button(action: { showingProjectSettings = true }) {
+                        Text("Settings")
+                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
                     }
+                    .foregroundColor(Color.white)
+                    .background(Color.red)
+                    .cornerRadius(Sizes.buttonCornerRadius)
+                    .disabled(model.isWorking > 0)
                     
                     Button(action: {
                         Task {
@@ -96,11 +81,11 @@ struct PlaybackView: View {
                         }
                     }) {
                         Text("Export")
-                            .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight)
+                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
                     }
                     .foregroundColor(Color.white)
                     .background(Color.purple)
-                    .cornerRadius(sizes.buttonCornerRadius)
+                    .cornerRadius(Sizes.buttonCornerRadius)
                     .disabled(model.isWorking > 0)
                 }
                 .padding([.leading, .trailing, .top])
@@ -119,6 +104,9 @@ struct PlaybackView: View {
                 WaitingSpinner(project: model.project)
             }
         }
+        .popover(isPresented: $showingProjectSettings) {
+            ProjectSettings(project: model.project)
+        }
     }
 }
 
@@ -126,7 +114,6 @@ struct VideoPlayback: View {
     @ObservedObject var playbackModel: PlaybackModel
     @ObservedObject var project: Project
     @State var showPlayer = false
-    private let sizes = Sizes()
     
     var body: some View {
         ZStack {
@@ -149,7 +136,7 @@ struct VideoPlayback: View {
                 // Show regardless
                 ClipMetadataView(playbackModel: playbackModel)
                     .position(x: (geo.size.width / 4) , y: geo.size.height / 15)
-                    .frame(width: geo.size.width / 3, height: sizes.projectButtonHeight * 1.3)
+                    .frame(width: geo.size.width / 3, height: Sizes.projectButtonHeight * 1.3)
             }
         }
         .onReceive(playbackModel.$currentVideoCanPlay) { canPlay in showPlayer = canPlay }
@@ -158,11 +145,10 @@ struct VideoPlayback: View {
 
 struct ClipMetadataView: View {
     @ObservedObject var playbackModel: PlaybackModel
-    private let sizes = Sizes()
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: sizes.buttonCornerRadius)
+            RoundedRectangle(cornerRadius: Sizes.buttonCornerRadius)
                 .fill(Color.black)
                 .opacity(0.2)
             VStack(alignment: .leading) {
@@ -236,7 +222,7 @@ struct Thumbnail: View {
     @ObservedObject var clip: Clip
     var isCurrentClip: Bool
     private let thumbnailSize = 75.0
-    private let statusIconInset = 15.0
+    private let statusIconInset = 12.0
     
     var body: some View {
         ZStack {

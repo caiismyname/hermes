@@ -32,6 +32,10 @@
 		27E0CA0528E7462B0010B226 /* FirebaseDatabaseSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 27E0CA0428E7462B0010B226 /* FirebaseDatabaseSwift */; };
 		27EA0661294D05CD00B0A932 /* Clip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27EA0660294D05CD00B0A932 /* Clip.swift */; };
 		27EA0663294D0E6500B0A932 /* WaitingSpinner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27EA0662294D0E6500B0A932 /* WaitingSpinner.swift */; };
+		27EA0665294EABE200B0A932 /* ProjectSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27EA0664294EABE200B0A932 /* ProjectSettingsView.swift */; };
+		27EA0667294F41EF00B0A932 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27EA0666294F41EF00B0A932 /* Helpers.swift */; };
+		27EA0669294F477000B0A932 /* UpgradeInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27EA0668294F477000B0A932 /* UpgradeInfo.swift */; };
+		27EA066B2950EB8100B0A932 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27EA066A2950EB8100B0A932 /* LoadingView.swift */; };
 		27ECF55228EBA50F00E7DF48 /* DeeplinkHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */; };
 		27ECF55628ECF2E400E7DF48 /* PlaybackModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55528ECF2E400E7DF48 /* PlaybackModel.swift */; };
 		27ECF55828F45A8F00E7DF48 /* Sizes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECF55728F45A8E00E7DF48 /* Sizes.swift */; };
@@ -63,6 +67,10 @@
 		2778E0B328D9D291003E901E /* PlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackView.swift; sourceTree = "<group>"; };
 		27EA0660294D05CD00B0A932 /* Clip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clip.swift; sourceTree = "<group>"; };
 		27EA0662294D0E6500B0A932 /* WaitingSpinner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitingSpinner.swift; sourceTree = "<group>"; };
+		27EA0664294EABE200B0A932 /* ProjectSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSettingsView.swift; sourceTree = "<group>"; };
+		27EA0666294F41EF00B0A932 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
+		27EA0668294F477000B0A932 /* UpgradeInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeInfo.swift; sourceTree = "<group>"; };
+		27EA066A2950EB8100B0A932 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
 		27ECF55128EBA50F00E7DF48 /* DeeplinkHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeeplinkHandler.swift; sourceTree = "<group>"; };
 		27ECF55528ECF2E400E7DF48 /* PlaybackModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackModel.swift; sourceTree = "<group>"; };
 		27ECF55728F45A8E00E7DF48 /* Sizes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sizes.swift; sourceTree = "<group>"; };
@@ -133,9 +141,12 @@
 				2778E09E28D6033F003E901E /* CameraPreview.swift */,
 				2778E0AF28D674BA003E901E /* RecordingControlsView.swift */,
 				2778E0B328D9D291003E901E /* PlaybackView.swift */,
+				27EA0664294EABE200B0A932 /* ProjectSettingsView.swift */,
 				27EA0662294D0E6500B0A932 /* WaitingSpinner.swift */,
 				27ECF55928F463D400E7DF48 /* SettingsView.swift */,
 				2733DAC32925D3C800D3574C /* OnboardingView.swift */,
+				27EA0666294F41EF00B0A932 /* Helpers.swift */,
+				27EA066A2950EB8100B0A932 /* LoadingView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -151,6 +162,7 @@
 				27ECF55528ECF2E400E7DF48 /* PlaybackModel.swift */,
 				275BAF2429437F190081AB22 /* Exporter.swift */,
 				2764EF382918A644000675A7 /* NotificationsManager.swift */,
+				27EA0668294F477000B0A932 /* UpgradeInfo.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -258,12 +270,14 @@
 				27EA0661294D05CD00B0A932 /* Clip.swift in Sources */,
 				2778E08928D6023B003E901E /* HermesApp.swift in Sources */,
 				2764EF392918A644000675A7 /* NotificationsManager.swift in Sources */,
+				27EA0669294F477000B0A932 /* UpgradeInfo.swift in Sources */,
 				2778E0B028D674BA003E901E /* RecordingControlsView.swift in Sources */,
 				2778E0AB28D663DF003E901E /* Extensions.swift in Sources */,
 				27ECF55628ECF2E400E7DF48 /* PlaybackModel.swift in Sources */,
 				27ECF55828F45A8F00E7DF48 /* Sizes.swift in Sources */,
 				2778E0A328D607C0003E901E /* CameraManager.swift in Sources */,
 				2778E09F28D6033F003E901E /* CameraPreview.swift in Sources */,
+				27EA066B2950EB8100B0A932 /* LoadingView.swift in Sources */,
 				2778E08E28D6023B003E901E /* Hermes.xcdatamodeld in Sources */,
 				27EA0663294D0E6500B0A932 /* WaitingSpinner.swift in Sources */,
 				2778E0A928D6165D003E901E /* ContentViewModel.swift in Sources */,
@@ -273,9 +287,11 @@
 				2778E0AE28D66D27003E901E /* RecordingManager.swift in Sources */,
 				2778E09028D6023B003E901E /* ContentView.swift in Sources */,
 				2778E08B28D6023B003E901E /* Persistence.swift in Sources */,
+				27EA0667294F41EF00B0A932 /* Helpers.swift in Sources */,
 				2733DAC42925D3C800D3574C /* OnboardingView.swift in Sources */,
 				2778E0A528D60877003E901E /* CameraError.swift in Sources */,
 				2778E0B228D7A171003E901E /* Project.swift in Sources */,
+				27EA0665294EABE200B0A932 /* ProjectSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

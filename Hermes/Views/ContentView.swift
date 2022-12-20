@@ -12,7 +12,6 @@ struct ContentView: View {
     @StateObject var model: ContentViewModel
     @State var orientation = UIDeviceOrientation.portrait // default assume portrait
     @GestureState var magnificationLevel = 1.0
-    private let sizes = Sizes()
     @State var shouldShowSwitcherModal = false
     
     func updateOrientation(newOrientation: UIDeviceOrientation) {
@@ -40,44 +39,41 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .edgesIgnoringSafeArea(.all)
                     
-                    if model.ready {
-                        CameraPreviewWrapper(session: model.cameraManager.session, orientation: $orientation)
-                            .mask {
-                                Rectangle()
-                                    .cornerRadius(sizes.cameraPreviewCornerRadius)
-                                    .frame(width: geometry.size.width, height: geometry.size.width * (16/9))
-                            }
-                            .onTapGesture(count: 2) {
-                                model.cameraManager.flipCamera()
-                            }
-                            .gesture(DragGesture(minimumDistance: 1.0)
-                                .onEnded({ drag in
-                                    if drag.translation.width < -250 && abs(drag.translation.height) < 150  {
-                                        _ = model.switchToNextProject()
-                                    } else if drag.translation.width > 250 && abs(drag.translation.height) < 150 {
-                                        _ = model.switchToPreviousProject()
-                                    }
-                                }))
-                            .onReceive(model.$project) { _ in
-                                // This listens for when the project changes and displays a message
-                                guard model.ready else { return }
-                                shouldShowSwitcherModal = true
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                                    self.shouldShowSwitcherModal = false
+                    CameraPreviewWrapper(session: model.cameraManager.session, orientation: $orientation)
+                        .mask {
+                            Rectangle()
+                                .cornerRadius(Sizes.cameraPreviewCornerRadius)
+                                .frame(width: geometry.size.width, height: geometry.size.width * (16/9))
+                        }
+                        .onTapGesture(count: 2) {
+                            model.cameraManager.flipCamera()
+                        }
+                        .gesture(DragGesture(minimumDistance: 1.0)
+                            .onEnded({ drag in
+                                if drag.translation.width < -250 && abs(drag.translation.height) < 150  {
+                                    _ = model.switchToNextProject()
+                                } else if drag.translation.width > 250 && abs(drag.translation.height) < 150 {
+                                    _ = model.switchToPreviousProject()
                                 }
+                            }))
+                        .onReceive(model.$project) { _ in
+                            // This listens for when the project changes and displays a message
+                            shouldShowSwitcherModal = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                self.shouldShowSwitcherModal = false
                             }
-//                        do u think there's desert' i was hoping but my hopes are decreasing :( a brownnie would have been nice)
-//                            .gesture(MagnificationGesture(minimumScaleDelta: 0.6).updating($magnificationLevel) { currentState, gestureState, transaction in
-//                                    print(currentState, gestureState)
-//                                    if currentState < 1.0 {
-//                                        model.cameraManager.zoomCamera(cameraType: .ultrawide)
-//                                    } else if currentState > 3.0 {
-//                                        model.cameraManager.zoomCamera(cameraType: .tele)
-//                                    } else  {
-//                                        model.cameraManager.zoomCamera(cameraType: .main)
-//                                    }
-//                            })
-                    }
+                        }
+                    //                        do u think there's desert' i was hoping but my hopes are decreasing :( a brownnie would have been nice)
+                    //                            .gesture(MagnificationGesture(minimumScaleDelta: 0.6).updating($magnificationLevel) { currentState, gestureState, transaction in
+                    //                                    print(currentState, gestureState)
+                    //                                    if currentState < 1.0 {
+                    //                                        model.cameraManager.zoomCamera(cameraType: .ultrawide)
+                    //                                    } else if currentState > 3.0 {
+                    //                                        model.cameraManager.zoomCamera(cameraType: .tele)
+                    //                                    } else  {
+                    //                                        model.cameraManager.zoomCamera(cameraType: .main)
+                    //                                    }
+                    //                            })
                     
                     RecordingControlsView(
                         model: model,
@@ -95,9 +91,8 @@ struct ContentView: View {
                         )
                     })
                     
-                    
                     if shouldShowSwitcherModal {
-                        RoundedRectangle(cornerRadius: sizes.cameraPreviewCornerRadius)
+                        RoundedRectangle(cornerRadius: Sizes.cameraPreviewCornerRadius)
                             .foregroundColor(Color.gray)
                             .opacity(0.9)
                             .frame(width: 250, height: 250)
@@ -121,13 +116,12 @@ struct ContentView_Previews: PreviewProvider {
     let model = ContentViewModel()
     
     init() {
-        self.model.ready = true
+        
     }
     
     static var previews: some View {
         ContentView(model: {
             let model = ContentViewModel()
-            model.ready = true
             return model
         }())
     }

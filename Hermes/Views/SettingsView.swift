@@ -11,7 +11,6 @@ import SwiftUI
 struct SettingsModal: View {
     @ObservedObject var model: ContentViewModel
     @ObservedObject var recordingManager: RecordingManager
-    private let sizes = Sizes()
     var dismissCallback: () -> ()
     
     // For creating a new project
@@ -27,44 +26,33 @@ struct SettingsModal: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Spacer()
                     
-                    Button(action: { showingTitleAlert = !showingTitleAlert }) {
-                        HStack {
-                            Image(systemName: "plus.square")
-                                .font(.system(size: sizes.secondaryButtonSize))
-                            
-                            Text("Create new")
-                                .font(.system(.title3).bold())
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: sizes.projectButtonHeight * 1.5)
-                        .background(Color.blue)
-                        .foregroundColor(Color.white)
-                        .cornerRadius(sizes.buttonCornerRadius)
+                    BigButton(
+                        action: { self.showingTitleAlert = !self.showingTitleAlert },
+                        text: "Create new",
+                        imageName: "plus.square"
+                    )
                         .alert("New Project Name", isPresented: $showingTitleAlert, actions: {
                             TextField(
                                 "new project name",
                                 text: $newProjectName,
-                                prompt: Text(""))
-                            .multilineTextAlignment(.leading)
-                            .foregroundColor(Color.blue)
+                                prompt: Text("")
+                            )
+                                .multilineTextAlignment(.leading)
+                                .foregroundColor(Color.blue)
                             
-                            Button("Cancel", action: {
-                                self.showingTitleAlert = false
-                            })
+                            Button("Cancel", action: { self.showingTitleAlert = false })
                             Button("Create", action: {
                                 let newProject = model.createProject(name: newProjectName)
                                 model.switchProjects(newProject: newProject)
                                 dismissCallback()
                             })
-                        })
-                    }.padding()
-//                        .border(.green)
+                        }).padding()
                     
-                    Spacer()
-                    Text("My Projects")
+                   Spacer()
+                    
+                   Text("My Projects")
                         .font(.system(.title).bold())
                         .padding([.leading])
-//                        .border(.green)
-                    
                     
                     List {
                         ForEach( model.allProjects.indices, id: \.self) { index in
@@ -103,13 +91,13 @@ struct SettingsModal: View {
                                 VStack (alignment: .center) {
                                     Text("Snapchat")
                                     Circle()
-                                        .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 10)
-                                        .frame(width: sizes.recordButtonOuterSize, height: sizes.recordButtonOuterSize)
+                                        .strokeBorder(.white, lineWidth: Sizes.recordButtonSize / 10)
+                                        .frame(width: Sizes.recordButtonOuterSize, height: Sizes.recordButtonOuterSize)
                                     Text("Tap and hold to record, release to stop")
                                 }
                                 .padding()
                                 .background(recordingManager.recordingButtonStyle == .snapchat ? .blue : .clear)
-                                .cornerRadius(sizes.buttonCornerRadius)
+                                .cornerRadius(Sizes.buttonCornerRadius)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
                                     model.recordingManager.setRecordingButtonStyle(style: .snapchat)
@@ -119,18 +107,18 @@ struct SettingsModal: View {
                                     Text("Camera")
                                     ZStack {
                                         Circle()
-                                            .strokeBorder(.white, lineWidth: sizes.recordButtonSize / 15)
-                                            .frame(width: sizes.recordButtonOuterSize, height: sizes.recordButtonOuterSize)
+                                            .strokeBorder(.white, lineWidth: Sizes.recordButtonSize / 15)
+                                            .frame(width: Sizes.recordButtonOuterSize, height: Sizes.recordButtonOuterSize)
 
                                         Circle()
                                             .fill(Color.red)
-                                            .frame(width: sizes.recordButtonSize, height: sizes.recordButtonSize)
+                                            .frame(width: Sizes.recordButtonSize, height: Sizes.recordButtonSize)
                                     }
                                     Text("Tap to record, tap to stop")
                                 }
                                 .padding()
                                 .background(recordingManager.recordingButtonStyle == .camera ? .blue : .clear)
-                                .cornerRadius(sizes.buttonCornerRadius)
+                                .cornerRadius(Sizes.buttonCornerRadius)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
                                     model.recordingManager.setRecordingButtonStyle(style: .camera)
@@ -138,7 +126,6 @@ struct SettingsModal: View {
                             }
                         }
                     }
-//                    .border(.green)
                 }
                 .frame(minHeight: (CGFloat(model.allProjects.count) * 60) + 700)
             }

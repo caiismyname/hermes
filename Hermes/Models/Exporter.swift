@@ -39,7 +39,7 @@ class Exporter: ObservableObject {
     
     private func saveToPhotoLibrary(movieURL: URL) async {
         guard photosPermissionsCheck() else { return } // Double checking but we should already have it from the beginning of the func
-        print("    Saving full movie to photo library for project \(self.project.id.uuidString))")
+        print("    Saving full movie to photo library for project \(self.project.id.uuidString)")
         
         PHPhotoLibrary.shared().performChanges({
             let assetCollection = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: "Hermes Vlogs")
@@ -62,6 +62,9 @@ class Exporter: ObservableObject {
         project.startWork()
         
         let fullMovie = AVMutableComposition()
+        let videoTrack = fullMovie.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
+        let audioTrack = fullMovie.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
+        
         let fullInstructions = AVMutableVideoCompositionInstruction()
         fullInstructions.layerInstructions = [AVMutableVideoCompositionLayerInstruction]()
         
@@ -77,7 +80,6 @@ class Exporter: ObservableObject {
                 let clipAudio = try await clipContent.loadTracks(withMediaType: .audio)[0]
                 var clipTransform = try await clipVideo.load(.preferredTransform)
                 let clipTimerange = CMTimeRange(start: CMTime.zero, duration: clipDuration)
-                print("original \(clipTransform)")
                 
                 if clipTransform.a == 1.0 {
                     clipTransform = clipTransform.translatedBy(x: 0, y: (1920.0 / 2.0)  - ((1080.0 * (1080.0/1920.0)) / 2.0))
@@ -87,8 +89,6 @@ class Exporter: ObservableObject {
                     clipTransform = clipTransform.translatedBy(x: (1920.0 - 1080.0) / 0.5625, y: -183.75 / 0.5625)
                 }
                 
-                let videoTrack = fullMovie.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
-                let audioTrack = fullMovie.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
                 
                 try videoTrack?.insertTimeRange(clipTimerange, of: clipVideo, at: startCumulative)
                 try audioTrack?.insertTimeRange(clipTimerange, of: clipAudio, at: startCumulative)
@@ -102,7 +102,6 @@ class Exporter: ObservableObject {
                 startCumulative = CMTimeAdd(startCumulative, clipDuration)
                 
                 print("    Processed clip \(clip.id.uuidString)")
-                print("transform \(clipTransform)")
             }
         } catch {
             print(error)
