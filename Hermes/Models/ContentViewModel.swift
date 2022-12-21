@@ -18,6 +18,8 @@ class ContentViewModel: ObservableObject {
     
     @Published var shouldShowProjects = false
     @Published var isOnboarding: Bool
+    @Published var couldNotLoadProject = false
+    @Published var couldNotLoadProjectReason = ""
     
     let cameraManager: CameraManager
     let notificationManager = NotificationsManager()
@@ -380,6 +382,8 @@ class ContentViewModel: ObservableObject {
         } else {
             await self.project.networkAwareProjectUpload(shouldUploadVideo: false)
         }
+        
+        print("Project uploaded (uploadedVideos: \(!networkIsExpensive || (networkIsExpensive && useNetworkEvenIfExpensive))")
     }
     
     private func downloadCurrentProject(shouldDownloadVideo: Bool = true) async {
@@ -422,15 +426,78 @@ class ContentViewModel: ObservableObject {
         }
         
         do {
+            // Verified project doesn't already exist.
             print("Downloading project \(projectId) from firebase")
             self.startWork()
             self.shouldShowProjects = true
             
-            // Verified project doesn't already exist. Grab owner from DB
+            var inviteEnabled: Bool
+            var projectLevel: ProjectLevel
+            var creatorsCount: Int
+            
+            // Check if project is open to invites
+            // This should happen first. If invites aren't opened, all subsequent checks are guarentteed to fail.
+            let inviteSnapshot = try await Database.database().reference().child(projectId.uuidString).child("inviteEnabled").getData()
+            if !(inviteSnapshot.value! is NSNull) {
+                inviteEnabled = inviteSnapshot.value! as! Bool
+                print("    Invite enabled, proceeding...")
+            } else {
+                print("    No invite setting found")
+                self.stopWork()
+                return
+            }
+            
+            // Only download if invites are open
+            guard inviteEnabled else {
+                print("    Invite not enabled. Cannot download project \(projectId)")
+                self.couldNotLoadProject = true
+                self.couldNotLoadProjectReason = ProjectLevels.privateMessage
+                self.stopWork()
+                return
+            }
+            
+            // If invites are open, check that there are creator spots lefts
+            
+            // Grab projectLevel and creator count to check if slots are open
+            let projectLevelSnapshot = try await Database.database().reference().child(projectId.uuidString).child("projectLevel").getData()
+            let creatorsSnapshot = try await Database.database().reference().child(projectId.uuidString).child("creators").getData()
+            
+            guard !(projectLevelSnapshot.value! is NSNull) && !(creatorsSnapshot.value! is NSNull) else {
+                self.couldNotLoadProject = true
+                self.couldNotLoadProjectReason = ProjectLevels.genericFailureMessage
+                self.stopWork()
+                return
+            }
+            
+            projectLevel = ProjectLevel(rawValue: projectLevelSnapshot.value! as! String) ?? ProjectLevel.free
+            let creators = creatorsSnapshot.value! as! [String: String]
+            creatorsCount = creators.count
+            
+            if creators[me.id] == nil { // First check that I wasn't already part of this project
+                if projectLevel == .free && creatorsCount >= ProjectLevels.free.memberLimit {
+                    self.couldNotLoadProject = true
+                    self.couldNotLoadProjectReason = ProjectLevels.freeTierNoSpace
+                    self.stopWork()
+                    return
+                } else if projectLevel == .upgrade1 && creatorsCount >= ProjectLevels.upgrade1.memberLimit {
+                    self.couldNotLoadProject = true
+                    self.couldNotLoadProjectReason = ProjectLevels.upgradeTierNoSpace
+                    self.stopWork()
+                    return
+                }
+            }
+            
+            // Validated that we can join the project. Proceed with download
+            
+            // Add self to creators list. We need to do this first so we have access to the rest of the fields.
+            try await Database.database().reference().child(projectId.uuidString).child("creators").child(self.me.id).setValue(self.me.name)
+            
+            // Grab owner from DB
             var projectOwner = ""
             let ownerSnapshot = try await Database.database().reference().child(projectId.uuidString).child("owner").getData()
             if !(ownerSnapshot.value! is NSNull) {
                 projectOwner = ownerSnapshot.value! as! String
+                print("    Project owner is \(projectOwner)")
             } else {
                 print("    No project owner found")
                 return
@@ -450,19 +517,16 @@ class ContentViewModel: ObservableObject {
                 self.switchProjects(newProject: remoteProject)
             }
             
+            print("    Downloading project metadata and clip metadata")
             await remoteProject.pullProjectMetadata()
-            await remoteProject.pullNewClipMetadata()
-            // Intentionally do not download clips for videos when loading, to speed up loading time
-//            await remoteProject.pullVideosForNewClips()
+            await remoteProject.pullNewClipMetadata() // Intentionally do not download clips for videos when loading, to speed up loading time
+            
             // Not sure what this is protecting against, removing for now (12/19)
 //            projectAllClips = projectAllClips.filter { c in c.status != .invalid }
             
             // Add project to local projects
             self.allProjects.append(remoteProject)
             self.saveProjects()
-            
-            // Add self to creators list. It's technically redundant here, but good to set it on DB when the initial pull happens so it's visible to others
-            try await Database.database().reference().child(projectId.uuidString).child("creators").child(self.me.id).setValue(self.me.name)
             
             self.shouldShowProjects = false
             self.stopWork()

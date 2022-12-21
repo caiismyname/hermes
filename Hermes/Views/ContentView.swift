@@ -63,33 +63,33 @@ struct ContentView: View {
                                 self.shouldShowSwitcherModal = false
                             }
                         }
-                    //                        do u think there's desert' i was hoping but my hopes are decreasing :( a brownnie would have been nice)
-                    //                            .gesture(MagnificationGesture(minimumScaleDelta: 0.6).updating($magnificationLevel) { currentState, gestureState, transaction in
-                    //                                    print(currentState, gestureState)
-                    //                                    if currentState < 1.0 {
-                    //                                        model.cameraManager.zoomCamera(cameraType: .ultrawide)
-                    //                                    } else if currentState > 3.0 {
-                    //                                        model.cameraManager.zoomCamera(cameraType: .tele)
-                    //                                    } else  {
-                    //                                        model.cameraManager.zoomCamera(cameraType: .main)
-                    //                                    }
-                    //                            })
+//                        do u think there's desert' i was hoping but my hopes are decreasing :( a brownnie would have been nice)
+//                            .gesture(MagnificationGesture(minimumScaleDelta: 0.6).updating($magnificationLevel) { currentState, gestureState, transaction in
+//                                    print(currentState, gestureState)
+//                                    if currentState < 1.0 {
+//                                        model.cameraManager.zoomCamera(cameraType: .ultrawide)
+//                                    } else if currentState > 3.0 {
+//                                        model.cameraManager.zoomCamera(cameraType: .tele)
+//                                    } else  {
+//                                        model.cameraManager.zoomCamera(cameraType: .main)
+//                                    }
+//                            })
                     
                     RecordingControlsView(
                         model: model,
                         recordingManager: model.recordingManager,
                         orientation: $orientation
                     )
-                    .onRotate { newOrientation in // Note this .onRotate handles the orientation for all aspects of the recording UI, but only UI. The actual recording has a separate manager
-                        updateOrientation(newOrientation: newOrientation)
-                    }
-                    .popover(isPresented: $model.shouldShowProjects, content: {
-                        SettingsModal(
-                            model: model,
-                            recordingManager: model.recordingManager,
-                            dismissCallback: {model.shouldShowProjects = !model.shouldShowProjects}
-                        )
-                    })
+                        .onRotate { newOrientation in // Note this .onRotate handles the orientation for all aspects of the recording UI, but only UI. The actual recording has a separate manager
+                            updateOrientation(newOrientation: newOrientation)
+                        }
+                        .popover(isPresented: $model.shouldShowProjects, content: {
+                            SettingsModal(
+                                model: model,
+                                recordingManager: model.recordingManager,
+                                dismissCallback: {model.shouldShowProjects = !model.shouldShowProjects}
+                            )
+                        })
                     
                     if shouldShowSwitcherModal {
                         RoundedRectangle(cornerRadius: Sizes.cameraPreviewCornerRadius)

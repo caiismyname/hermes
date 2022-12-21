@@ -207,6 +207,9 @@ class Project: ObservableObject, Codable {
             DispatchQueue.main.async {
                 self.inviteEnabled = isEnabled
             }
+        } else {
+            // Ideally this falls through as a no-op, but because the Toggle is bound to self.inviteEnabled on the UI layer, to acheive the "no-op" result we have to unset it
+            self.inviteEnabled = !isEnabled
         }
         
         return success
@@ -222,23 +225,20 @@ class Project: ObservableObject, Codable {
                 return
             } else {
                 print("    Project has not been created in FB yet. Creating entry for  \(id.uuidString)")
-                try await Database.database().reference().child(self.id.uuidString).setValue([
-                    "owner": me!.id,
-                    "creators": self.creators
-                ])
-                
-                try await Database.database().reference().child(self.id.uuidString).setValue(
-                    [
-                        "clips": [], // Should be empty when project is created, to be filled when the clips are individually uploaded
-                        "name": self.name,
-                        "projectLevel": ProjectLevel.free.rawValue,
-                        "inviteEnabled": inviteEnabled
-                    ]
-                )
+                /*
+                 The following order is important.
+                 Owner get the most permissions so it must be set first. It can only be set if it doesn't exist.
+                 Creators requires invite to be set unless it doesn't exist, so its initial value is directly adding the owner.
+                 */
+                try await Database.database().reference().child(self.id.uuidString).child("owner").setValue(me!.id)
+                try await Database.database().reference().child(self.id.uuidString).child("creators").child("\(me!.id)").setValue(me?.name)
+                try await Database.database().reference().child(self.id.uuidString).child("name").setValue(self.name)
+                try await Database.database().reference().child(self.id.uuidString).child("projectLevel").setValue(self.projectLevel.rawValue)
+                try await Database.database().reference().child(self.id.uuidString).child("inviteEnabled").setValue(self.inviteEnabled)
             }
         } catch {
             print("    Error creating initial FB entry for project \(id.uuidString)")
-            print(error)
+            print("        \(error)")
         }
     }
     
@@ -420,7 +420,7 @@ class Project: ObservableObject, Codable {
             
         } catch {
             print("    Error pulling project metadata")
-            print(error)
+            print("        \(error)")
         }
     }
     
@@ -504,16 +504,16 @@ class Project: ObservableObject, Codable {
         }
     }
     
-    func pullNewClipVideos(newClips: [Clip]) async {
+    func pullVideosForClips(clipsToDownload: [Clip]) async {
         await withTaskGroup(of: Void.self) { group in
             prepareWorkProgress(label: "Downloading videos")
             
             DispatchQueue.main.async {
-                self.workTotal = Double(newClips.count) * 1.10
+                self.workTotal = Double(clipsToDownload.count) * 1.10
             }
             
             
-            for clip in newClips {
+            for clip in clipsToDownload {
                 group.addTask {
                     await clip.downloadVideo()
                 }
@@ -548,10 +548,19 @@ class Project: ObservableObject, Codable {
         let newClips = await pullNewClipMetadata()
         
         if shouldDownloadVideo {
-            await pullNewClipVideos(newClips: newClips)
+            await pullVideosForClips(clipsToDownload: newClips)
         }
         
         computeUnseenCount()
+    }
+    
+    func downloadAllVideos() async {
+        // Pull any new videos
+        await networkAwareProjectDownload(shouldDownloadVideo: true)
+        
+        // Download all undownloaded videos with metadata currently on device
+        let undownloadedClips = allClips.filter { c in c.videoLocation == .remoteOnly }
+        await pullVideosForClips(clipsToDownload: undownloadedClips)
     }
     
     private func getFirebaseIdForClip(id: UUID) async -> String? {
@@ -608,6 +617,7 @@ class Project: ObservableObject, Codable {
     
     private func upgradeProjectInFB(upgradeLevel: ProjectLevel) async -> Bool {
         do {
+            await checkAndCreateRTDBEntry()
             let dbRef = Database.database().reference().child(self.id.uuidString)
             try await dbRef.child("projectLevel").setValue(upgradeLevel.rawValue)
             return true
@@ -620,8 +630,9 @@ class Project: ObservableObject, Codable {
     
     private func setInviteSettingInFB(isEnabled: Bool) async -> Bool  {
         do {
+            await checkAndCreateRTDBEntry()
             let dbRef = Database.database().reference().child(self.id.uuidString)
-            try await dbRef.child("invite").setValue(isEnabled)
+            try await dbRef.child("inviteEnabled").setValue(isEnabled)
             return true
         } catch {
             print("    Could not set Invite Setting in FB")
@@ -632,6 +643,7 @@ class Project: ObservableObject, Codable {
     
     func setProjectNameInFB(newName : String) async -> Bool {
         do {
+            await checkAndCreateRTDBEntry()
             let dbRef = Database.database().reference().child(self.id.uuidString)
             try await dbRef.child("name").setValue(newName)
             return true

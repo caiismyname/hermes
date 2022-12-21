@@ -37,7 +37,7 @@ struct SettingsModal: View {
                                 text: $newProjectName,
                                 prompt: Text("")
                             )
-//                                .multilineTextAlignment(.leading)
+                                .multilineTextAlignment(.leading)
                                 .foregroundColor(Color.blue)
                             
                             Button("Cancel", action: { self.showingTitleAlert = false })
@@ -69,6 +69,13 @@ struct SettingsModal: View {
                         }
                     }
                     .frame(maxHeight: 250)
+                    .alert(isPresented: $model.couldNotLoadProject) {
+                        Alert(
+                            title: Text("Could not join project"),
+                            message: Text(model.couldNotLoadProjectReason),
+                            dismissButton: .default(Text("Okay"))
+                        )
+                    }
 
                     Text("Settings")
                         .font(.system(.title).bold())

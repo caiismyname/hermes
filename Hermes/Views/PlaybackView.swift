@@ -101,11 +101,12 @@ struct VideoPlayback: View {
                     Image(systemName: "gearshape")
                         .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
                 }
-                    .foregroundColor(Color.white)
                     .background(Color.blue)
+                    .foregroundColor(Color.white)
+                    .font(.system(.title2).bold())
+                    .frame(width: Sizes.projectButtonHeight * 2, height: Sizes.projectButtonHeight)
                     .cornerRadius(90)
-                    .position(x: 6 * (geo.size.width / 7) , y: geo.size.height / 15)
-                    .frame(width: Sizes.projectButtonHeight, height: Sizes.projectButtonHeight)
+                    .position(x: (5/6) * geo.size.width , y: (16 / 18) * geo.size.height)
             }
         }
         .onReceive(playbackModel.$currentVideoCanPlay) { canPlay in showPlayer = canPlay }

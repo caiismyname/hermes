@@ -118,7 +118,8 @@ struct RecordingControlsView: View {
                                     }
                                 }
                             },
-                            isOwner: self.model.project.isOwner()
+                            isOwner: self.model.project.isOwner(),
+                            title: "You've hit the limit"
                         )
                     }
                 }
