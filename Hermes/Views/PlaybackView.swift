@@ -13,7 +13,7 @@ import Photos
 struct PlaybackView: View {
     @ObservedObject var model: ContentViewModel
     @ObservedObject var playbackModel: PlaybackModel
-    @ObservedObject var exporter: Exporter
+//    @ObservedObject var exporter: Exporter
     
     @State var showingRenameAlert = false
     @State var showingShareAlert = false
@@ -22,7 +22,7 @@ struct PlaybackView: View {
     init(model: ContentViewModel, playbackModel: PlaybackModel) {
         self.model = model
         self.playbackModel = playbackModel
-        self.exporter = Exporter(project: model.project)
+//        self.exporter = Exporter(project: model.project)
     }
     
     var body: some View {
@@ -48,50 +48,8 @@ struct PlaybackView: View {
 //                        .font(.system(.title2).bold())
                 }
                 
-                HStack {
-                    Button(action: {
-                        // Go through the model so it does the firebase auth
-                        Task {
-                            await model.networkSync(performDownloadSync: true, shouldDownloadVideos: true)
-                        }
-                    }) {
-                        Text("Sync")
-                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
-                    }
-                    .foregroundColor(Color.white)
-                    .background(Color.green)
-                    .cornerRadius(Sizes.buttonCornerRadius)
-                    .disabled(model.isWorking > 0)
-                    
-                    Button(action: { showingProjectSettings = true }) {
-                        Text("Settings")
-                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
-                    }
-                    .foregroundColor(Color.white)
-                    .background(Color.red)
-                    .cornerRadius(Sizes.buttonCornerRadius)
-                    .disabled(model.isWorking > 0)
-                    
-                    Button(action: {
-                        Task {
-                            model.startWork()
-                            exporter.project = model.project
-                            await exporter.export()
-                            model.stopWork()
-                        }
-                    }) {
-                        Text("Export")
-                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
-                    }
-                    .foregroundColor(Color.white)
-                    .background(Color.purple)
-                    .cornerRadius(Sizes.buttonCornerRadius)
-                    .disabled(model.isWorking > 0)
-                }
-                .padding([.leading, .trailing, .top])
-                
                 if (model.project.allClips.count != 0) {
-                    VideoPlayback(playbackModel: playbackModel, project: model.project)
+                    VideoPlayback(playbackModel: playbackModel, project: model.project, showingProjectSettingsCallback: {self.showingProjectSettings = true})
                     ThumbnailReel(project: model.project, playbackModel: playbackModel)
                 } else {
                     Spacer()
@@ -114,6 +72,7 @@ struct VideoPlayback: View {
     @ObservedObject var playbackModel: PlaybackModel
     @ObservedObject var project: Project
     @State var showPlayer = false
+    var showingProjectSettingsCallback: () -> ()
     
     var body: some View {
         ZStack {
@@ -137,6 +96,16 @@ struct VideoPlayback: View {
                 ClipMetadataView(playbackModel: playbackModel)
                     .position(x: (geo.size.width / 4) , y: geo.size.height / 15)
                     .frame(width: geo.size.width / 3, height: Sizes.projectButtonHeight * 1.3)
+                
+                Button(action: showingProjectSettingsCallback) {
+                    Image(systemName: "gearshape")
+                        .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
+                }
+                    .foregroundColor(Color.white)
+                    .background(Color.blue)
+                    .cornerRadius(90)
+                    .position(x: 6 * (geo.size.width / 7) , y: geo.size.height / 15)
+                    .frame(width: Sizes.projectButtonHeight, height: Sizes.projectButtonHeight)
             }
         }
         .onReceive(playbackModel.$currentVideoCanPlay) { canPlay in showPlayer = canPlay }

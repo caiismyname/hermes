@@ -10,20 +10,96 @@ import SwiftUI
 
 struct ProjectSettings: View {
     @ObservedObject var project: Project
+    @ObservedObject var exporter: Exporter
+    @State var showingRenameModal = false
+    
+    init(project: Project) {
+        self.project = project
+        self.exporter = Exporter(project: project)
+    }
 
     var body: some View {
-        VStack {
-            Text("\(project.name)")
-                .font(.system(.title).bold())
+        ZStack {
+            VStack {
+                VStack {
+                    HStack {
+                        Text("\(project.name)")
+                            .font(.system(.title).bold())
+                        
+                        Button(action: {showingRenameModal = true}) {
+                            Image(systemName: "pencil.circle.fill")
+                                .foregroundColor(Color.white)
+                                .font(.system(.title).bold())
+                        }
+                        .alert("Rename Project", isPresented: $showingRenameModal, actions: {
+                            TextField("Name", text: $project.name)
+                                .foregroundColor(Color.blue)
+                                .onSubmit {
+                                    Task {
+                                        await project.setProjectNameInFB(newName: project.name)
+                                    }
+                                }
+                        })
+                    }
+                    
+                    if project.projectLevel == .upgrade1 {
+                        HStack {
+                            Image(systemName: "star.fill")
+                            Text("Upgraded. \(ProjectLevels.upgrade1.memberLimit) members + \(ProjectLevels.upgrade1.clipLimit) videos")
+                            Image(systemName: "star.fill")
+                        }
+                    }
+                }
+                .padding([.bottom])
+                
+                HStack {
+                    Button(action: {
+                        project.startWork()
+                        Task {
+                            await project.networkAwareProjectDownload(shouldDownloadVideo:true)
+                            await project.networkAwareProjectUpload()
+                            self.project.stopWork()
+                        }
+                    }) {
+                        Text("Sync")
+                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
+                    }
+                    .background(Color.green)
+                    .cornerRadius(Sizes.buttonCornerRadius)
+                    
+                    Button(action: {
+                        Task {
+                            project.startWork()
+                            exporter.project = project
+                            await exporter.export()
+                            project.stopWork()
+                        }
+                    }) {
+                        Text("Export")
+                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
+                    }
+                    .background(Color.orange)
+                    .cornerRadius(Sizes.buttonCornerRadius)
+                }
+                    .foregroundColor(Color.white)
+                    .font(.system(.title3).bold())
+                
+                Divider()
+                    .frame(height: 0.6)
+                    .overlay(Color.gray)
+                    .padding([.top, .bottom])
+                
+                InviteButton(project: project, inviteEnabled: project.inviteEnabled)
+                    .padding([.bottom])
+                
+                CreatorsList(
+                    project: project
+                )
+            }
             
-            InviteButton(project: project)
-            
-            Spacer()
-            
-            CreatorsList(
-                project: project,
-                inviteEnabled: project.inviteEnabled
-            )
+            if project.isWorking > 0 {
+                WaitingSpinner(project: project)
+            }
         }
         .padding()
     }
@@ -31,29 +107,21 @@ struct ProjectSettings: View {
 
 struct InviteButton: View {
     @ObservedObject var project: Project
+    @State var inviteEnabled: Bool
     
     var body: some View {
-        if #available(iOS 16.0, *) {
-            ShareLink("Invite", item: project.generateURL())
-                .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight * 1.5)
-                .foregroundColor(Color.white)
-                .background(Color.blue)
-                .cornerRadius(Sizes.buttonCornerRadius)
-                .font(.system(.title2).bold())
-        } else {
-            BigButton(action: {}, text: "Invite", imageName: "plus.square")
-        }
-    }
-}
+        VStack {
+            if #available(iOS 16.0, *) {
+                ShareLink("Invite", item: project.generateURL())
+                    .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight * 1.5)
+                    .foregroundColor(Color.white)
+                    .background(Color.blue)
+                    .cornerRadius(Sizes.buttonCornerRadius)
+                    .font(.system(.title2).bold())
+            } else {
+                BigButton(action: {}, text: "Invite", imageName: "plus.square")
+            }
 
-struct CreatorsList: View {
-    @ObservedObject var project: Project
-    @State var inviteEnabled: Bool
- 
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text("Members")
-                .font(.system(.title2).bold())
             if project.isOwner() {
                 Toggle("Enable Invite Link", isOn: $inviteEnabled)
                     .font(.system(.title3))
@@ -62,7 +130,19 @@ struct CreatorsList: View {
                             let success = await project.setInviteSetting(isEnabled: newVal)
                         }
                     }
+                    .padding([.leading])
             }
+        }
+    }
+}
+
+struct CreatorsList: View {
+    @ObservedObject var project: Project
+ 
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text("Members")
+                .font(.system(.title2).bold())
             List {
                 ForEach(Array(project.creators.keys), id: \.self) { uuid in
                     Text(project.creators[uuid] ?? "")
@@ -109,6 +189,7 @@ struct UpgradeInterstitial: View {
                         Spacer()
                     }
                 }
+                .foregroundColor(Color.black)
                 .frame(width: (12 * geo.size.width) / 14, height: geo.size.height / 2)
                 .position(x: geo.size.width / 2, y: geo.size.height / 2)
             }

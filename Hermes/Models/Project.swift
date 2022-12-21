@@ -187,6 +187,7 @@ class Project: ObservableObject, Codable {
     }
     
     func upgradeProject(upgradeLevel: ProjectLevel) async -> Bool {
+        print("Upgrading project to \(upgradeLevel.rawValue)")
         await checkAndCreateRTDBEntry()
         let success = await upgradeProjectInFB(upgradeLevel: upgradeLevel)
         if success {
@@ -199,6 +200,7 @@ class Project: ObservableObject, Codable {
     }
     
     func setInviteSetting(isEnabled: Bool) async -> Bool  {
+        print("Setting invite setting to \(isEnabled)")
         await checkAndCreateRTDBEntry()
         let success = await setInviteSettingInFB(isEnabled: isEnabled)
         if success {
@@ -214,17 +216,21 @@ class Project: ObservableObject, Codable {
     
     func checkAndCreateRTDBEntry() async {
         do {
-            let project = try await Database.database().reference().child("owner").getData() // All projects should have an owner. Picking a child field to avoid pulling the whole object
-            if project.exists() {
+            let (snapshot, _) = await Database.database().reference().child(id.uuidString).child("name").observeSingleEventAndPreviousSiblingKey(of: .value)
+            if snapshot.exists() {
+                print("    Project exists in FB")
                 return
             } else {
                 print("    Project has not been created in FB yet. Creating entry for  \(id.uuidString)")
+                try await Database.database().reference().child(self.id.uuidString).setValue([
+                    "owner": me!.id,
+                    "creators": self.creators
+                ])
+                
                 try await Database.database().reference().child(self.id.uuidString).setValue(
                     [
-                        "owner": me!.id,
                         "clips": [], // Should be empty when project is created, to be filled when the clips are individually uploaded
                         "name": self.name,
-                        "creators": self.creators,
                         "projectLevel": ProjectLevel.free.rawValue,
                         "inviteEnabled": inviteEnabled
                     ]
@@ -346,7 +352,7 @@ class Project: ObservableObject, Codable {
             let dbRef = Database.database().reference().child(self.id.uuidString)
             
             // Project name
-//            try await dbRef.child("name").setValue(self.name)
+            try await dbRef.child("name").setValue(self.name)
             
             // Rewrite Me name in creators list, in case display name changed
             if let meId = self.me?.id { // Idk I keep getting a crash here
@@ -619,6 +625,18 @@ class Project: ObservableObject, Codable {
             return true
         } catch {
             print("    Could not set Invite Setting in FB")
+            print(error)
+            return false
+        }
+    }
+    
+    func setProjectNameInFB(newName : String) async -> Bool {
+        do {
+            let dbRef = Database.database().reference().child(self.id.uuidString)
+            try await dbRef.child("name").setValue(newName)
+            return true
+        } catch {
+            print("    Could not set Project Name in FB")
             print(error)
             return false
         }
