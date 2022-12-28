@@ -43,20 +43,6 @@ struct ProjectSettings: View {
                                 }
                         })
                     }
-                    
-                    if project.projectLevel == .free && project.isOwner() {
-                        HStack {
-                            Button(action: {showingUpgradeModal = true}) {
-                                Text("Free tier. Tap to upgrade")
-                            }
-                        }
-                    } else if project.projectLevel == .upgrade1 {
-                        HStack {
-                            Image(systemName: "star.fill")
-                            Text("Upgraded. \(ProjectLevels.upgrade1.memberLimit) members + \(ProjectLevels.upgrade1.clipLimit) videos")
-                            Image(systemName: "star.fill")
-                        }
-                    }
                 }
                 .padding([.top, .bottom])
                 
@@ -104,6 +90,12 @@ struct ProjectSettings: View {
                 }
                     .foregroundColor(Color.white)
                     .font(.system(.body))
+                    .padding([.bottom])
+                
+                UpgradeModule(
+                    project: project,
+                    upgradeCallback: {self.showingUpgradeModal = true}
+                )
                 
                 Divider()
                     .frame(height: 0.6)
@@ -146,7 +138,7 @@ struct InviteButton: View {
     var body: some View {
         VStack {
             if project.isOwner() {
-                Toggle("Enable Invite Link", isOn: $project.inviteEnabled)
+                Toggle("Enable Invite Link \n    (\(ProjectLevels.getLeveByName(levelName: project.projectLevel).memberLimit - project.creators.count) of \(ProjectLevels.getLeveByName(levelName: project.projectLevel).memberLimit) remaining)", isOn: $project.inviteEnabled)
                     .font(.system(.title3))
                     .onChange(of: project.inviteEnabled) { newVal in
                         Task {
@@ -182,6 +174,7 @@ struct CreatorsList: View {
         VStack(alignment: .leading) {
             Text("Members")
                 .font(.system(.title2).bold())
+            
             List {
                 ForEach(Array(project.creators.keys), id: \.self) { uuid in
                     Text(project.creators[uuid] ?? "")
@@ -190,6 +183,42 @@ struct CreatorsList: View {
             }
             .listStyle(.inset)
         }
+    }
+}
+
+struct UpgradeModule: View {
+    @ObservedObject var project: Project
+    var upgradeCallback: () -> ()
+    
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: Sizes.buttonCornerRadius)
+                .stroke(Color.white, lineWidth: 2)
+            VStack {
+                if project.projectLevel == .free && project.isOwner() {
+                    HStack {
+                        Button(action: upgradeCallback) {
+                            Text("Free tier. Tap to upgrade")
+                        }
+                    }
+                } else if project.projectLevel == .upgrade1 {
+                    HStack {
+                        Image(systemName: "star.fill")
+                        Text("Upgraded")
+                        Image(systemName: "star.fill")
+                    }
+                }
+                
+                Divider()
+                    .frame(height: 0.6)
+                    .overlay(Color.gray)
+                
+                Text("Clip count: \(project.allClips.count) out of \(ProjectLevels.getLeveByName(levelName: project.projectLevel).clipLimit)")
+                    ProgressView(value: Float(project.allClips.count), total: Float(ProjectLevels.getLeveByName(levelName: project.projectLevel).clipLimit))
+            }
+                .padding()
+        }
+            .frame(height: 125)
     }
 }
 
@@ -275,24 +304,23 @@ struct UpgradeInterstitial: View {
 }
 
 
-//struct ProjectSettings_Previews: PreviewProvider {
-//    static var previews: some View {
-//        let project = Project(owner: "")
-//
-//        ProjectSettings(project: project)
-//        .previewDevice("iPhone 8")
-//        .preferredColorScheme(.dark)
-//    }
-//}
-
-struct UpgradeInterstitial_Previews: PreviewProvider {
+struct ProjectSettings_Previews: PreviewProvider {
     static var previews: some View {
-        UpgradeInterstitial(
-            dismissCallback: {},
-            upgradeCallback: {},
-            isOwner: false
-        )
-        .previewDevice("iPhone 8")
-//        .preferredColorScheme(.dark)
+        let project = Project(owner: "")
+
+        ProjectSettings(project: project)
+        .preferredColorScheme(.dark)
     }
 }
+
+//struct UpgradeInterstitial_Previews: PreviewProvider {
+//    static var previews: some View {
+//        UpgradeInterstitial(
+//            dismissCallback: {},
+//            upgradeCallback: {},
+//            isOwner: false
+//        )
+//        .previewDevice("iPhone 8")
+////        .preferredColorScheme(.dark)
+//    }
+//}

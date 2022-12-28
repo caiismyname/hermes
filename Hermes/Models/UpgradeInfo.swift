@@ -9,12 +9,22 @@ import Foundation
 
 struct ProjectLevels {
     static let free = ProjectLevelInfo(memberLimit: 2, clipLimit: 10)
-    static let upgrade1 = ProjectLevelInfo(memberLimit: 10, clipLimit: 100)
+    static let upgrade1 = ProjectLevelInfo(memberLimit: 10, clipLimit: 200)
     
     static let privateMessage = "This project is currently private. \n\n Ask the owner to enable the invite link and try again."
     static let freeTierNoSpace = "This vlog has reached its member limit. \n\n Ask the owner to upgrade and try again."
     static let upgradeTierNoSpace = "This vlog has reached its member limit. \n\n We apologize and are working to expand our capacity."
     static let genericFailureMessage = "This project could not be downloaded because of an error. \n\n Ask the owner to re-sync and try again."
+    
+    static func getLeveByName(levelName: ProjectLevel) -> ProjectLevelInfo {
+        if levelName == .free {
+            return self.free
+        } else if levelName == .upgrade1 {
+            return self.upgrade1
+        } else {
+            return self.free
+        }
+    }
 }
 
 struct ProjectLevelInfo {

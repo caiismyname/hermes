@@ -57,6 +57,9 @@ class Exporter: ObservableObject {
     func export() async {
         guard photosPermissionsCheck() else { return }
         
+        // Ensure all videos are downloaded before compiling.
+        await project.downloadAllVideos()
+        
         print("Starting movie export")
         project.prepareWorkProgress(label:"Exporting", total: 1.0)
         project.startWork()
