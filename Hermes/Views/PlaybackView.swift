@@ -134,7 +134,7 @@ struct ClipMetadataView: View {
 struct ThumbnailReel: View {
     @ObservedObject var project: Project
     @ObservedObject var playbackModel: PlaybackModel
-    @State private var showDeleteALert = false
+    @State private var showDeleteAlert = false
     @State private var clipToDelete = UUID()
     
     var body: some View {
@@ -150,21 +150,21 @@ struct ThumbnailReel: View {
                             .id(clip.id)
                             .onTapGesture(count: 2, perform: {
                                 print("Tapped on \(clip.id.uuidString)")
-                                showDeleteALert = true
+                                showDeleteAlert = true
                                 clipToDelete = clip.id
                             })
                             .onTapGesture(count: 1, perform: {
                                 print("Playing \(clip.id)")
                                 playbackModel.playNVideo(n: idx)
                             })
-                            .alert(isPresented: $showDeleteALert) {
+                            .alert(isPresented: $showDeleteAlert) {
                                 Alert(
                                     title: Text("Delete clip?"),
                                     primaryButton: .destructive(Text("Delete")) {
                                         Task { await playbackModel.deleteClip(id: clipToDelete) }
                                     },
                                     secondaryButton: .cancel(Text("Cancel")) {
-                                        showDeleteALert = false
+                                        showDeleteAlert = false
                                     }
                                 )
                             }
