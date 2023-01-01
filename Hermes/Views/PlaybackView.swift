@@ -145,6 +145,7 @@ struct ThumbnailReel: View {
                         let clip = project.allClips[idx]
                         Thumbnail(
                             clip: clip,
+                            playbackModel: playbackModel,
                             isCurrentClip: idx == playbackModel.currentVideoIdx
                         )
                             .id(clip.id)
@@ -172,16 +173,19 @@ struct ThumbnailReel: View {
                     .onAppear {
                         reader.scrollTo(project.allClips.last?.id)
                     }
-                    .onReceive(playbackModel.$currentVideoIdx) { idx in
-                        guard project.allClips.count > 0 else { return }
-                        if project.allClips.count - idx > 2 {
-                            // Roughly center the currently playing clip
-                            reader.scrollTo(project.allClips[idx + 2].id)
-                        } else {
-                            guard idx < project.allClips.count else {return}
-                            reader.scrollTo(project.allClips[idx].id)
-                        }
-                    }
+                    /*
+                     The auto scroll behavior makes it look like the videos aren't progressing during playback.for now
+                     */
+//                    .onReceive(playbackModel.$currentVideoIdx) { idx in
+//                        guard project.allClips.count > 0 else { return }
+//                        if project.allClips.count - idx > 2 {
+//                            // Roughly center the currently playing clip
+//                            reader.scrollTo(project.allClips[idx + 2].id)
+//                        } else {
+//                            guard idx < project.allClips.count else {return}
+//                            reader.scrollTo(project.allClips[idx].id)
+//                        }
+//                    }
                 }
             }
         }
@@ -190,42 +194,56 @@ struct ThumbnailReel: View {
 
 struct Thumbnail: View {
     @ObservedObject var clip: Clip
+    @ObservedObject var playbackModel: PlaybackModel
     var isCurrentClip: Bool
-    private let thumbnailSize = 75.0
-    private let statusIconInset = 12.0
     
     var body: some View {
         ZStack {
-            Rectangle()
-                .background(Color.red)
             if clip.thumbnail != nil {
                 Image(uiImage: UIImage(cgImage: UIImage(data: clip.thumbnail!)!.cgImage!.cropToCenter()))
                     .resizable(resizingMode: .stretch)
+//                    .frame(width: Sizes.thumbnailSize, height: Sizes.thumbnailSize)
             }
-        }
-        .frame(width: thumbnailSize, height: thumbnailSize)
-        .overlay() {
+            
             if !clip.seen {
                 Rectangle().stroke(.blue, lineWidth: 2.0)
             }
             
             if isCurrentClip {
-                Rectangle().stroke(.white, lineWidth: 2.0)
+                Rectangle()
+                    .stroke(.white, lineWidth: 2.0)
             }
             
             if clip.videoLocation == .deviceAndRemote {
                 Image(systemName: "checkmark.circle.fill")
-                    .position(x: thumbnailSize - statusIconInset, y: statusIconInset)
+                    .position(x: Sizes.thumbnailSize - Sizes.playbackStatusIconInset, y: Sizes.playbackStatusIconInset)
             } else if clip.videoLocation == .remoteOnly {
                 Image(systemName: "icloud.and.arrow.down")
-                    .position(x: thumbnailSize - statusIconInset, y: statusIconInset)
+                    .position(x: Sizes.thumbnailSize - Sizes.playbackStatusIconInset, y: Sizes.playbackStatusIconInset)
             } else if clip.videoLocation == .deviceOnly {
                 Image(systemName: "icloud.and.arrow.up")
-                    .position(x: thumbnailSize - statusIconInset, y: statusIconInset)
+                    .position(x: Sizes.thumbnailSize - Sizes.playbackStatusIconInset, y: Sizes.playbackStatusIconInset)
             }
         }
+        .frame(width: Sizes.thumbnailSize, height: Sizes.thumbnailSize)
     }
 }
+
+//struct ThumbnailProgressOverlay: View {
+//    @ObservedObject var playbackModel: PlaybackModel
+//
+//    var body: some View {
+//        if playbackModel.currentVideoTotalTime != CMTime.zero {
+//            Rectangle()
+//                .background(Color.black)
+//                .opacity(0.5)
+//                .frame(
+//                    width: Sizes.thumbnailSize * (playbackModel.currentVideoElapsedTime.seconds / playbackModel.currentVideoTotalTime.seconds),
+//                    height: Sizes.thumbnailSize
+//                )
+//        }
+//    }
+//}
 
 
 //struct PlaybackView_Previews: PreviewProvider {

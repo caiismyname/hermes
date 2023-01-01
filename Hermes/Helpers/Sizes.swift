@@ -22,6 +22,9 @@ struct Sizes {
     static let infoPillWidthPercentage = 0.55
     static let infoPillTopOffset = 0.025
     
+    // Playback thumbnails
+    static let thumbnailSize = 75.0
+    static let playbackStatusIconInset = 12.0
     
     static let fontSize = 20.0
 }

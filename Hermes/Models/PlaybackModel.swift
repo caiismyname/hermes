@@ -11,11 +11,16 @@ import AVKit
 @MainActor
 class PlaybackModel:ObservableObject {
     let project: Project
+    var player = AVQueuePlayer()
+    
     @Published var currentVideoIdx: Int
     @Published var currentVideoCreatorName = ""
     @Published var currentVideoTimestamp = Date()
     @Published var currentVideoCanPlay = false
-    var player = AVQueuePlayer()
+    
+    // For displaying progress of current video
+//    @Published var currentVideoElapsedTime = CMTime.zero
+//    @Published var currentVideoTotalTime = CMTime.zero
     
     init(project: Project, currentVideoIdx: Int = 0) {
         self.project = project
@@ -44,7 +49,6 @@ class PlaybackModel:ObservableObject {
         self.currentVideoIdx = idx
         setCurrentClipMetadata()
 
-//        if clip.location != .remoteUndownloaded, let url = clip.finalURL {
         if clip.videoLocation != .remoteOnly, let url = clip.finalURL {
             playerItem = AVPlayerItem(url: url)
             player.actionAtItemEnd = .none // override this behavior with the Notification
