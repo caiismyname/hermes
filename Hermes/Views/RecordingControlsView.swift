@@ -181,7 +181,7 @@ struct RecordButtonSnapchatStyle: View {
             
             if recordingManager.isRecording {
                 Circle()
-                    .trim(from: 0.0, to: Double(recordingManager.snapchatStyleProgress))
+                    .trim(from: 0.0, to: Double(recordingManager.snapchatStyleProgress) == 1.0 ? 0.0 : Double(recordingManager.snapchatStyleProgress)) // Ternary is what eliminates the full circle from flashing in the beginning
                     .stroke(style: StrokeStyle(lineWidth: Sizes.recordButtonSize / 6, lineCap:.round))
                     .foregroundColor(.red)
                     .frame(width: (Sizes.recordButtonSize * 1.7), height: Sizes.recordButtonSize * 1.7)

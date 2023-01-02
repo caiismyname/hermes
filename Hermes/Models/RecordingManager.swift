@@ -67,7 +67,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     
     private func initCoreMotion() {
         let splitAngle:Double = 0.75
-        let updateTimer:TimeInterval = 0.5
+        let updateTimer:TimeInterval = 0.2
 
         motionManager.gyroUpdateInterval = updateTimer
         motionManager.accelerometerUpdateInterval = updateTimer
@@ -76,7 +76,6 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
 
         motionManager.startAccelerometerUpdates(to: (OperationQueue.current)!, withHandler: { (acceleroMeterData, error) -> Void in
             if error == nil {
-
                 let acceleration = (acceleroMeterData?.acceleration)!
                 var orientationNew = UIDeviceOrientation(rawValue: 0)!
 
@@ -93,7 +92,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
                     orientationNew = .portraitUpsideDown
                 }
 
-                if orientationNew != orientationLast && orientationNew != .unknown{
+                if orientationNew != orientationLast && orientationNew != .unknown {
                     orientationLast = orientationNew
                     self.deviceOrientationChanged(orientation: orientationNew)
                 }
@@ -106,6 +105,7 @@ class RecordingManager: NSObject, AVCaptureFileOutputRecordingDelegate, Observab
     
     func deviceOrientationChanged(orientation: UIDeviceOrientation) {
         self.orientation = orientation
+        print(orientation.rawValue)
     }
     
     func toggleRecording() {

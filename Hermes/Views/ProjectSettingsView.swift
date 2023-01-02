@@ -327,9 +327,9 @@ struct UpgradeInterstitial: View {
                     
                     Spacer()
                 }
-                .foregroundColor(Color.black)
-                .frame(width: (12 * geo.size.width) / 14)
-                .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                    .foregroundColor(Color.black)
+                    .frame(width: (12 * geo.size.width) / 14)
+                    .position(x: geo.size.width / 2, y: geo.size.height / 2)
             }
         }
     }

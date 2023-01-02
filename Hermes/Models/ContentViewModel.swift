@@ -343,7 +343,7 @@ class ContentViewModel: ObservableObject {
             
             if self.project.id == toDelete {
                 if self.allProjects.count > 0 {
-                    self.project = allProjects[0]
+                    self.project = allProjects.last!
                 } else {
                     createProject()
                 }

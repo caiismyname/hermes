@@ -13,7 +13,6 @@ import Photos
 struct PlaybackView: View {
     @ObservedObject var model: ContentViewModel
     @ObservedObject var playbackModel: PlaybackModel
-//    @ObservedObject var exporter: Exporter
     
     @State var showingRenameAlert = false
     @State var showingShareAlert = false
@@ -22,7 +21,6 @@ struct PlaybackView: View {
     init(model: ContentViewModel, playbackModel: PlaybackModel) {
         self.model = model
         self.playbackModel = playbackModel
-//        self.exporter = Exporter(project: model.project)
     }
     
     var body: some View {
@@ -33,21 +31,6 @@ struct PlaybackView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack {
-                HStack{
-                    // TODO This code works for editing, but not sure how to handle dirty db updates with it
-//                    Image(systemName: "pencil.circle")
-//                        .font(.system(.title2))
-//                        .onTapGesture {
-//                            showingRenameAlert = !showingRenameAlert
-//                        }
-//                        .alert("Rename Project", isPresented: $showingRenameAlert, actions: {
-//                            TextField("New name value", text: $model.project.name)
-//                                .foregroundColor(Color.black)
-//                        })
-//                    Text("\(model.project.name)")
-//                        .font(.system(.title2).bold())
-                }
-                
                 if (model.project.allClips.count != 0) {
                     VideoPlayback(playbackModel: playbackModel, project: model.project, showingProjectSettingsCallback: {self.showingProjectSettings = true})
                     ThumbnailReel(project: model.project, playbackModel: playbackModel)
@@ -140,7 +123,7 @@ struct ThumbnailReel: View {
     var body: some View {
         ScrollViewReader { reader in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
+                LazyHStack {
                     ForEach(project.allClips.indices, id: \.self) { idx in
                         let clip = project.allClips[idx]
                         Thumbnail(
@@ -187,6 +170,7 @@ struct ThumbnailReel: View {
 //                        }
 //                    }
                 }
+                    .frame(height: Sizes.thumbnailSize)
             }
         }
     }
@@ -202,7 +186,6 @@ struct Thumbnail: View {
             if clip.thumbnail != nil {
                 Image(uiImage: UIImage(cgImage: UIImage(data: clip.thumbnail!)!.cgImage!.cropToCenter()))
                     .resizable(resizingMode: .stretch)
-//                    .frame(width: Sizes.thumbnailSize, height: Sizes.thumbnailSize)
             }
             
             if !clip.seen {
@@ -211,7 +194,7 @@ struct Thumbnail: View {
             
             if isCurrentClip {
                 Rectangle()
-                    .stroke(.white, lineWidth: 2.0)
+                    .stroke(.white, lineWidth: 3.0)
             }
             
             if clip.videoLocation == .deviceAndRemote {

@@ -114,6 +114,7 @@ class Clip: Identifiable, Codable, ObservableObject {
                 let timescale = try await asset.load(.duration).timescale
                 let imgGenerator = AVAssetImageGenerator(asset: asset)
                 imgGenerator.appliesPreferredTrackTransform = true
+                
                 if #available(iOS 16, *) {
                     let cgImage = try await imgGenerator.image(at: CMTime(value: 0, timescale: timescale)).image
                     self.thumbnail = UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.6)

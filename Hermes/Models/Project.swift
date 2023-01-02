@@ -119,8 +119,13 @@ class Project: ObservableObject, Codable {
     
     func deleteClip(id: UUID) async {
         print("    Deleting clip locally \(id.uuidString)")
-        await deleteClipFromFB(id: id)
         let clip = self.allClips.first(where: { c in c.id == id })
+        
+        // Only need to delete on FB if clip is already in FB
+        if clip?.metadataLocation != .deviceOnly {
+            await deleteClipFromFB(id: id)
+        }
+        
         if !(clip?.seen ?? true) {
             self.unseenCount -= 1
         }
