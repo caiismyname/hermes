@@ -8,7 +8,7 @@
 import Foundation
 
 struct ProjectLevels {
-    static let free = ProjectLevelInfo(memberLimit: 2, clipLimit: 10)
+    static let free = ProjectLevelInfo(memberLimit: 2, clipLimit: 20)
     static let upgrade1 = ProjectLevelInfo(memberLimit: 10, clipLimit: 200)
     
     static let privateMessage = "This project is currently private. \n\n Ask the owner to enable the invite link and try again."

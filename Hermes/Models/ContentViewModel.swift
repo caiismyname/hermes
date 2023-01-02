@@ -83,6 +83,7 @@ class ContentViewModel: ObservableObject {
             if let projects = results?["allProjects"] {
                 if projects.count != 0 {
                     self.allProjects = projects
+                    
                 } else {
                     // If loaded set is empty, noop and carry through the temp projects
                     print("Empty loaded projects set")
@@ -332,10 +333,11 @@ class ContentViewModel: ObservableObject {
 //        }
 //    }
     
+    @MainActor
     func deleteProject(toDelete: UUID) {
         guard self.allProjects.contains(where: { p in p.id == toDelete }) else { return }
         Task {
-            await self.startWork()
+            startWork()
             
             self.allProjects = self.allProjects.filter({ p in p.id != toDelete })
             
@@ -348,7 +350,7 @@ class ContentViewModel: ObservableObject {
             }
             
             saveProjects()
-            await self.stopWork()
+            stopWork()
         }
     }
     
@@ -401,6 +403,10 @@ class ContentViewModel: ObservableObject {
     
     @MainActor
     func networkSync(performDownloadSync: Bool = true, shouldDownloadVideos: Bool = true) async {
+        guard project.shareInitiated else {
+            print("Current project sharing has not been initiated. Aborting network sync.")
+            return
+        }
         self.startWork()
         if performDownloadSync {
             await downloadCurrentProject(shouldDownloadVideo: shouldDownloadVideos)
@@ -508,7 +514,8 @@ class ContentViewModel: ObservableObject {
                 uuid: projectId,
                 allClips: [Clip](),
                 owner: projectOwner,
-                me: me
+                me: me,
+                shareInitiated: true
             )
             
             // Switch, if told

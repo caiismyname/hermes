@@ -14,8 +14,8 @@
             filePath = "Hermes/Models/Project.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "644"
-            endingLineNumber = "644"
+            startingLineNumber = "699"
+            endingLineNumber = "699"
             landmarkName = "setProjectNameInFB(newName:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -30,8 +30,8 @@
             filePath = "Hermes/Models/Project.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "220"
-            endingLineNumber = "220"
+            startingLineNumber = "261"
+            endingLineNumber = "261"
             landmarkName = "checkAndCreateRTDBEntry()"
             landmarkType = "7">
          </BreakpointContent>

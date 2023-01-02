@@ -19,6 +19,7 @@ class Project: ObservableObject, Codable {
     var creators: [String: String] = [String: String]() // [uuid: display name]
     @Published var name: String
     @Published var allClips: [Clip]
+    @Published var shareInitiated: Bool
     
     // UI handling
     private var currentlyRecording = false
@@ -37,7 +38,7 @@ class Project: ObservableObject, Codable {
     @Published var spinnerLabel = ""
     @Published var isWorking = 0
     
-    init(uuid: UUID = UUID(), name: String = "New Project", allClips: [Clip] = [], owner: String, me: Me = Me(id: "", name: "")) {
+    init(uuid: UUID = UUID(), name: String = "New Project", allClips: [Clip] = [], owner: String, me: Me = Me(id: "", name: ""), shareInitiated: Bool = false) {
         self.id = uuid
         self.name = name
         self.allClips = allClips
@@ -47,6 +48,7 @@ class Project: ObservableObject, Codable {
         if me.id != "" {
             self.creators[me.id] = me.name
         }
+        self.shareInitiated = shareInitiated
         
         self.sortClips()
         self.lastClip = allClips.last
@@ -172,6 +174,11 @@ class Project: ObservableObject, Codable {
     }
     
     func canAddClip() -> Bool {
+        // Individual projects (not in FB) have unlimited clips
+        if !shareInitiated {
+            return true
+        }
+        
         if projectLevel == .free {
             return allClips.count < ProjectLevels.free.clipLimit
         } else if projectLevel == .upgrade1 {
@@ -188,7 +195,14 @@ class Project: ObservableObject, Codable {
     
     func upgradeProject(upgradeLevel: ProjectLevel) async -> Bool {
         print("Upgrading project to \(upgradeLevel.rawValue)")
-        await checkAndCreateRTDBEntry()
+        if !self.shareInitiated {
+            print("  Implicitly setting shareInitiated to true")
+            self.shareInitiated = true // Upgrading the project implies they want to share it.
+        }
+        
+        let shouldSync = await checkAndCreateRTDBEntry()
+        guard shouldSync else { return false }
+        
         let success = await upgradeProjectInFB(upgradeLevel: upgradeLevel)
         if success {
             DispatchQueue.main.async {
@@ -201,7 +215,21 @@ class Project: ObservableObject, Codable {
     
     func setInviteSetting(isEnabled: Bool) async -> Bool  {
         print("Setting invite setting to \(isEnabled)")
+        
+        // Set shareInitiated to true on the first instance this is toggled.
+        var previouslyUnshared = !shareInitiated
+        if isEnabled {
+            self.shareInitiated = true
+        }
+        
         await checkAndCreateRTDBEntry()
+        if previouslyUnshared {
+            prepareWorkProgress(label: "Preparing vlog for sharing")
+            await pushProjectMetadata()
+            await pushUnuploadedClipVideos()
+            stopWork()
+        }
+        
         let success = await setInviteSettingInFB(isEnabled: isEnabled)
         if success {
             DispatchQueue.main.async {
@@ -215,14 +243,33 @@ class Project: ObservableObject, Codable {
         return success
     }
     
+    var isUnderTierLimits: Bool {
+        if !canInviteMembers() { return false }
+        
+        if projectLevel == .free {
+            return allClips.count < ProjectLevels.free.clipLimit
+        } else if projectLevel == .upgrade1 {
+            return allClips.count < ProjectLevels.upgrade1.clipLimit
+        } else {
+            // This is some error
+            return false
+        }
+    }
+    
     // MARK: - Firebase
     
-    func checkAndCreateRTDBEntry() async {
+    func checkAndCreateRTDBEntry() async -> Bool {
+        // Only bother with syncing if the share link has been toggled on
+        guard shareInitiated else {
+            print("    Sharing has not been initiated. Aborting sync")
+            return false
+        }
+        
         do {
             let (snapshot, _) = await Database.database().reference().child(id.uuidString).child("name").observeSingleEventAndPreviousSiblingKey(of: .value)
             if snapshot.exists() {
                 print("    Project exists in FB")
-                return
+                return true
             } else {
                 print("    Project has not been created in FB yet. Creating entry for  \(id.uuidString)")
                 /*
@@ -235,10 +282,13 @@ class Project: ObservableObject, Codable {
                 try await Database.database().reference().child(self.id.uuidString).child("name").setValue(self.name)
                 try await Database.database().reference().child(self.id.uuidString).child("projectLevel").setValue(self.projectLevel.rawValue)
                 try await Database.database().reference().child(self.id.uuidString).child("inviteEnabled").setValue(self.inviteEnabled)
+                
+                return true
             }
         } catch {
             print("    Error creating initial FB entry for project \(id.uuidString)")
             print("        \(error)")
+            return false
         }
     }
     
@@ -346,7 +396,8 @@ class Project: ObservableObject, Codable {
     
     func pushProjectMetadata() async {
         do {
-            await checkAndCreateRTDBEntry()
+            let shouldSync = await checkAndCreateRTDBEntry()
+            guard shouldSync else { return }
             
             print("Pushing project metadata for \(id.uuidString)")
             let dbRef = Database.database().reference().child(self.id.uuidString)
@@ -617,7 +668,9 @@ class Project: ObservableObject, Codable {
     
     private func upgradeProjectInFB(upgradeLevel: ProjectLevel) async -> Bool {
         do {
-            await checkAndCreateRTDBEntry()
+            let shouldSync = await checkAndCreateRTDBEntry()
+            guard shouldSync else { return false }
+            
             let dbRef = Database.database().reference().child(self.id.uuidString)
             try await dbRef.child("projectLevel").setValue(upgradeLevel.rawValue)
             return true
@@ -630,7 +683,9 @@ class Project: ObservableObject, Codable {
     
     private func setInviteSettingInFB(isEnabled: Bool) async -> Bool  {
         do {
-            await checkAndCreateRTDBEntry()
+            let shouldSync = await checkAndCreateRTDBEntry()
+            guard shouldSync else { return false}
+            
             let dbRef = Database.database().reference().child(self.id.uuidString)
             try await dbRef.child("inviteEnabled").setValue(isEnabled)
             return true
@@ -643,7 +698,9 @@ class Project: ObservableObject, Codable {
     
     func setProjectNameInFB(newName : String) async -> Bool {
         do {
-            await checkAndCreateRTDBEntry()
+            let shouldSync = await checkAndCreateRTDBEntry()
+            guard shouldSync else { return false }
+            
             let dbRef = Database.database().reference().child(self.id.uuidString)
             try await dbRef.child("name").setValue(newName)
             return true
@@ -663,6 +720,7 @@ class Project: ObservableObject, Codable {
         case projectLevel
         case owner
         case inviteEnabled
+        case shareInitiated
     }
     
     func encode(to encoder: Encoder) throws {
@@ -674,6 +732,7 @@ class Project: ObservableObject, Codable {
         try container.encode(projectLevel, forKey: .projectLevel)
         try container.encode(owner, forKey: .owner)
         try container.encode(inviteEnabled, forKey: .inviteEnabled)
+        try container.encode(shareInitiated, forKey: .shareInitiated)
         
     }
     
@@ -686,5 +745,11 @@ class Project: ObservableObject, Codable {
         projectLevel = try values.decode(ProjectLevel.self, forKey: .projectLevel)
         owner = try values.decode(String.self, forKey: .owner)
         inviteEnabled = try values.decode(Bool.self, forKey: .inviteEnabled)
+        
+        do {
+            shareInitiated = try values.decode(Bool.self, forKey: .shareInitiated)
+        } catch {
+            shareInitiated = false
+        }
     }
 }

@@ -13,6 +13,7 @@ struct ProjectSettings: View {
     @ObservedObject var exporter: Exporter
     @State var showingRenameModal = false
     @State var showingUpgradeModal = false
+    @State var upgradeInterstitalTitle = "Upgrading's a good choice 😉"
     
     init(project: Project) {
         self.project = project
@@ -61,32 +62,34 @@ struct ProjectSettings: View {
                     .background(Color.orange)
                     .cornerRadius(Sizes.buttonCornerRadius)
                     
-                    Button(action: {
-                        project.startWork()
-                        Task {
-                            await project.networkAwareProjectDownload(shouldDownloadVideo: false)
-                            await project.networkAwareProjectUpload(shouldUploadVideo: true)
-                            self.project.stopWork()
+                    if project.shareInitiated {
+                        Button(action: {
+                            project.startWork()
+                            Task {
+                                await project.networkAwareProjectDownload(shouldDownloadVideo: false)
+                                await project.networkAwareProjectUpload(shouldUploadVideo: true)
+                                self.project.stopWork()
+                            }
+                        }) {
+                            Text("Sync")
+                                .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
                         }
-                    }) {
-                        Text("Sync")
-                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
-                    }
-                    .background(Color.green)
-                    .cornerRadius(Sizes.buttonCornerRadius)
-                    
-                    Button(action: {
-                        project.startWork()
-                        Task {
-                            await project.downloadAllVideos()
-                            self.project.stopWork()
+                        .background(Color.green)
+                        .cornerRadius(Sizes.buttonCornerRadius)
+                        
+                        Button(action: {
+                            project.startWork()
+                            Task {
+                                await project.downloadAllVideos()
+                                self.project.stopWork()
+                            }
+                        }) {
+                            Text("Download all")
+                                .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
                         }
-                    }) {
-                        Text("Download all")
-                            .frame(maxWidth: .infinity, maxHeight: Sizes.projectButtonHeight)
+                        .background(Color.indigo)
+                        .cornerRadius(Sizes.buttonCornerRadius)
                     }
-                    .background(Color.indigo)
-                    .cornerRadius(Sizes.buttonCornerRadius)
                 }
                     .foregroundColor(Color.white)
                     .font(.system(.body))
@@ -102,11 +105,21 @@ struct ProjectSettings: View {
                     .overlay(Color.gray)
                     .padding([.top, .bottom])
                 
-                InviteButton(project: project)
-                
-                CreatorsList(
-                    project: project
+                InviteButton(
+                    project: project,
+                    upgradeCallback: {title in
+                        self.upgradeInterstitalTitle = title
+                        self.showingUpgradeModal = true
+                    }
                 )
+                
+                if project.shareInitiated {
+                    CreatorsList(
+                        project: project
+                    )
+                } else {
+                    Spacer()
+                }
             }
             
             if project.isWorking > 0 {
@@ -124,7 +137,8 @@ struct ProjectSettings: View {
                             }
                         }
                     },
-                    isOwner: project.isOwner()
+                    isOwner: project.isOwner(),
+                    title: upgradeInterstitalTitle
                 )
             }
         }
@@ -134,15 +148,26 @@ struct ProjectSettings: View {
 
 struct InviteButton: View {
     @ObservedObject var project: Project
+    var upgradeCallback: (String) -> ()
     
     var body: some View {
         VStack {
             if project.isOwner() {
-                Toggle("Enable Invite Link \n    (\(ProjectLevels.getLeveByName(levelName: project.projectLevel).memberLimit - project.creators.count) of \(ProjectLevels.getLeveByName(levelName: project.projectLevel).memberLimit) remaining)", isOn: $project.inviteEnabled)
+                Toggle(
+                    project.shareInitiated
+                        ? "Enable Invite Link \n    (\(ProjectLevels.getLeveByName(levelName: project.projectLevel).memberLimit - project.creators.count) of \(ProjectLevels.getLeveByName(levelName: project.projectLevel).memberLimit) remaining)"
+                        : "Enable Invite Link",
+                    isOn: $project.inviteEnabled
+                )
                     .font(.system(.title3))
                     .onChange(of: project.inviteEnabled) { newVal in
                         Task {
-                            let success = await project.setInviteSetting(isEnabled: newVal)
+                            if !project.isUnderTierLimits && !project.shareInitiated {
+                                upgradeCallback("You have \(project.allClips.count - ProjectLevels.free.clipLimit) too many clips")
+                                project.inviteEnabled = false // Unset the change since the Toggle itself updates the value locally
+                            } else {
+                                let success = await project.setInviteSetting(isEnabled: newVal)
+                            }
                         }
                     }
                     .padding([.bottom])
@@ -171,17 +196,19 @@ struct CreatorsList: View {
     @ObservedObject var project: Project
  
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Members")
-                .font(.system(.title2).bold())
-            
-            List {
-                ForEach(Array(project.creators.keys), id: \.self) { uuid in
-                    Text(project.creators[uuid] ?? "")
-                        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
+        if project.shareInitiated {
+            VStack(alignment: .leading) {
+                Text("Members")
+                    .font(.system(.title2).bold())
+                
+                List {
+                    ForEach(Array(project.creators.keys), id: \.self) { uuid in
+                        Text(project.creators[uuid] ?? "")
+                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, alignment: .leading)
+                    }
                 }
+                .listStyle(.inset)
             }
-            .listStyle(.inset)
         }
     }
 }
@@ -191,34 +218,39 @@ struct UpgradeModule: View {
     var upgradeCallback: () -> ()
     
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: Sizes.buttonCornerRadius)
-                .stroke(Color.white, lineWidth: 2)
-            VStack {
-                if project.projectLevel == .free && project.isOwner() {
-                    HStack {
-                        Button(action: upgradeCallback) {
-                            Text("Free tier. Tap to upgrade")
+        if project.shareInitiated {
+            ZStack {
+                RoundedRectangle(cornerRadius: Sizes.buttonCornerRadius)
+                    .stroke(Color.white, lineWidth: 2)
+                VStack {
+                    if project.projectLevel == .free && project.isOwner() {
+                        HStack {
+                            Button(action: upgradeCallback) {
+                                Text("Free tier. Tap to upgrade")
+                            }
+                        }
+                    } else if project.projectLevel == .upgrade1 {
+                        HStack {
+                            Image(systemName: "star.fill")
+                            Text("Upgraded")
+                            Image(systemName: "star.fill")
                         }
                     }
-                } else if project.projectLevel == .upgrade1 {
-                    HStack {
-                        Image(systemName: "star.fill")
-                        Text("Upgraded")
-                        Image(systemName: "star.fill")
-                    }
-                }
-                
-                Divider()
-                    .frame(height: 0.6)
-                    .overlay(Color.gray)
-                
-                Text("Clip count: \(project.allClips.count) out of \(ProjectLevels.getLeveByName(levelName: project.projectLevel).clipLimit)")
+                    
+                    Divider()
+                        .frame(height: 0.6)
+                        .overlay(Color.gray)
+                    
+                    Text("Clip count: \(project.allClips.count) out of \(ProjectLevels.getLeveByName(levelName: project.projectLevel).clipLimit)")
+                        .foregroundColor(
+                            project.isUnderTierLimits ? Color.white : Color.red
+                        )
                     ProgressView(value: Float(project.allClips.count), total: Float(ProjectLevels.getLeveByName(levelName: project.projectLevel).clipLimit))
-            }
+                }
                 .padding()
-        }
+            }
             .frame(height: 125)
+        }
     }
 }
 
@@ -226,7 +258,7 @@ struct UpgradeInterstitial: View {
     var dismissCallback: () -> ()
     var upgradeCallback: () -> ()
     var isOwner: Bool
-    var title: String = "Upgrading's a good choice 😉"
+    @State var title: String
     
     var body: some View {
         GeometryReader() { geo in
@@ -245,8 +277,8 @@ struct UpgradeInterstitial: View {
                             Spacer()
                             Text("Free").font(.system(.title2).bold())
                             Spacer()
-                            Text("- 2 members")
-                            Text("- 10 videos")
+                            Text("- \(ProjectLevels.free.memberLimit) members")
+                            Text("- \(ProjectLevels.free.clipLimit) videos")
                             Text(" \n ") // spacing
                             Spacer()
                         }
@@ -260,8 +292,8 @@ struct UpgradeInterstitial: View {
                             Spacer()
                             Text("Upgraded 🌟").font(.system(.title2).bold())
                             Spacer()
-                            Text("- 10 members")
-                            Text("- 100 videos")
+                            Text("- \(ProjectLevels.upgrade1.memberLimit) members")
+                            Text("- \(ProjectLevels.upgrade1.clipLimit) videos")
                             Text("- Support\n  development 👨‍💻")
                             Spacer()
                         }
